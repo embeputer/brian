@@ -44,6 +44,7 @@ function checkSource(source, manifest) {
 		) {
 			return;
 		}
+		if (specifier.startsWith("#") && Object.hasOwn(manifest.imports ?? {}, specifier)) return;
 		const name = specifier.split("/").slice(0, specifier.startsWith("@") ? 2 : 1).join("/");
 		if (declared.has(name)) return;
 		const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
