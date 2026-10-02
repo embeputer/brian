@@ -23,7 +23,7 @@ const fallbackConfigName = "tsconfig.runtime-deps-fallback.json";
 const fallbackConfig = JSON.stringify({ include: ["src/**/*"] });
 const failures = [];
 
-function checkSource(source, manifest) {
+function checkSource(source, manifest, directory) {
 	const file = source.fileName;
 	const declared = new Set([
 		manifest.name,
@@ -32,9 +32,27 @@ function checkSource(source, manifest) {
 		...Object.keys(manifest.peerDependencies ?? {}),
 	]);
 
-	function checkSpecifier(node) {
-		if (!node || !(isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node))) return;
-		const specifier = node.text;
+	function checkImportTarget(target, node, seen) {
+		if (typeof target === "string") {
+			if (target.startsWith("./")) {
+				const targetPath = resolve(directory, target);
+				const path = relative(resolve(directory, "src"), targetPath);
+				if (path.startsWith("..") || isAbsolute(path) || !existsSync(targetPath)) {
+					failures.push(`${file}: package import target ${target} must name an existing file inside src`);
+				}
+			} else {
+				checkRuntimeSpecifier(target, node, seen);
+			}
+		} else if (Array.isArray(target)) {
+			for (const entry of target) checkImportTarget(entry, node, seen);
+		} else if (target && typeof target === "object") {
+			for (const [condition, entry] of Object.entries(target)) {
+				if (condition !== "types") checkImportTarget(entry, node, seen);
+			}
+		}
+	}
+
+	function checkRuntimeSpecifier(specifier, node, seen = new Set()) {
 		// `cloudflare:` modules are built into the Workers runtime, like `node:` modules are into Node.
 		if (
 			specifier.startsWith(".") ||
@@ -44,11 +62,22 @@ function checkSource(source, manifest) {
 		) {
 			return;
 		}
-		if (specifier.startsWith("#") && Object.hasOwn(manifest.imports ?? {}, specifier)) return;
+		if (specifier.startsWith("#") && Object.hasOwn(manifest.imports ?? {}, specifier)) {
+			if (seen.has(specifier)) {
+				failures.push(`${file}: package import ${specifier} has a cyclic target`);
+				return;
+			}
+			checkImportTarget(manifest.imports[specifier], node, new Set([...seen, specifier]));
+			return;
+		}
 		const name = specifier.split("/").slice(0, specifier.startsWith("@") ? 2 : 1).join("/");
 		if (declared.has(name)) return;
 		const { line } = source.getLineAndCharacterOfPosition(node.getStart(source));
 		failures.push(`${file}:${line + 1}: ${specifier} is not declared in ${manifest.name}'s runtime dependencies`);
+	}
+
+	function checkSpecifier(node) {
+		if (node && (isStringLiteral(node) || isNoSubstitutionTemplateLiteral(node))) checkRuntimeSpecifier(node.text, node);
 	}
 
 	function visit(node) {
@@ -95,6 +124,7 @@ const packages = getPublicWorkspacePackages()
 	.map(({ directory, sourceDirectory }) => {
 		const configPath = resolve(directory, "tsconfig.build.json");
 		return {
+			directory,
 			sourceDirectory,
 			manifest: JSON.parse(readFileSync(join(directory, "package.json"), "utf8")),
 			configPath: existsSync(configPath) ? configPath : resolve(directory, fallbackConfigName),
@@ -113,7 +143,7 @@ const api = new API({
 });
 try {
 	const snapshot = api.updateSnapshot({ openProjects: packages.map(({ configPath }) => configPath) });
-	for (const { sourceDirectory, manifest, configPath } of packages) {
+	for (const { directory, sourceDirectory, manifest, configPath } of packages) {
 		const project = snapshot.getProject(configPath);
 		const diagnostics = project.program.getConfigFileParsingDiagnostics();
 		if (diagnostics.length > 0) throw new Error(diagnostics.map((diagnostic) => diagnostic.text).join("\n"));
@@ -127,7 +157,7 @@ try {
 			if (!roots.has(resolve(fileName))) {
 				failures.push(`${fileName} is excluded from ${manifest.name}'s build but imported by it`);
 			}
-			checkSource(project.program.getSourceFile(fileName), manifest);
+			checkSource(project.program.getSourceFile(fileName), manifest, directory);
 		}
 	}
 } finally {
