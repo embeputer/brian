@@ -21,10 +21,25 @@ import { getPublicWorkspacePackages } from "./release-packages.mjs";
 // Packages without tsconfig.build.json are checked against a synthetic config.
 const fallbackConfigName = "tsconfig.runtime-deps-fallback.json";
 const fallbackConfig = JSON.stringify({ include: ["src/**/*"] });
+// Local package import targets (such as `.mjs` driver wrappers) are often outside
+// the build's include pattern, so each package gets a synthetic project for them.
+const importTargetsConfigName = "tsconfig.runtime-deps-import-targets.json";
 const failures = [];
 
-function checkSource(source, manifest, directory) {
-	const file = source.fileName;
+function localImportTargets(target) {
+	if (typeof target === "string") return target.startsWith("./") ? [target] : [];
+	if (Array.isArray(target)) return target.flatMap(localImportTargets);
+	if (target && typeof target === "object") {
+		return Object.entries(target).flatMap(([condition, entry]) => (condition === "types" ? [] : localImportTargets(entry)));
+	}
+	return [];
+}
+
+function checkSource(source, pkg) {
+	const { manifest, directory, checkedSources } = pkg;
+	const file = resolve(source.fileName);
+	if (checkedSources.has(file)) return;
+	checkedSources.add(file);
 	const declared = new Set([
 		manifest.name,
 		...Object.keys(manifest.dependencies ?? {}),
@@ -39,6 +54,8 @@ function checkSource(source, manifest, directory) {
 				const path = relative(resolve(directory, "src"), targetPath);
 				if (path.startsWith("..") || isAbsolute(path) || !existsSync(targetPath)) {
 					failures.push(`${file}: package import target ${target} must name an existing file inside src`);
+				} else {
+					checkSource(pkg.importTargetSource(targetPath), pkg);
 				}
 			} else {
 				checkRuntimeSpecifier(target, node, seen);
@@ -53,11 +70,12 @@ function checkSource(source, manifest, directory) {
 	}
 
 	function checkRuntimeSpecifier(specifier, node, seen = new Set()) {
-		// `cloudflare:` modules are built into the Workers runtime, like `node:` modules are into Node.
+		// `cloudflare:` and `bun:` modules are built into Workers and Bun, like `node:` modules are into Node.
 		if (
 			specifier.startsWith(".") ||
 			specifier.startsWith("/") ||
 			specifier.startsWith("cloudflare:") ||
+			specifier.startsWith("bun:") ||
 			isBuiltin(specifier)
 		) {
 			return;
@@ -123,28 +141,51 @@ const packages = getPublicWorkspacePackages()
 	.filter(({ sourceDirectory }) => existsSync(sourceDirectory))
 	.map(({ directory, sourceDirectory }) => {
 		const configPath = resolve(directory, "tsconfig.build.json");
+		const manifest = JSON.parse(readFileSync(join(directory, "package.json"), "utf8"));
+		const importTargets = [
+			...new Set(Object.values(manifest.imports ?? {}).flatMap(localImportTargets)),
+		].filter((target) => {
+			const path = relative(sourceDirectory, resolve(directory, target));
+			return !path.startsWith("..") && !isAbsolute(path) && existsSync(resolve(directory, target));
+		});
 		return {
 			directory,
 			sourceDirectory,
-			manifest: JSON.parse(readFileSync(join(directory, "package.json"), "utf8")),
+			manifest,
 			configPath: existsSync(configPath) ? configPath : resolve(directory, fallbackConfigName),
+			importTargetsConfigPath: importTargets.length > 0 ? resolve(directory, importTargetsConfigName) : undefined,
+			importTargets,
 		};
 	});
 
-const fallbackConfigs = new Set(
-	packages.map(({ configPath }) => configPath).filter((path) => path.endsWith(fallbackConfigName)),
-);
+const syntheticConfigs = new Map();
+for (const { configPath, importTargetsConfigPath, importTargets } of packages) {
+	if (configPath.endsWith(fallbackConfigName)) syntheticConfigs.set(configPath, fallbackConfig);
+	if (importTargetsConfigPath) {
+		syntheticConfigs.set(
+			importTargetsConfigPath,
+			JSON.stringify({ compilerOptions: { allowJs: true, noEmit: true }, files: importTargets }),
+		);
+	}
+}
 const api = new API({
 	cwd: process.cwd(),
 	fs: {
-		fileExists: (fileName) => (fallbackConfigs.has(resolve(fileName)) ? true : undefined),
-		readFile: (fileName) => (fallbackConfigs.has(resolve(fileName)) ? fallbackConfig : undefined),
+		fileExists: (fileName) => (syntheticConfigs.has(resolve(fileName)) ? true : undefined),
+		readFile: (fileName) => syntheticConfigs.get(resolve(fileName)),
 	},
 });
 try {
-	const snapshot = api.updateSnapshot({ openProjects: packages.map(({ configPath }) => configPath) });
-	for (const { directory, sourceDirectory, manifest, configPath } of packages) {
+	const snapshot = api.updateSnapshot({ openProjects: [...syntheticConfigs.keys(), ...packages.map(({ configPath }) => configPath)] });
+	for (const { directory, sourceDirectory, manifest, configPath, importTargetsConfigPath } of packages) {
 		const project = snapshot.getProject(configPath);
+		const importTargetsProgram = importTargetsConfigPath ? snapshot.getProject(importTargetsConfigPath).program : undefined;
+		const pkg = {
+			manifest,
+			directory,
+			checkedSources: new Set(),
+			importTargetSource: (path) => importTargetsProgram.getSourceFile(path),
+		};
 		const diagnostics = project.program.getConfigFileParsingDiagnostics();
 		if (diagnostics.length > 0) throw new Error(diagnostics.map((diagnostic) => diagnostic.text).join("\n"));
 		const roots = new Set(project.rootFiles.map((file) => resolve(file)));
@@ -157,7 +198,7 @@ try {
 			if (!roots.has(resolve(fileName))) {
 				failures.push(`${fileName} is excluded from ${manifest.name}'s build but imported by it`);
 			}
-			checkSource(project.program.getSourceFile(fileName), manifest, directory);
+			checkSource(project.program.getSourceFile(fileName), pkg);
 		}
 	}
 } finally {
