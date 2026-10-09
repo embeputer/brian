@@ -114,6 +114,17 @@ describe("resolveCliModel", () => {
 		expect(resolveCliModel({ cliModel: "openrouter/VENDOR/MODEL", modelRuntime: both }).error).toContain("ambiguous");
 	});
 
+	test("prefers an exact-case provider over a case-insensitive one", () => {
+		const lower = withId("fixture/model", "openrouter");
+		const upper = withId("fixture/model", "OpenRouter");
+		const modelRuntime = runtimeFor([lower, upper]);
+		expect(resolveCliModel({ cliModel: "openrouter/fixture/model", modelRuntime }).model).toBe(lower);
+		expect(resolveCliModel({ cliProvider: "OpenRouter", cliModel: "fixture/model", modelRuntime }).model).toBe(upper);
+		const result = resolveCliModel({ cliModel: "OPENROUTER/fixture/model", modelRuntime });
+		expect(result.model).toBeUndefined();
+		expect(result.error).toContain("not found");
+	});
+
 	test("does not match partial IDs or invent missing models", () => {
 		const modelRuntime = runtimeFor(allModels);
 		for (const cliModel of ["sonnet", "anthropic/sonnet", "openrouter/qwen", "openai/gpt-5-missing", ""]) {
@@ -197,6 +208,21 @@ describe("resolveModelScopeWithDiagnostics", () => {
 		);
 		expect(result.scopedModels).toEqual([{ model: bracketed, thinkingLevel: "high" }]);
 		expect(result.diagnostics).toEqual([]);
+	});
+
+	test("reports ambiguous literal IDs instead of glob matching", async () => {
+		const result = await resolveModelScopeWithDiagnostics(
+			["model[1m]"],
+			runtimeFor([withId("model[1m]", "alpha"), withId("model[1m]", "beta"), withId("model1", "gamma")]),
+		);
+		expect(result.scopedModels).toEqual([]);
+		expect(result.diagnostics).toEqual([
+			expect.objectContaining({
+				code: "no-match",
+				pattern: "model[1m]",
+				message: expect.stringContaining("ambiguous"),
+			}),
+		]);
 	});
 
 	test("limits provider-prefixed globs to that provider", async () => {

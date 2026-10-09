@@ -753,6 +753,8 @@ export async function main(args: string[], options?: MainOptions) {
 		}
 		diagnostics.push(...scope.diagnostics);
 		const scopedModels = scope.scopedModels;
+		const sessionContext = sessionManager.buildSessionContext();
+		const hasSavedModel = sessionContext.model !== null;
 		const {
 			options: sessionOptions,
 			cliThinkingFromModel,
@@ -760,10 +762,12 @@ export async function main(args: string[], options?: MainOptions) {
 		} = buildSessionOptions(
 			parsed,
 			scopedModels,
-			sessionManager.buildSessionContext().messages.length > 0,
+			sessionContext.messages.length > 0 || hasSavedModel,
 			modelRuntime,
 			settingsManager,
 		);
+		// Startup --model applies to the first runtime and sessions with no saved model; others restore theirs.
+		const applyCliModel = isInitialRuntime || !hasSavedModel;
 		diagnostics.push(...sessionOptionDiagnostics);
 		const modelError = sessionOptionDiagnostics.find((diagnostic) => diagnostic.type === "error");
 		if (modelError) throw new Error(modelError.message);
@@ -783,16 +787,16 @@ export async function main(args: string[], options?: MainOptions) {
 			services,
 			sessionManager,
 			sessionStartEvent,
-			model: sessionOptions.model,
+			model: applyCliModel ? sessionOptions.model : undefined,
 			strictModelSelection: !parsed.help && parsed.listModels === undefined,
-			thinkingLevel: sessionOptions.thinkingLevel,
+			thinkingLevel: applyCliModel || !cliThinkingFromModel ? sessionOptions.thinkingLevel : undefined,
 			scopedModels: sessionOptions.scopedModels,
 			tools: sessionOptions.tools,
 			excludeTools: sessionOptions.excludeTools,
 			noTools: sessionOptions.noTools,
 			customTools: sessionOptions.customTools,
 		});
-		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
+		const cliThinkingOverride = parsed.thinking !== undefined || (applyCliModel && cliThinkingFromModel);
 		if (created.session.model && cliThinkingOverride) {
 			created.session.setThinkingLevel(created.session.thinkingLevel);
 		}

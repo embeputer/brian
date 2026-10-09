@@ -15,6 +15,7 @@ import {
 	withCancel,
 } from "@punch-bot/agent";
 import { NodeExecutionEnv } from "@punch-bot/agent/node";
+import { modelsAreEqual } from "@punch-bot/ai";
 import {
 	isJsonValue,
 	type JsonValue,
@@ -802,7 +803,8 @@ export async function runSessionWorkerWithHarness(
 	}
 }
 
-async function createCodingAgentHarness(
+/** @internal Exported for testing */
+export async function createCodingAgentHarness(
 	session: Session<JsonlSessionMetadata>,
 	options: SessionWorkerOptions,
 	executionEnv: NodeExecutionEnv,
@@ -848,6 +850,17 @@ async function createCodingAgentHarness(
 	).harness;
 	try {
 		const lane = await harness.lane("main", TODO_CONTEXT);
+		if (options.model !== undefined) {
+			if (!modelsAreEqual(await lane.getModel(TODO_CONTEXT), resolved.model)) {
+				await lane.setModel({ provider: resolved.model.provider, modelId: resolved.model.id }, TODO_CONTEXT);
+			}
+			if (resolved.thinkingLevel !== undefined) await lane.setThinkingLevel(resolved.thinkingLevel, TODO_CONTEXT);
+		} else if ((await lane.getModel(TODO_CONTEXT)) === undefined) {
+			const { configuredModel } = await lane.inspectExecution(TODO_CONTEXT);
+			throw new Error(
+				`Session worker could not restore the session model: ${configuredModel.provider}/${configuredModel.modelId}`,
+			);
+		}
 		const currentActiveToolNames = await lane.getActiveTools(TODO_CONTEXT);
 		if (
 			currentActiveToolNames.length !== activeToolNames.length ||

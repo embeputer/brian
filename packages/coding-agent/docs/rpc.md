@@ -17,9 +17,9 @@ Common options:
 - `--no-session`: Disable session persistence
 - `--session-dir <path>`: Custom session storage directory
 
-Model selection requires an exact, case-sensitive catalog ID. An ID shared by multiple providers requires `--provider` or a provider prefix. Missing IDs return an error without selecting another provider or model. OpenRouter service suffixes such as `:free` and `:batch` are part of the ID; if only `vendor/model:free` exists, requesting `vendor/model` fails. Add a missing model through authoritative catalog metadata or its own explicit `models.json` definition.
+Model selection requires an exact catalog ID. Case is ignored only when that leaves a single match. An ID shared by multiple providers requires `--provider` or a provider prefix. Missing IDs return an error without selecting another provider or model. OpenRouter service suffixes such as `:free` and `:batch` are part of the ID; if only `vendor/model:free` exists, requesting `vendor/model` fails. Add a missing model through authoritative catalog metadata or its own explicit `models.json` definition.
 
-A complete catalog ID takes precedence over thinking shorthand. For example, `openrouter/vendor/model:free:high` selects `vendor/model:free` with high thinking only when the full `vendor/model:free:high` ID does not exist. `--thinking` overrides shorthand. Saved defaults and restored sessions also require their exact model; a failed `new_session` or `switch_session` leaves the current session active.
+A complete catalog ID takes precedence over thinking shorthand. For example, `openrouter/vendor/model:free:high` selects `vendor/model:free` with high thinking only when the full `vendor/model:free:high` ID does not exist. `--thinking` overrides shorthand. Saved defaults and restored sessions also require their exact model; a failed `new_session` or `switch_session` leaves the current session active. Switching to a session with a saved model restores that model; startup `--model` applies to the first session and to new sessions.
 
 ## Protocol Overview
 

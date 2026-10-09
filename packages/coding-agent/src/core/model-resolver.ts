@@ -99,7 +99,12 @@ export function resolveModelScopeFromModels(
 
 	for (const pattern of patterns) {
 		const exact = resolveExactModelReference(pattern, catalogModels);
-		if (!exact.model && (pattern.includes("*") || pattern.includes("?") || pattern.includes("["))) {
+		// An ambiguous literal ID is reported as-is and never retried as a glob.
+		if (
+			!exact.model &&
+			!exact.ambiguous &&
+			(pattern.includes("*") || pattern.includes("?") || pattern.includes("["))
+		) {
 			// Extract optional thinking level suffix (e.g., "provider/*:high")
 			const colonIdx = pattern.lastIndexOf(":");
 			let globPattern = pattern;
@@ -173,27 +178,48 @@ export interface ResolveCliModelResult {
 	error: string | undefined;
 }
 
+/** Internal result. `ambiguous` is set when several catalog models match the reference. */
+interface ExactModelResolution extends ResolveCliModelResult {
+	ambiguous?: boolean;
+}
+
 function resolveExactModelReference(
 	reference: string,
 	models: readonly Model<Api>[],
 	cliProvider?: string,
-): ResolveCliModelResult {
-	const providers = new Map(models.map((model) => [model.provider.toLowerCase(), model.provider]));
-	let provider = cliProvider === undefined ? undefined : providers.get(cliProvider.toLowerCase());
-	if (cliProvider !== undefined && provider === undefined) {
+): ExactModelResolution {
+	const providerNames = [...new Set(models.map((model) => model.provider))];
+	// An exact-case provider wins; otherwise a case-insensitive match must be unique.
+	const matchProvider = (name: string) => {
+		const exact = providerNames.filter((provider) => provider === name);
+		return exact.length > 0
+			? exact
+			: providerNames.filter((provider) => provider.toLowerCase() === name.toLowerCase());
+	};
+	const cliMatches = cliProvider === undefined ? [] : matchProvider(cliProvider);
+	if (cliProvider !== undefined && cliMatches.length === 0) {
 		return {
 			model: undefined,
 			warning: undefined,
 			error: `Unknown provider "${cliProvider}". Use --list-models to see available providers.`,
 		};
 	}
+	if (cliProvider !== undefined && cliMatches.length > 1) {
+		return {
+			model: undefined,
+			warning: undefined,
+			error: `Provider "${cliProvider}" is ambiguous: ${cliMatches.sort().join(", ")}.`,
+		};
+	}
+	let provider: string | undefined = cliMatches.length === 1 ? cliMatches[0] : undefined;
 	let modelId = reference;
 	const literalId = cliProvider === undefined ? undefined : reference;
 	if (provider === undefined) {
 		const slash = modelId.indexOf("/");
-		const prefix = slash === -1 ? undefined : providers.get(modelId.slice(0, slash).toLowerCase());
-		if (prefix !== undefined) {
-			provider = prefix;
+		// An ambiguous prefix is not a provider; it stays part of the model ID.
+		const prefixMatches = slash === -1 ? [] : matchProvider(modelId.slice(0, slash));
+		if (prefixMatches.length === 1) {
+			provider = prefixMatches[0];
 			modelId = modelId.slice(slash + 1);
 		}
 	} else if (modelId.toLowerCase().startsWith(`${provider.toLowerCase()}/`)) {
@@ -233,6 +259,7 @@ function resolveExactModelReference(
 	return {
 		model: undefined,
 		warning: undefined,
+		ambiguous: matches.length > 1,
 		error:
 			matches.length > 1
 				? `Model "${display}" is ambiguous: ${matches
@@ -266,7 +293,14 @@ export function resolveCliModel(options: {
 		return { model: undefined, warning: undefined, error: undefined };
 	}
 	// Use all models, not only authenticated ones, so --api-key works for first-time setup.
-	return resolveExactModelReference(cliModel, modelRuntime.getModels(), cliProvider);
+	const resolved = resolveExactModelReference(cliModel, modelRuntime.getModels(), cliProvider);
+	// Copy fields explicitly so the internal `ambiguous` flag does not leak.
+	return {
+		model: resolved.model,
+		thinkingLevel: resolved.thinkingLevel,
+		warning: resolved.warning,
+		error: resolved.error,
+	};
 }
 
 export interface InitialModelResult {

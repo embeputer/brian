@@ -207,6 +207,52 @@ describe("regression #3042: OpenRouter RPC startup and session selection", () =>
 			success: true,
 			data: { model: { id: "fixture/model:free" } },
 		});
+		expect(diagnostics.join("\n")).toContain("openrouter/fixture/missing");
+	});
+
+	it("restores the destination session's model instead of the startup --model on switch", async () => {
+		const variant = savedSession("fixture/model:free");
+		const missing = savedSession("fixture/missing");
+		const request = await start(["--model", "openrouter/fixture/model"]);
+		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model" } } });
+		expect(await request({ type: "switch_session", sessionPath: variant })).toMatchObject({ success: true });
+		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model:free" } } });
+		expect(await request({ type: "switch_session", sessionPath: missing })).toMatchObject({
+			success: false,
+			error: expect.stringContaining("Could not restore model openrouter/fixture/missing"),
+		});
+		expect(await request({ type: "new_session" })).toMatchObject({ success: true });
+		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model" } } });
+	});
+
+	it("restores a model-only session instead of the first enabledModels entry", async () => {
+		writeFileSync(
+			join(agentDir, "settings.json"),
+			JSON.stringify({
+				defaultProvider: "openrouter",
+				defaultModel: "fixture/model",
+				enabledModels: ["openrouter/fixture/model:batch"],
+			}),
+		);
+		// SessionManager does not write a session file until an assistant message exists, so write the
+		// header and model_change entry in the on-disk JSONL format directly.
+		const sessionPath = join(harness.tempDir, "model-only.jsonl");
+		const entries = [
+			{ type: "session", version: 3, id: "model-only", timestamp: "2026-08-03T00:00:00.000Z", cwd: harness.tempDir },
+			{
+				type: "model_change",
+				id: "model-change",
+				parentId: null,
+				timestamp: "2026-08-03T00:00:01.000Z",
+				provider: "openrouter",
+				modelId: "fixture/model:free",
+			},
+		];
+		writeFileSync(sessionPath, entries.map((entry) => `${JSON.stringify(entry)}\n`).join(""));
+		const request = await start(["--session", sessionPath]);
+		expect(await request({ type: "get_state" })).toMatchObject({
+			data: { sessionFile: sessionPath, model: { id: "fixture/model:free" } },
+		});
 	});
 
 	it("restores variants on startup and switch, and rejects unavailable sessions/defaults", async () => {
