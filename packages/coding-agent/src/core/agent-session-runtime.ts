@@ -12,7 +12,7 @@ import type {
 import { emitSessionShutdownEvent } from "./extensions/runner.ts";
 import type { CreateAgentSessionResult } from "./sdk.ts";
 import { assertSessionCwdExists } from "./session-cwd.ts";
-import { SessionManager } from "./session-manager.ts";
+import { type FileEntry, SessionManager } from "./session-manager.ts";
 
 /**
  * Result returned by runtime creation.
@@ -67,7 +67,7 @@ function extractUserMessageText(content: string | Array<{ type: string; text?: s
 /**
  * Owns the current AgentSession plus its cwd-bound services.
  *
- * New, switch, and import flows create the target runtime before tearing down
+ * New, switch, fork, and import flows create the target runtime before tearing down
  * the current one, so model selection errors leave the current session usable.
  * The caller is responsible for user-facing error handling.
  */
@@ -185,7 +185,7 @@ export class AgentSessionRuntime {
 	}
 
 	private async replaceRuntime(
-		reason: "new" | "resume",
+		reason: "new" | "resume" | "fork",
 		options: Parameters<CreateAgentSessionRuntimeFactory>[0],
 	): Promise<void> {
 		const next = await this.createRuntime(options);
@@ -304,15 +304,12 @@ export class AgentSessionRuntime {
 			if (!targetLeafId) {
 				const sessionManager = SessionManager.create(this.cwd, sessionDir);
 				sessionManager.newSession({ parentSession: currentSessionFile });
-				await this.teardownCurrent("fork", sessionManager.getSessionFile());
-				this.apply(
-					await this.createRuntime({
-						cwd: this.cwd,
-						agentDir: this.services.agentDir,
-						sessionManager,
-						sessionStartEvent: { type: "session_start", reason: "fork", previousSessionFile },
-					}),
-				);
+				await this.replaceRuntime("fork", {
+					cwd: this.cwd,
+					agentDir: this.services.agentDir,
+					sessionManager,
+					sessionStartEvent: { type: "session_start", reason: "fork", previousSessionFile },
+				});
 				await this.finishSessionReplacement(options?.withSession);
 				return { cancelled: false, selectedText };
 			}
@@ -327,34 +324,33 @@ export class AgentSessionRuntime {
 			if (!forkedSessionPath) {
 				throw new Error("Failed to create forked session");
 			}
-			await this.teardownCurrent("fork", sessionManager.getSessionFile());
-			this.apply(
-				await this.createRuntime({
-					cwd: sessionManager.getCwd(),
-					agentDir: this.services.agentDir,
-					sessionManager,
-					sessionStartEvent: { type: "session_start", reason: "fork", previousSessionFile },
-				}),
-			);
+			await this.replaceRuntime("fork", {
+				cwd: sessionManager.getCwd(),
+				agentDir: this.services.agentDir,
+				sessionManager,
+				sessionStartEvent: { type: "session_start", reason: "fork", previousSessionFile },
+			});
 			await this.finishSessionReplacement(options?.withSession);
 			return { cancelled: false, selectedText };
 		}
 
-		const sessionManager = this.session.sessionManager;
-		await this.teardownCurrent("fork", sessionManager.getSessionFile());
+		// Build the fork in a copy so the current in-memory manager is untouched
+		// if the replacement runtime fails to create (for example, a missing model).
+		const currentManager = this.session.sessionManager;
+		const header = currentManager.getHeader();
+		const copiedEntries: FileEntry[] = [...(header ? [header] : []), ...currentManager.getEntries()];
+		const forkManager = SessionManager.inMemory(currentManager.getCwd(), undefined, structuredClone(copiedEntries));
 		if (!targetLeafId) {
-			sessionManager.newSession({ parentSession: previousSessionFile });
+			forkManager.newSession({ parentSession: previousSessionFile });
 		} else {
-			sessionManager.createBranchedSession(targetLeafId);
+			forkManager.createBranchedSession(targetLeafId);
 		}
-		this.apply(
-			await this.createRuntime({
-				cwd: this.cwd,
-				agentDir: this.services.agentDir,
-				sessionManager,
-				sessionStartEvent: { type: "session_start", reason: "fork", previousSessionFile },
-			}),
-		);
+		await this.replaceRuntime("fork", {
+			cwd: this.cwd,
+			agentDir: this.services.agentDir,
+			sessionManager: forkManager,
+			sessionStartEvent: { type: "session_start", reason: "fork", previousSessionFile },
+		});
 		await this.finishSessionReplacement(options?.withSession);
 		return { cancelled: false, selectedText };
 	}

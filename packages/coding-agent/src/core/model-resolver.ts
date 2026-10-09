@@ -88,7 +88,7 @@ export function resolveModelScopeFromModels(
 ): ResolveModelScopeResult {
 	const availableModels = [...models];
 	const catalogModels = options?.catalogModels ?? availableModels;
-	const providers = new Set(catalogModels.map((model) => model.provider.toLowerCase()));
+	const catalogProviderNames = [...new Set(catalogModels.map((model) => model.provider))];
 	const scopedModels: ScopedModel[] = [];
 	const diagnostics: ModelScopeDiagnostic[] = [];
 	const addModel = (model: Model<Api>, thinkingLevel: ThinkingLevel | undefined) => {
@@ -118,12 +118,29 @@ export function resolveModelScopeFromModels(
 			}
 
 			// "*sonnet*" matches bare IDs, but "openrouter/*" only matches that provider.
-			const matchFullIdOnly = providers.has(globPattern.split("/")[0].toLowerCase());
-			const matchingModels = availableModels.filter(
-				(m) =>
-					minimatch(`${m.provider}/${m.id}`, globPattern, { nocase: true }) ||
-					(!matchFullIdOnly && minimatch(m.id, globPattern, { nocase: true })),
-			);
+			const slash = globPattern.indexOf("/");
+			const prefix = slash === -1 ? undefined : globPattern.slice(0, slash);
+			const prefixProviders = prefix === undefined ? [] : matchProviderNames(catalogProviderNames, prefix);
+			if (prefix !== undefined && prefixProviders.length > 1) {
+				diagnostics.push({
+					type: "warning",
+					code: "no-match",
+					message: `Provider "${prefix}" is ambiguous: ${prefixProviders.sort().join(", ")}.`,
+					pattern,
+				});
+				continue;
+			}
+			const [provider] = prefixProviders;
+			const matchingModels =
+				provider === undefined
+					? availableModels.filter(
+							(m) =>
+								minimatch(`${m.provider}/${m.id}`, globPattern, { nocase: true }) ||
+								minimatch(m.id, globPattern, { nocase: true }),
+						)
+					: availableModels.filter(
+							(m) => m.provider === provider && minimatch(m.id, globPattern.slice(slash + 1), { nocase: true }),
+						);
 			if (matchingModels.length === 0) {
 				diagnostics.push({
 					type: "warning",
@@ -183,20 +200,22 @@ interface ExactModelResolution extends ResolveCliModelResult {
 	ambiguous?: boolean;
 }
 
+/**
+ * Return the provider names that match `name`. An exact-case match wins. Otherwise
+ * every case-insensitive match is returned, so callers must treat more than one as ambiguous.
+ */
+function matchProviderNames(providerNames: readonly string[], name: string): string[] {
+	const exact = providerNames.filter((provider) => provider === name);
+	return exact.length > 0 ? exact : providerNames.filter((provider) => provider.toLowerCase() === name.toLowerCase());
+}
+
 function resolveExactModelReference(
 	reference: string,
 	models: readonly Model<Api>[],
 	cliProvider?: string,
 ): ExactModelResolution {
 	const providerNames = [...new Set(models.map((model) => model.provider))];
-	// An exact-case provider wins; otherwise a case-insensitive match must be unique.
-	const matchProvider = (name: string) => {
-		const exact = providerNames.filter((provider) => provider === name);
-		return exact.length > 0
-			? exact
-			: providerNames.filter((provider) => provider.toLowerCase() === name.toLowerCase());
-	};
-	const cliMatches = cliProvider === undefined ? [] : matchProvider(cliProvider);
+	const cliMatches = cliProvider === undefined ? [] : matchProviderNames(providerNames, cliProvider);
 	if (cliProvider !== undefined && cliMatches.length === 0) {
 		return {
 			model: undefined,
@@ -217,7 +236,7 @@ function resolveExactModelReference(
 	if (provider === undefined) {
 		const slash = modelId.indexOf("/");
 		// An ambiguous prefix is not a provider; it stays part of the model ID.
-		const prefixMatches = slash === -1 ? [] : matchProvider(modelId.slice(0, slash));
+		const prefixMatches = slash === -1 ? [] : matchProviderNames(providerNames, modelId.slice(0, slash));
 		if (prefixMatches.length === 1) {
 			provider = prefixMatches[0];
 			modelId = modelId.slice(slash + 1);

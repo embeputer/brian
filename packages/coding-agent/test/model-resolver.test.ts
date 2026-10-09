@@ -238,6 +238,27 @@ describe("resolveModelScopeWithDiagnostics", () => {
 			"azure-openai-responses/gpt-4o-mini",
 		]);
 	});
+
+	test("limits provider-prefixed globs to the exact-case provider", async () => {
+		const lower = withId("fixture-model", "openrouter");
+		const upper = withId("fixture-model", "OpenRouter");
+		const modelRuntime = runtimeFor([lower, upper]);
+		const exactCase = await resolveModelScopeWithDiagnostics(["OpenRouter/*"], modelRuntime);
+		expect(exactCase.scopedModels).toEqual([{ model: upper, thinkingLevel: undefined }]);
+		expect(exactCase.diagnostics).toEqual([]);
+		const lowerCase = await resolveModelScopeWithDiagnostics(["openrouter/*"], modelRuntime);
+		expect(lowerCase.scopedModels).toEqual([{ model: lower, thinkingLevel: undefined }]);
+		expect(lowerCase.diagnostics).toEqual([]);
+		const ambiguous = await resolveModelScopeWithDiagnostics(["OPENROUTER/*"], modelRuntime);
+		expect(ambiguous.scopedModels).toEqual([]);
+		expect(ambiguous.diagnostics).toEqual([
+			expect.objectContaining({
+				code: "no-match",
+				pattern: "OPENROUTER/*",
+				message: 'Provider "OPENROUTER" is ambiguous: OpenRouter, openrouter.',
+			}),
+		]);
+	});
 });
 
 describe("default model selection", () => {

@@ -41,6 +41,32 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 		return resolveCliModel({ cliModel, cliProvider, modelRuntime: harness.session.modelRuntime });
 	}
 
+	const strictRuntimeFactory: CreateAgentSessionRuntimeFactory = async ({
+		cwd,
+		agentDir,
+		sessionManager,
+		sessionStartEvent,
+	}) => {
+		const services = {
+			cwd,
+			agentDir,
+			modelRuntime: harness.session.modelRuntime,
+			settingsManager: harness.settingsManager,
+			resourceLoader: createTestResourceLoader(),
+			diagnostics: [],
+		};
+		return {
+			...(await createAgentSessionFromServices({
+				services,
+				sessionManager,
+				sessionStartEvent,
+				strictModelSelection: true,
+			})),
+			services,
+			diagnostics: [],
+		};
+	};
+
 	it("selects exactly the requested base or variant when both exist", async () => {
 		const ids = ["fixture/model", "fixture/model:free", "fixture/model:batch", "fixture/model:future-service"];
 		const faux = await catalog(ids);
@@ -241,32 +267,7 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 	it("selects new and resumed sessions exactly and keeps the current session after model errors", async () => {
 		const faux = await catalog(["fixture/model", "fixture/model:free"]);
 		harness.settingsManager.setDefaultModelAndProvider("openrouter", "fixture/model");
-		const factory: CreateAgentSessionRuntimeFactory = async ({
-			cwd,
-			agentDir,
-			sessionManager,
-			sessionStartEvent,
-		}) => {
-			const services = {
-				cwd,
-				agentDir,
-				modelRuntime: harness.session.modelRuntime,
-				settingsManager: harness.settingsManager,
-				resourceLoader: createTestResourceLoader(),
-				diagnostics: [],
-			};
-			return {
-				...(await createAgentSessionFromServices({
-					services,
-					sessionManager,
-					sessionStartEvent,
-					strictModelSelection: true,
-				})),
-				services,
-				diagnostics: [],
-			};
-		};
-		const runtime = await createAgentSessionRuntime(factory, {
+		const runtime = await createAgentSessionRuntime(strictRuntimeFactory, {
 			cwd: harness.tempDir,
 			agentDir: harness.tempDir,
 			sessionManager: SessionManager.inMemory(harness.tempDir),
@@ -290,6 +291,29 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 		expect(runtime.session).toBe(current);
 		faux.setResponses([fauxAssistantMessage("still usable")]);
 		await runtime.session.prompt("after rejected selection");
+		expect(runtime.session.getLastAssistantText()).toBe("still usable");
+	});
+
+	it("keeps the current session when a fork's saved model is missing", async () => {
+		const faux = await catalog(["fixture/model"]);
+		harness.settingsManager.setDefaultModelAndProvider("openrouter", "fixture/model");
+		const runtime = await createAgentSessionRuntime(strictRuntimeFactory, {
+			cwd: harness.tempDir,
+			agentDir: harness.tempDir,
+			sessionManager: SessionManager.inMemory(harness.tempDir),
+		});
+		cleanups.push(() => runtime.dispose());
+		const manager = runtime.session.sessionManager;
+		const userMessage = (text: string) => ({ role: "user" as const, content: text, timestamp: Date.now() });
+		manager.appendModelChange("openrouter", "fixture/missing");
+		const forkEntryId = manager.appendMessage(userMessage("from missing model"));
+		manager.appendModelChange("openrouter", "fixture/model");
+		manager.appendMessage(userMessage("from current model"));
+		const current = runtime.session;
+		await expect(runtime.fork(forkEntryId)).rejects.toThrow("Could not restore model");
+		expect(runtime.session).toBe(current);
+		faux.setResponses([fauxAssistantMessage("still usable")]);
+		await runtime.session.prompt("after rejected fork");
 		expect(runtime.session.getLastAssistantText()).toBe("still usable");
 	});
 });

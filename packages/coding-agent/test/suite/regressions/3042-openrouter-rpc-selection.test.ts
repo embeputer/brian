@@ -225,6 +225,15 @@ describe("regression #3042: OpenRouter RPC startup and session selection", () =>
 		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model" } } });
 	});
 
+	it("switches to a saved session even when the startup model was removed from the catalog", async () => {
+		const variant = savedSession("fixture/model:free");
+		// Start while fixture/model is still in the catalog, then drop it before switching.
+		const request = await start(["--model", "openrouter/fixture/model"]);
+		writeCatalog(["fixture/model:free"]);
+		expect(await request({ type: "switch_session", sessionPath: variant })).toMatchObject({ success: true });
+		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model:free" } } });
+	});
+
 	it("restores a model-only session instead of the first enabledModels entry", async () => {
 		writeFileSync(
 			join(agentDir, "settings.json"),

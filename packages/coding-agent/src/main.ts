@@ -429,6 +429,7 @@ function buildSessionOptions(
 	parsed: Args,
 	scopedModels: ScopedModel[],
 	hasExistingSession: boolean,
+	applyCliModel: boolean,
 	modelRuntime: ModelRuntime,
 	settingsManager: SettingsManager,
 ): {
@@ -440,10 +441,10 @@ function buildSessionOptions(
 	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
 	let cliThinkingFromModel = false;
 
-	// Model from CLI
+	// Model from CLI (skipped when a restored session supplies its own model, so a stale --model cannot fail it)
 	// - supports --provider <name> --model <id>
 	// - supports --model <provider>/<id>
-	if (parsed.model !== undefined) {
+	if (applyCliModel && parsed.model !== undefined) {
 		const resolved = resolveCliModel({
 			cliProvider: parsed.provider,
 			cliModel: parsed.model,
@@ -661,6 +662,8 @@ export async function main(args: string[], options?: MainOptions) {
 	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
 	const resolvedPromptTemplatePaths = resolveCliPaths(cwd, parsed.promptTemplates);
 	const resolvedThemePaths = resolveCliPaths(cwd, parsed.themes);
+	// Provider of the model resolved from startup --model, reused by later runtimes for --api-key.
+	let cliModelProvider: string | undefined;
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 		cwd,
 		agentDir,
@@ -755,6 +758,8 @@ export async function main(args: string[], options?: MainOptions) {
 		const scopedModels = scope.scopedModels;
 		const sessionContext = sessionManager.buildSessionContext();
 		const hasSavedModel = sessionContext.model !== null;
+		// Startup --model applies to the first runtime and sessions with no saved model; others restore theirs.
+		const applyCliModel = isInitialRuntime || !hasSavedModel;
 		const {
 			options: sessionOptions,
 			cliThinkingFromModel,
@@ -763,23 +768,25 @@ export async function main(args: string[], options?: MainOptions) {
 			parsed,
 			scopedModels,
 			sessionContext.messages.length > 0 || hasSavedModel,
+			applyCliModel,
 			modelRuntime,
 			settingsManager,
 		);
-		// Startup --model applies to the first runtime and sessions with no saved model; others restore theirs.
-		const applyCliModel = isInitialRuntime || !hasSavedModel;
 		diagnostics.push(...sessionOptionDiagnostics);
 		const modelError = sessionOptionDiagnostics.find((diagnostic) => diagnostic.type === "error");
 		if (modelError) throw new Error(modelError.message);
+		if (sessionOptions.model) cliModelProvider = sessionOptions.model.provider;
 
+		// --api-key targets the startup model's provider, which may differ from the current runtime's model.
+		const apiKeyProvider = sessionOptions.model?.provider ?? cliModelProvider;
 		if (parsed.apiKey) {
-			if (!sessionOptions.model) {
+			if (!apiKeyProvider) {
 				diagnostics.push({
 					type: "error",
 					message: "--api-key requires a model to be specified via --model, --provider/--model, or --models",
 				});
 			} else {
-				await modelRuntime.setRuntimeApiKey(sessionOptions.model.provider, parsed.apiKey);
+				await modelRuntime.setRuntimeApiKey(apiKeyProvider, parsed.apiKey);
 			}
 		}
 
@@ -787,16 +794,16 @@ export async function main(args: string[], options?: MainOptions) {
 			services,
 			sessionManager,
 			sessionStartEvent,
-			model: applyCliModel ? sessionOptions.model : undefined,
+			model: sessionOptions.model,
 			strictModelSelection: !parsed.help && parsed.listModels === undefined,
-			thinkingLevel: applyCliModel || !cliThinkingFromModel ? sessionOptions.thinkingLevel : undefined,
+			thinkingLevel: sessionOptions.thinkingLevel,
 			scopedModels: sessionOptions.scopedModels,
 			tools: sessionOptions.tools,
 			excludeTools: sessionOptions.excludeTools,
 			noTools: sessionOptions.noTools,
 			customTools: sessionOptions.customTools,
 		});
-		const cliThinkingOverride = parsed.thinking !== undefined || (applyCliModel && cliThinkingFromModel);
+		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
 		if (created.session.model && cliThinkingOverride) {
 			created.session.setThinkingLevel(created.session.thinkingLevel);
 		}
