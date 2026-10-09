@@ -269,7 +269,7 @@ ${chalk.bold("Commands:")}
 
 ${chalk.bold("Options:")}
   --provider <name>              Provider name (default: google)
-  --model <id>                   Exact model ID (supports "provider/id" and optional ":<thinking>")
+  --model <id>                   Exact model ID as "provider/id" (or with --provider), optional ":<thinking>"
   --api-key <key>                API key (defaults to env vars)
   --system-prompt <text>         System prompt (default: coding assistant prompt)
   --append-system-prompt <text>  Append text or file contents to the system prompt (can be used multiple times)
@@ -283,8 +283,8 @@ ${chalk.bold("Options:")}
   --session-dir <dir>            Directory for session storage and lookup
   --no-session                   Don't save session (ephemeral)
   --name, -n <name>              Set session display name
-  --models <patterns>            Comma-separated model patterns available to the session
-                                 Supports exact IDs and globs (anthropic/*, *sonnet*)
+  --models <ids>                 Comma-separated exact model IDs or globs available to the session
+                                 Globs such as anthropic/* or *sonnet*
   --no-tools, -nt                Disable all tools by default (built-in and extension)
   --no-builtin-tools, -nbt       Disable built-in tools by default but keep extension/custom tools enabled
   --tools, -t <tools>            Comma-separated allowlist of tool names to enable

@@ -824,7 +824,6 @@ async function createCodingAgentHarness(
 		resolved = resolveCliModel({
 			cliProvider: options.provider,
 			cliModel: options.model,
-			exact: true,
 			modelRuntime,
 		});
 		if (resolved.error) throw new Error(`Session worker could not resolve model: ${resolved.error}`);

@@ -199,7 +199,7 @@ If your command is slow, expensive, rate-limited, or should keep using a previou
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
 | `id` | Yes | — | Model identifier (passed to the API) |
-| `name` | No | `id` | Human-readable model label. Used for matching (`--model` patterns) and shown as secondary model detail text. |
+| `name` | No | `id` | Human-readable model label, shown as secondary model detail text. Not used for `--model` matching. |
 | `api` | No | provider's `api` | Override provider's API for this model |
 | `reasoning` | No | `false` | Supports extended thinking |
 | `thinkingLevelMap` | No | omitted | Maps pi thinking levels to provider values and marks unsupported levels (see below) |

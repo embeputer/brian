@@ -447,8 +447,6 @@ function buildSessionOptions(
 		const resolved = resolveCliModel({
 			cliProvider: parsed.provider,
 			cliModel: parsed.model,
-			cliThinking: parsed.thinking,
-			exact: true,
 			modelRuntime,
 		});
 		if (resolved.warning) {
@@ -746,11 +744,11 @@ export async function main(args: string[], options?: MainOptions) {
 			modelPatterns && modelPatterns.length > 0
 				? await resolveModelScopeWithDiagnostics(modelPatterns, modelRuntime, {
 						signal: AbortSignal.timeout(15_000),
-						exact: true,
 					})
 				: { scopedModels: [], diagnostics: [] };
+		// An explicit --models must resolve fully. Stale enabledModels settings only warn.
 		const scopeError = scope.diagnostics.find((diagnostic) => diagnostic.code === "no-match");
-		if (scopeError && !parsed.help && parsed.listModels === undefined && (parsed.models || !parsed.model)) {
+		if (scopeError && !parsed.help && parsed.listModels === undefined && parsed.models !== undefined) {
 			throw new Error(scopeError.message);
 		}
 		diagnostics.push(...scope.diagnostics);

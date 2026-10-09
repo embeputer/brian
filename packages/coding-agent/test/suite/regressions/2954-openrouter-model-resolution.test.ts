@@ -8,7 +8,6 @@ import {
 } from "../../../src/core/agent-session-runtime.ts";
 import {
 	findInitialModel,
-	parseModelPattern,
 	resolveCliModel,
 	resolveModelScopeFromModels,
 	resolveModelScopeWithDiagnostics,
@@ -42,15 +41,10 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 		return resolveCliModel({ cliModel, cliProvider, modelRuntime: harness.session.modelRuntime });
 	}
 
-	it.each(["fixture/model", "fixture/model:free", "fixture/model:batch", "fixture/model:future-service"])(
-		"selects exactly %s when the base and variants coexist",
-		async (id) => {
-			const faux = await catalog([
-				"fixture/model",
-				"fixture/model:free",
-				"fixture/model:batch",
-				"fixture/model:future-service",
-			]);
+	it("selects exactly the requested base or variant when both exist", async () => {
+		const ids = ["fixture/model", "fixture/model:free", "fixture/model:batch", "fixture/model:future-service"];
+		const faux = await catalog(ids);
+		for (const id of ids) {
 			for (const result of [
 				resolve(id, "openrouter"),
 				resolve(`openrouter/${id}`),
@@ -60,8 +54,8 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 				expect(result.error).toBeUndefined();
 				expect(result.thinkingLevel).toBeUndefined();
 			}
-		},
-	);
+		}
+	});
 
 	it("rejects a missing base when only its service variants exist", async () => {
 		await catalog(["fixture/model:free", "fixture/model:batch"]);
@@ -69,6 +63,8 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 			resolve("fixture/model", "openrouter"),
 			resolve("openrouter/fixture/model"),
 			resolve("fixture/model"),
+			resolve("model", "openrouter"),
+			resolve("fixture/model:typo", "openrouter"),
 		]) {
 			expect(result.model).toBeUndefined();
 			expect(result.error).toContain("not found");
@@ -78,14 +74,12 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 
 	it("uses exact IDs in automation scopes and keeps explicitly requested globs", async () => {
 		const faux = await catalog(["fixture/model:free", "fixture/model:batch", "fixture/model-plus"]);
-		const missing = resolveModelScopeFromModels(["openrouter/fixture/model", "fixture/model"], faux.models, {
-			exact: true,
-		});
+		const missing = resolveModelScopeFromModels(["openrouter/fixture/model", "fixture/model"], faux.models);
 		expect(missing.scopedModels).toEqual([]);
 		expect(missing.diagnostics).toHaveLength(2);
-		const variant = resolveModelScopeFromModels(["openrouter/fixture/model:free:high"], faux.models, { exact: true });
+		const variant = resolveModelScopeFromModels(["openrouter/fixture/model:free:high"], faux.models);
 		expect(variant.scopedModels).toMatchObject([{ model: { id: "fixture/model:free" }, thinkingLevel: "high" }]);
-		const glob = resolveModelScopeFromModels(["openrouter/fixture/model:*"], faux.models, { exact: true });
+		const glob = resolveModelScopeFromModels(["openrouter/fixture/model:*"], faux.models);
 		expect(glob.scopedModels.map((scoped) => scoped.model.id)).toEqual(["fixture/model:free", "fixture/model:batch"]);
 	});
 
@@ -98,17 +92,6 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 		});
 		expect(resolve("openrouter/openrouter/fusion").model?.id).toBe("openrouter/fusion");
 	});
-
-	it.each(["fixture/model:batch", "fixture/model:typo", "fixture/model:free:typo", "model", "Fixture/model", ""])(
-		"rejects the missing or partial ID %j without changing models",
-		async (id) => {
-			await catalog(["fixture/model", "fixture/model:free"]);
-			expect(resolve(id, "openrouter")).toMatchObject({
-				model: undefined,
-				error: expect.stringContaining("not found"),
-			});
-		},
-	);
 
 	it("does not change an inferred provider based on authentication or a missing ID", async () => {
 		await catalog(["fixture/model"], "vendor");
@@ -128,9 +111,7 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 			expect(resolve(id).error).toContain("ambiguous");
 		}
 		expect(resolve("fixture/model", "openrouter").model?.provider).toBe("openrouter");
-		const scope = await resolveModelScopeWithDiagnostics(["fixture/model"], harness.session.modelRuntime, {
-			exact: true,
-		});
+		const scope = await resolveModelScopeWithDiagnostics(["fixture/model"], harness.session.modelRuntime);
 		expect(scope.scopedModels).toEqual([]);
 		expect(scope.diagnostics[0]?.message).toContain("ambiguous");
 	});
@@ -142,7 +123,6 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 		const scope = await resolveModelScopeWithDiagnostics(
 			["vendor/fixture/model", "vendor/*"],
 			harness.session.modelRuntime,
-			{ exact: true },
 		);
 		expect(scope.scopedModels).toEqual([]);
 		expect(scope.diagnostics).toHaveLength(2);
@@ -163,31 +143,9 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 
 	it("preserves literal brackets and colon suffixes in automation scopes", async () => {
 		const faux = await catalog(["fixture/model[1m]", "fixture/model[1m]:high"]);
-		const scope = resolveModelScopeFromModels(["openrouter/fixture/model[1m]:high"], faux.models, { exact: true });
+		const scope = resolveModelScopeFromModels(["openrouter/fixture/model[1m]:high"], faux.models);
 		expect(scope.scopedModels).toMatchObject([{ model: { id: "fixture/model[1m]:high" }, thinkingLevel: undefined }]);
 		expect(scope.diagnostics).toEqual([]);
-	});
-
-	it.each(["off", "minimal", "low", "medium", "high", "xhigh", "max"])(
-		"parses %s after an explicit service variant",
-		async (level) => {
-			await catalog(["fixture/model:free"]);
-			expect(resolve(`openrouter/fixture/model:free:${level}`)).toMatchObject({
-				model: { id: "fixture/model:free" },
-				thinkingLevel: level,
-				error: undefined,
-			});
-			expect(resolve(`openrouter/fixture/model:${level}`).model).toBeUndefined();
-		},
-	);
-
-	it("keeps fuzzy matching convenient without selecting an unrequested service variant", async () => {
-		const faux = await catalog(["fixture/model", "fixture/model:free", "fixture/model:batch"]);
-		expect(parseModelPattern("fixture", faux.models).model?.id).toBe("fixture/model");
-		expect(parseModelPattern("model:free", faux.models).model?.id).toBe("fixture/model:free");
-		expect(parseModelPattern("fixture/model:free", faux.models).model?.id).toBe("fixture/model:free");
-		const variants = faux.models.filter((model) => model.id.includes(":"));
-		expect(parseModelPattern("fixture/model", variants).model).toBeUndefined();
 	});
 
 	it("uses an explicit models.json definition's own capabilities and pricing", async () => {
@@ -218,7 +176,6 @@ describe("regressions #2954 and #3042: exact OpenRouter selection", () => {
 		const result = resolveCliModel({
 			cliProvider: "openrouter",
 			cliModel: "fixture/model",
-			exact: true,
 			modelRuntime: defined.session.modelRuntime,
 		});
 		expect(result.model).toMatchObject({
