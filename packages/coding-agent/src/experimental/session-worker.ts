@@ -817,12 +817,14 @@ async function createCodingAgentHarness(
 			defaultProvider: settingsManager.getDefaultProvider(),
 			defaultModelId: settingsManager.getDefaultModel(),
 			defaultThinkingLevel: settingsManager.getDefaultThinkingLevel(),
+			strictModelSelection: true,
 			modelRuntime,
 		});
 	} else {
 		resolved = resolveCliModel({
 			cliProvider: options.provider,
 			cliModel: options.model,
+			exact: true,
 			modelRuntime,
 		});
 		if (resolved.error) throw new Error(`Session worker could not resolve model: ${resolved.error}`);

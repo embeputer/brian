@@ -269,7 +269,7 @@ ${chalk.bold("Commands:")}
 
 ${chalk.bold("Options:")}
   --provider <name>              Provider name (default: google)
-  --model <pattern>              Model pattern or ID (supports "provider/id" and optional ":<thinking>")
+  --model <id>                   Exact model ID (supports "provider/id" and optional ":<thinking>")
   --api-key <key>                API key (defaults to env vars)
   --system-prompt <text>         System prompt (default: coding assistant prompt)
   --append-system-prompt <text>  Append text or file contents to the system prompt (can be used multiple times)
@@ -284,7 +284,7 @@ ${chalk.bold("Options:")}
   --no-session                   Don't save session (ephemeral)
   --name, -n <name>              Set session display name
   --models <patterns>            Comma-separated model patterns available to the session
-                                 Supports globs (anthropic/*, *sonnet*) and fuzzy matching
+                                 Supports exact IDs and globs (anthropic/*, *sonnet*)
   --no-tools, -nt                Disable all tools by default (built-in and extension)
   --no-builtin-tools, -nbt       Disable built-in tools by default but keep extension/custom tools enabled
   --tools, -t <tools>            Comma-separated allowlist of tool names to enable
@@ -340,22 +340,22 @@ ${chalk.bold("Examples:")}
   ${APP_NAME} --name "Refactor auth module"
 
   # Use different model
-  ${APP_NAME} --provider openai --model gpt-4o-mini "Help me refactor this code"
+  ${APP_NAME} --provider openai --model gpt-6-astra "Help me refactor this code"
 
   # Use model with provider prefix (no --provider needed)
-  ${APP_NAME} --model openai/gpt-4o "Help me refactor this code"
+  ${APP_NAME} --model openrouter/openai/gpt-6-astra "Help me refactor this code"
 
   # Use model with thinking level shorthand
-  ${APP_NAME} --model sonnet:high "Solve this complex problem"
+  ${APP_NAME} --model anthropic/claude-fable-5-1:high "Solve this complex problem"
 
   # Limit the models available to the session
-  ${APP_NAME} --models claude-sonnet,claude-haiku,gpt-4o
+  ${APP_NAME} --models anthropic/claude-fable-5-1,google/gemini-3.8-flash,openai/gpt-6-astra
 
   # Limit to a specific provider with glob pattern
   ${APP_NAME} --models "github-copilot/*"
 
   # Set fixed thinking levels for scoped models
-  ${APP_NAME} --models sonnet:high,haiku:low
+  ${APP_NAME} --models anthropic/claude-fable-5-1:high,openai/gpt-6-astra:low
 
   # Start with a specific thinking level
   ${APP_NAME} --thinking high "Solve this complex problem"

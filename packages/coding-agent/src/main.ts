@@ -41,7 +41,7 @@ import { AuthStorage, ReadOnlyAuthStorage } from "./core/auth-storage.ts";
 import { exportFromFile } from "./core/export-html/index.ts";
 import type { InlineExtension } from "./core/extensions/types.ts";
 import { applyHttpProxySettings, configureHttpDispatcher } from "./core/http-dispatcher.ts";
-import { resolveCliModel, resolveModelScope, type ScopedModel } from "./core/model-resolver.ts";
+import { resolveCliModel, resolveModelScopeWithDiagnostics, type ScopedModel } from "./core/model-resolver.ts";
 import { ModelRuntime } from "./core/model-runtime.ts";
 import { restoreStdout, takeOverStdout } from "./core/output-guard.ts";
 import { type AppMode, resolveProjectTrusted } from "./core/project-trust.ts";
@@ -441,13 +441,14 @@ function buildSessionOptions(
 	let cliThinkingFromModel = false;
 
 	// Model from CLI
-	// - supports --provider <name> --model <pattern>
-	// - supports --model <provider>/<pattern>
-	if (parsed.model) {
+	// - supports --provider <name> --model <id>
+	// - supports --model <provider>/<id>
+	if (parsed.model !== undefined) {
 		const resolved = resolveCliModel({
 			cliProvider: parsed.provider,
 			cliModel: parsed.model,
 			cliThinking: parsed.thinking,
+			exact: true,
 			modelRuntime,
 		});
 		if (resolved.warning) {
@@ -741,10 +742,19 @@ export async function main(args: string[], options?: MainOptions) {
 		];
 
 		const modelPatterns = parsed.models ?? settingsManager.getEnabledModels();
-		const scopedModels =
+		const scope =
 			modelPatterns && modelPatterns.length > 0
-				? await resolveModelScope(modelPatterns, modelRuntime, { signal: AbortSignal.timeout(15_000) })
-				: [];
+				? await resolveModelScopeWithDiagnostics(modelPatterns, modelRuntime, {
+						signal: AbortSignal.timeout(15_000),
+						exact: true,
+					})
+				: { scopedModels: [], diagnostics: [] };
+		const scopeError = scope.diagnostics.find((diagnostic) => diagnostic.code === "no-match");
+		if (scopeError && !parsed.help && parsed.listModels === undefined && (parsed.models || !parsed.model)) {
+			throw new Error(scopeError.message);
+		}
+		diagnostics.push(...scope.diagnostics);
+		const scopedModels = scope.scopedModels;
 		const {
 			options: sessionOptions,
 			cliThinkingFromModel,
@@ -757,6 +767,8 @@ export async function main(args: string[], options?: MainOptions) {
 			settingsManager,
 		);
 		diagnostics.push(...sessionOptionDiagnostics);
+		const modelError = sessionOptionDiagnostics.find((diagnostic) => diagnostic.type === "error");
+		if (modelError) throw new Error(modelError.message);
 
 		if (parsed.apiKey) {
 			if (!sessionOptions.model) {
@@ -774,6 +786,7 @@ export async function main(args: string[], options?: MainOptions) {
 			sessionManager,
 			sessionStartEvent,
 			model: sessionOptions.model,
+			strictModelSelection: !parsed.help && parsed.listModels === undefined,
 			thinkingLevel: sessionOptions.thinkingLevel,
 			scopedModels: sessionOptions.scopedModels,
 			tools: sessionOptions.tools,
@@ -797,6 +810,9 @@ export async function main(args: string[], options?: MainOptions) {
 		cwd: sessionManager.getCwd(),
 		agentDir,
 		sessionManager,
+	}).catch((error: unknown) => {
+		console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+		process.exit(1);
 	});
 	time("createAgentSessionRuntime");
 	const { services, session } = runtime;

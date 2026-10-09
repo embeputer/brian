@@ -1,0 +1,236 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fauxAssistantMessage } from "@punch-bot/ai";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ENV_AGENT_DIR } from "../../../src/config.ts";
+import type { AgentSessionRuntime } from "../../../src/core/agent-session-runtime.ts";
+import { SessionManager } from "../../../src/core/session-manager.ts";
+import { stopThemeWatcher } from "../../../src/core/theme/theme.ts";
+import { main } from "../../../src/main.ts";
+import { runRpcMode } from "../../../src/modes/rpc/rpc-mode.ts";
+import type { RpcCommand, RpcResponse } from "../../../src/modes/rpc/rpc-types.ts";
+import { createHarness, type Harness } from "../harness.ts";
+
+const rpcIo = vi.hoisted(() => ({
+	responses: [] as RpcResponse[],
+	hosts: [] as AgentSessionRuntime[],
+	lineHandler: undefined as ((line: string) => void) | undefined,
+	ready: undefined as (() => void) | undefined,
+}));
+
+vi.mock("../../../src/core/output-guard.ts", () => ({
+	flushRawStdout: async () => {},
+	takeOverStdout: () => {},
+	restoreStdout: () => {},
+	waitForRawStdoutBackpressure: async () => {},
+	writeRawStdout: (line: string) => {
+		rpcIo.responses.push(JSON.parse(line) as RpcResponse);
+	},
+}));
+
+vi.mock("../../../src/modes/rpc/jsonl.ts", () => ({
+	attachJsonlLineReader: (_stream: NodeJS.ReadableStream, handler: (line: string) => void) => {
+		rpcIo.lineHandler = handler;
+		rpcIo.ready?.();
+		return () => {
+			rpcIo.lineHandler = undefined;
+		};
+	},
+	serializeJsonLine: (value: unknown) => `${JSON.stringify(value)}\n`,
+}));
+
+vi.mock("../../../src/modes/index.ts", () => ({
+	runRpcMode: (host: AgentSessionRuntime) => {
+		rpcIo.hosts.push(host);
+		return runRpcMode(host);
+	},
+}));
+
+describe("regression #3042: OpenRouter RPC startup and session selection", () => {
+	let harness: Harness;
+	let agentDir: string;
+	let requestId: number;
+	let diagnostics: string[];
+	let endListeners: ReturnType<typeof process.stdin.listeners>;
+	let signalListeners: Map<NodeJS.Signals, Set<NodeJS.SignalsListener>>;
+
+	beforeEach(async () => {
+		harness = await createHarness({ models: [{ id: "fixture/model", reasoning: true }] });
+		agentDir = join(harness.tempDir, "agent");
+		mkdirSync(agentDir);
+		writeCatalog(["fixture/model", "fixture/model:free", "fixture/model:batch"]);
+		writeFileSync(
+			join(agentDir, "settings.json"),
+			JSON.stringify({ defaultProvider: "openrouter", defaultModel: "fixture/model" }),
+		);
+		requestId = 0;
+		diagnostics = [];
+		endListeners = process.stdin.listeners("end");
+		signalListeners = new Map(
+			(["SIGTERM", "SIGHUP"] as const).map((signal) => [signal, new Set(process.listeners(signal))]),
+		);
+		vi.stubEnv(ENV_AGENT_DIR, agentDir);
+		vi.stubEnv("PI_OFFLINE", "1");
+		vi.spyOn(process, "cwd").mockReturnValue(harness.tempDir);
+		vi.spyOn(console, "error").mockImplementation((message: unknown) => {
+			diagnostics.push(String(message));
+		});
+		vi.spyOn(process, "exit").mockImplementation(() => {
+			throw new Error(diagnostics.join("\n"));
+		});
+	});
+
+	afterEach(async () => {
+		for (const host of rpcIo.hosts) await host.dispose();
+		for (const listener of process.stdin.listeners("end")) {
+			if (!endListeners.includes(listener)) process.stdin.off("end", listener as () => void);
+		}
+		for (const [signal, previous] of signalListeners) {
+			for (const listener of process.listeners(signal)) {
+				if (!previous.has(listener)) process.off(signal, listener);
+			}
+		}
+		stopThemeWatcher();
+		rpcIo.responses = [];
+		rpcIo.hosts = [];
+		rpcIo.lineHandler = undefined;
+		rpcIo.ready = undefined;
+		vi.restoreAllMocks();
+		vi.unstubAllEnvs();
+		harness.cleanup();
+	});
+
+	function writeCatalog(ids: string[]) {
+		writeFileSync(
+			join(agentDir, "models.json"),
+			JSON.stringify({
+				providers: {
+					openrouter: {
+						api: "openai-completions",
+						baseUrl: "https://example.invalid/v1",
+						apiKey: "faux-key",
+						models: ids.map((id) => ({ ...harness.getModel(), id, api: "openai-completions", name: id })),
+					},
+				},
+			}),
+		);
+	}
+
+	function savedSession(modelId: string) {
+		const manager = SessionManager.create(harness.tempDir, join(harness.tempDir, "sessions"));
+		manager.appendModelChange("openrouter", modelId);
+		manager.appendMessage({ ...fauxAssistantMessage("saved"), provider: "openrouter", model: modelId });
+		return manager.getSessionFile()!;
+	}
+
+	async function start(args: string[] = []) {
+		const ready = new Promise<void>((resolve) => {
+			rpcIo.ready = resolve;
+		});
+		await Promise.race([ready, main(["--mode", "rpc", "--offline", "-ne", ...args])]);
+		return async (command: RpcCommand): Promise<RpcResponse> => {
+			const id = String(++requestId);
+			rpcIo.lineHandler?.(JSON.stringify({ ...command, id }));
+			await vi.waitFor(() => expect(rpcIo.responses.some((response) => response.id === id)).toBe(true));
+			return rpcIo.responses.find((response) => response.id === id)!;
+		};
+	}
+
+	it.each(["fixture/model", "fixture/model:free", "fixture/model:batch"])(
+		"starts with and switches to exactly %s",
+		async (id) => {
+			const request = await start(["--provider", "openrouter", "--model", id]);
+			expect(await request({ type: "get_state" })).toMatchObject({
+				success: true,
+				data: { model: { provider: "openrouter", id } },
+			});
+			for (const modelId of ["fixture/model:batch", "fixture/model:free", "fixture/model"]) {
+				expect(await request({ type: "set_model", provider: "openrouter", modelId })).toMatchObject({
+					success: true,
+					data: { id: modelId },
+				});
+			}
+			for (const modelId of ["fixture/model:unknown", "fixture/model:free:high", "model", "fixture/missing"]) {
+				expect(await request({ type: "set_model", provider: "openrouter", modelId })).toMatchObject({
+					success: false,
+					error: expect.stringContaining("Model not found"),
+				});
+			}
+			expect(await request({ type: "set_model", provider: "unknown", modelId: "fixture/model" })).toMatchObject({
+				success: false,
+			});
+			expect(await request({ type: "get_state" })).toMatchObject({
+				data: { model: { provider: "openrouter", id: "fixture/model" } },
+			});
+		},
+	);
+
+	it("parses startup thinking after a service variant and honors --thinking", async () => {
+		const request = await start(["--model", "openrouter/fixture/model:free:high", "--thinking", "low"]);
+		expect(await request({ type: "get_state" })).toMatchObject({
+			success: true,
+			data: { model: { id: "fixture/model:free" }, thinkingLevel: "low" },
+		});
+	});
+
+	it.each([
+		{ args: [] },
+		{ args: ["--provider", "openrouter", "--model", "fixture/model"] },
+		{ args: ["--model", "openrouter/fixture/model"] },
+	])("fails startup for a missing explicit or saved default base with flags $args", async ({ args }) => {
+		writeCatalog(["fixture/model:free"]);
+		await expect(start(args)).rejects.toThrow("fixture/model");
+		expect(process.exit).toHaveBeenCalledWith(1);
+		expect(rpcIo.hosts).toEqual([]);
+	});
+
+	it("rejects an empty explicit model instead of using the default", async () => {
+		await expect(start(["--model", ""])).rejects.toThrow('Model "" not found');
+		expect(rpcIo.hosts).toEqual([]);
+	});
+
+	it("fails an explicit model scope instead of ignoring the missing base", async () => {
+		writeCatalog(["fixture/model:free"]);
+		await expect(start(["--models", "openrouter/fixture/model"])).rejects.toThrow(
+			'Model "openrouter/fixture/model" not found',
+		);
+		expect(rpcIo.hosts).toEqual([]);
+	});
+
+	it("restores variants on startup and switch, and rejects unavailable sessions/defaults", async () => {
+		const variant = savedSession("fixture/model:free");
+		const missing = savedSession("fixture/missing");
+		const request = await start(["--session", variant]);
+		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model:free" } } });
+		expect(await request({ type: "new_session" })).toMatchObject({ success: true });
+		expect(await request({ type: "get_state" })).toMatchObject({ data: { model: { id: "fixture/model" } } });
+		expect(await request({ type: "switch_session", sessionPath: variant })).toMatchObject({ success: true });
+		expect(await request({ type: "switch_session", sessionPath: missing })).toMatchObject({
+			success: false,
+			error: expect.stringContaining("Could not restore model openrouter/fixture/missing"),
+		});
+		expect(await request({ type: "get_state" })).toMatchObject({
+			data: { sessionFile: variant, model: { id: "fixture/model:free" } },
+		});
+		writeFileSync(
+			join(agentDir, "settings.json"),
+			JSON.stringify({ defaultProvider: "openrouter", defaultModel: "fixture/missing" }),
+		);
+		expect(await request({ type: "new_session" })).toMatchObject({
+			success: false,
+			error: expect.stringContaining("Could not select default model"),
+		});
+		expect(await request({ type: "get_state" })).toMatchObject({
+			data: { sessionFile: variant, model: { id: "fixture/model:free" } },
+		});
+	});
+
+	it("fails resume when the saved base is missing even though its variant is present", async () => {
+		const sessionPath = savedSession("fixture/model");
+		writeCatalog(["fixture/model:free"]);
+		await expect(start(["--session", sessionPath])).rejects.toThrow(
+			"Could not restore model openrouter/fixture/model",
+		);
+		expect(process.exit).toHaveBeenCalledWith(1);
+	});
+});

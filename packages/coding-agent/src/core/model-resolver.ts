@@ -135,8 +135,9 @@ function tryMatchModel(modelPattern: string, availableModels: Model<Api>[]): Mod
 	// No exact match - fall back to partial matching
 	const matches = availableModels.filter(
 		(m) =>
-			m.id.toLowerCase().includes(modelPattern.toLowerCase()) ||
-			m.name?.toLowerCase().includes(modelPattern.toLowerCase()),
+			(m.provider !== "openrouter" || !m.id.includes(":") || modelPattern.includes(":")) &&
+			(m.id.toLowerCase().includes(modelPattern.toLowerCase()) ||
+				m.name?.toLowerCase().includes(modelPattern.toLowerCase())),
 	);
 
 	if (matches.length === 0) {
@@ -166,6 +167,9 @@ export interface ParsedModelResult {
 }
 
 function buildFallbackModel(provider: string, modelId: string, availableModels: Model<Api>[]): Model<Api> | undefined {
+	// OpenRouter variants can have different APIs, capabilities, and pricing.
+	// A missing ID needs its own catalog entry or an explicit definition.
+	if (provider === "openrouter") return undefined;
 	const providerModels = availableModels.filter((m) => m.provider === provider);
 	if (providerModels.length === 0) return undefined;
 
@@ -275,14 +279,28 @@ export interface ResolveModelScopeResult {
 export function resolveModelScopeFromModels(
 	patterns: string[],
 	models: readonly Model<Api>[],
+	options?: { exact?: boolean; catalogModels?: readonly Model<Api>[] },
 ): ResolveModelScopeResult {
 	const availableModels = [...models];
+	const catalogModels = options?.catalogModels ?? availableModels;
+	const providers = new Set(catalogModels.map((model) => model.provider));
 	const scopedModels: ScopedModel[] = [];
 	const diagnostics: ModelScopeDiagnostic[] = [];
 
 	for (const pattern of patterns) {
+		const exactResult = options?.exact ? resolveExactModelReference(pattern, catalogModels) : undefined;
+		const exactModel = exactResult?.model;
+		if (exactModel && !availableModels.some((model) => modelsAreEqual(model, exactModel))) {
+			diagnostics.push({
+				type: "warning",
+				code: "no-match",
+				message: `Model "${exactModel.provider}/${exactModel.id}" is unavailable. Configure authentication for its provider.`,
+				pattern,
+			});
+			continue;
+		}
 		// Check if pattern contains glob characters
-		if (pattern.includes("*") || pattern.includes("?") || pattern.includes("[")) {
+		if (!exactResult?.model && (pattern.includes("*") || pattern.includes("?") || pattern.includes("["))) {
 			// Extract optional thinking level suffix (e.g., "provider/*:high")
 			const colonIdx = pattern.lastIndexOf(":");
 			let globPattern = pattern;
@@ -296,7 +314,7 @@ export function resolveModelScopeFromModels(
 				}
 			}
 
-			const exactMatch = findExactModelReferenceMatch(globPattern, availableModels);
+			const exactMatch = options?.exact ? undefined : findExactModelReferenceMatch(globPattern, availableModels);
 			if (exactMatch) {
 				if (!scopedModels.find((sm) => modelsAreEqual(sm.model, exactMatch))) {
 					scopedModels.push({ model: exactMatch, thinkingLevel });
@@ -308,6 +326,9 @@ export function resolveModelScopeFromModels(
 			// This allows "*sonnet*" to match without requiring "anthropic/*sonnet*"
 			const matchingModels = availableModels.filter((m) => {
 				const fullId = `${m.provider}/${m.id}`;
+				if (options?.exact && providers.has(globPattern.split("/")[0])) {
+					return minimatch(fullId, globPattern, { nocase: true });
+				}
 				return minimatch(fullId, globPattern, { nocase: true }) || minimatch(m.id, globPattern, { nocase: true });
 			});
 
@@ -329,7 +350,7 @@ export function resolveModelScopeFromModels(
 			continue;
 		}
 
-		const { model, thinkingLevel, warning } = parseModelPattern(pattern, availableModels);
+		const { model, thinkingLevel, warning } = exactResult ?? parseModelPattern(pattern, availableModels);
 
 		if (warning) {
 			diagnostics.push({ type: "warning", code: "invalid-thinking-level", message: warning, pattern });
@@ -339,7 +360,7 @@ export function resolveModelScopeFromModels(
 			diagnostics.push({
 				type: "warning",
 				code: "no-match",
-				message: `No models match pattern "${pattern}"`,
+				message: exactResult?.error ?? `No models match pattern "${pattern}"`,
 				pattern,
 			});
 			continue;
@@ -357,15 +378,19 @@ export function resolveModelScopeFromModels(
 export async function resolveModelScopeWithDiagnostics(
 	patterns: string[],
 	modelRuntime: ModelRuntime,
-	options?: AuthOperationOptions,
+	options?: AuthOperationOptions & { exact?: boolean },
 ): Promise<ResolveModelScopeResult> {
-	return resolveModelScopeFromModels(patterns, await modelRuntime.getAvailable(undefined, options));
+	return resolveModelScopeFromModels(patterns, await modelRuntime.getAvailable(undefined, options), {
+		...options,
+		// Authentication must not change provider inference or hide ambiguous IDs.
+		catalogModels: options?.exact ? modelRuntime.getModels() : undefined,
+	});
 }
 
 export async function resolveModelScope(
 	patterns: string[],
 	modelRuntime: ModelRuntime,
-	options?: AuthOperationOptions,
+	options?: AuthOperationOptions & { exact?: boolean },
 ): Promise<ScopedModel[]> {
 	const { scopedModels, diagnostics } = await resolveModelScopeWithDiagnostics(patterns, modelRuntime, options);
 	for (const diagnostic of diagnostics) {
@@ -385,13 +410,73 @@ export interface ResolveCliModelResult {
 	error: string | undefined;
 }
 
+function resolveExactModelReference(
+	cliModel: string,
+	models: readonly Model<Api>[],
+	cliProvider?: string,
+): ResolveCliModelResult {
+	const providers = new Set(models.map((model) => model.provider));
+	let provider = cliProvider;
+	let modelId = cliModel;
+	const literalId = cliProvider === undefined ? undefined : cliModel;
+	if (provider === undefined) {
+		const slash = modelId.indexOf("/");
+		const prefix = slash === -1 ? undefined : modelId.slice(0, slash);
+		if (prefix !== undefined && providers.has(prefix)) {
+			provider = prefix;
+			modelId = modelId.slice(slash + 1);
+		}
+	} else if (modelId.startsWith(`${provider}/`)) {
+		modelId = modelId.slice(provider.length + 1);
+	}
+
+	const candidates = provider === undefined ? models : models.filter((model) => model.provider === provider);
+	// With --provider, the raw ID may itself start with that provider name
+	// (for example OpenRouter's openrouter/fusion).
+	const ids = literalId === undefined || literalId === modelId ? [modelId] : [literalId, modelId];
+	let matches =
+		ids.map((id) => candidates.filter((model) => model.id === id)).find((matches) => matches.length > 0) ?? [];
+	let thinkingLevel: ThinkingLevel | undefined;
+	// A literal catalog ID takes precedence, including IDs ending in :high.
+	// Strip at most one thinking suffix, and only resolve the remaining ID exactly.
+	if (matches.length === 0) {
+		for (const id of ids) {
+			const colon = id.lastIndexOf(":");
+			const suffix = id.slice(colon + 1);
+			if (colon !== -1 && isValidThinkingLevel(suffix)) {
+				matches = candidates.filter((model) => model.id === id.slice(0, colon));
+				if (matches.length > 0) {
+					thinkingLevel = suffix;
+					break;
+				}
+			}
+		}
+	}
+	if (matches.length === 1) {
+		return { model: matches[0], thinkingLevel, warning: undefined, error: undefined };
+	}
+	const display = provider === undefined ? cliModel : `${provider}/${modelId}`;
+	return {
+		model: undefined,
+		warning: undefined,
+		error:
+			matches.length > 1
+				? `Model "${display}" is ambiguous: ${matches
+						.map((model) => `${model.provider}/${model.id}`)
+						.sort()
+						.join(", ")}. Use --provider or provider/model.`
+				: `Model "${display}" not found. Use --list-models or define the exact model in models.json.`,
+	};
+}
+
 /**
  * Resolve a single model from CLI flags.
  *
  * Supports:
  * - --provider <provider> --model <pattern>
  * - --model <provider>/<pattern>
- * - Fuzzy matching (same rules as model scoping: exact id, then partial id/name)
+ * - Exact catalog IDs by default
+ * - Interactive fuzzy matching when exact is false
  *
  * Note: This does not apply the thinking level by itself, but it may *parse* and
  * return a thinking level from "<pattern>:<thinking>" so the caller can apply it.
@@ -400,9 +485,15 @@ export function resolveCliModel(options: {
 	cliProvider?: string;
 	cliModel?: string;
 	cliThinking?: ThinkingLevel;
+	/** Require an exact catalog ID, without provider, fuzzy, or custom-model fallbacks. */
+	exact?: boolean;
 	modelRuntime: ModelRuntime;
 }): ResolveCliModelResult {
 	const { cliProvider, cliModel, cliThinking, modelRuntime } = options;
+
+	if ((options.exact ?? true) && cliModel !== undefined) {
+		return resolveExactModelReference(cliModel, modelRuntime.getModels(), cliProvider);
+	}
 
 	if (!cliModel) {
 		return { model: undefined, warning: undefined, error: undefined };
@@ -621,6 +712,7 @@ export async function findInitialModel(options: {
 	defaultModelId?: string;
 	defaultThinkingLevel?: ThinkingLevel;
 	modelThinkingLevels?: Record<string, ThinkingLevel>;
+	strictModelSelection?: boolean;
 	modelRuntime: ModelRuntime;
 }): Promise<InitialModelResult> {
 	const {
@@ -633,24 +725,31 @@ export async function findInitialModel(options: {
 		defaultThinkingLevel,
 		modelThinkingLevels,
 		modelRuntime,
+		strictModelSelection = true,
 	} = options;
 
 	let model: Model<Api> | undefined;
 	let thinkingLevel: ThinkingLevel = DEFAULT_THINKING_LEVEL;
 
 	// 1. CLI args take priority
-	if (cliProvider && cliModel) {
+	if (cliModel !== undefined) {
 		const resolved = resolveCliModel({
 			cliProvider,
 			cliModel,
 			modelRuntime,
+			exact: strictModelSelection,
 		});
 		if (resolved.error) {
+			if (strictModelSelection) throw new Error(resolved.error);
 			console.error(chalk.red(resolved.error));
 			process.exit(1);
 		}
 		if (resolved.model) {
-			return { model: resolved.model, thinkingLevel: DEFAULT_THINKING_LEVEL, fallbackMessage: undefined };
+			return {
+				model: resolved.model,
+				thinkingLevel: resolved.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+				fallbackMessage: undefined,
+			};
 		}
 	}
 
@@ -668,6 +767,11 @@ export async function findInitialModel(options: {
 	// 3. Try saved default from settings if auth is configured.
 	if (defaultProvider && defaultModelId) {
 		const found = modelRuntime.getModel(defaultProvider, defaultModelId);
+		if (strictModelSelection && (!found || !modelRuntime.hasConfiguredAuth(defaultProvider))) {
+			throw new Error(
+				`Could not select default model ${defaultProvider}/${defaultModelId}: ${found ? "no auth configured" : "model not found; define the exact model in models.json"}.`,
+			);
+		}
 		if (found && modelRuntime.hasConfiguredAuth(found.provider)) {
 			model = found;
 			const perModel = modelThinkingLevels?.[`${defaultProvider}/${defaultModelId}`];

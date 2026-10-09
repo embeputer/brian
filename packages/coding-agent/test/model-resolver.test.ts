@@ -325,6 +325,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "openai/gpt-4o",
 			modelRuntime: registry,
 		});
@@ -340,6 +341,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliProvider: "openai",
 			cliModel: "4o",
 			modelRuntime: registry,
@@ -356,6 +358,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "sonnet:high",
 			modelRuntime: registry,
 		});
@@ -371,6 +374,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "openai/gpt-4o:extended",
 			modelRuntime: registry,
 		});
@@ -386,6 +390,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliProvider: "openai",
 			cliModel: "gpt-4o:extended",
 			modelRuntime: registry,
@@ -396,20 +401,20 @@ describe("resolveCliModel", () => {
 		expect(result.model?.id).toBe("gpt-4o:extended");
 	});
 
-	test("allows custom model ids for explicit providers without double prefixing", () => {
+	test("rejects missing OpenRouter ids without copying another model's metadata", () => {
 		const registry = {
 			getModels: () => allModels,
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliProvider: "openrouter",
 			cliModel: "openrouter/openai/ghost-model",
 			modelRuntime: registry,
 		});
 
-		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openrouter");
-		expect(result.model?.id).toBe("openai/ghost-model");
+		expect(result.error).toContain("not found");
+		expect(result.model).toBeUndefined();
 	});
 
 	test("returns a clear error when there are no models", () => {
@@ -418,6 +423,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliProvider: "openai",
 			cliModel: "gpt-4o",
 			modelRuntime: registry,
@@ -446,6 +452,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "gpt-5.6-sol",
 			modelRuntime: registry,
 		});
@@ -474,6 +481,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "gpt-5.6-sol",
 			modelRuntime: registry,
 		});
@@ -518,6 +526,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "zai/glm-5",
 			modelRuntime: registry,
 		});
@@ -558,6 +567,7 @@ describe("resolveCliModel", () => {
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "xiaomi/mimo-v2.5-pro",
 			modelRuntime: registry,
 		});
@@ -567,19 +577,19 @@ describe("resolveCliModel", () => {
 		expect(result.model?.id).toBe("xiaomi/mimo-v2.5-pro");
 	});
 
-	test("resolves provider-prefixed fuzzy patterns (openrouter/qwen -> openrouter model)", () => {
+	test("does not select an unrequested OpenRouter variant through fuzzy matching", () => {
 		const registry = {
 			getModels: () => allModels,
 		} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 		const result = resolveCliModel({
+			exact: false,
 			cliModel: "openrouter/qwen",
 			modelRuntime: registry,
 		});
 
-		expect(result.error).toBeUndefined();
-		expect(result.model?.provider).toBe("openrouter");
-		expect(result.model?.id).toBe("qwen/qwen3-coder:exacto");
+		expect(result.error).toContain("not found");
+		expect(result.model).toBeUndefined();
 	});
 
 	describe("custom model fallback with :thinking suffix (#5552)", () => {
@@ -606,6 +616,7 @@ describe("resolveCliModel", () => {
 			} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 			const result = resolveCliModel({
+				exact: false,
 				cliModel: "neuralwatt/zai-org/GLM-5.1-FP8:high",
 				modelRuntime: registry,
 			});
@@ -624,6 +635,7 @@ describe("resolveCliModel", () => {
 			} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 			const result = resolveCliModel({
+				exact: false,
 				cliModel: "neuralwatt/zai-org/GLM-5.1-FP8",
 				modelRuntime: registry,
 			});
@@ -641,6 +653,7 @@ describe("resolveCliModel", () => {
 
 			for (const level of ["off", "minimal", "low", "medium", "high", "xhigh", "max"]) {
 				const result = resolveCliModel({
+					exact: false,
 					cliModel: `neuralwatt/zai-org/GLM-5.1-FP8:${level}`,
 					modelRuntime: registry,
 				});
@@ -657,6 +670,7 @@ describe("resolveCliModel", () => {
 			} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 			const result = resolveCliModel({
+				exact: false,
 				cliModel: "neuralwatt/zai-org/GLM-5.1-FP8:banana",
 				modelRuntime: registry,
 			});
@@ -674,6 +688,7 @@ describe("resolveCliModel", () => {
 			} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 			const result = resolveCliModel({
+				exact: false,
 				cliProvider: "neuralwatt",
 				cliModel: "zai-org/GLM-5.1-FP8:high",
 				modelRuntime: registry,
@@ -691,6 +706,7 @@ describe("resolveCliModel", () => {
 			} as unknown as Parameters<typeof resolveCliModel>[0]["modelRuntime"];
 
 			const result = resolveCliModel({
+				exact: false,
 				cliModel: "neuralwatt/zai-org/GLM-5.1-FP8:high",
 				cliThinking: "medium",
 				modelRuntime: registry,
@@ -742,21 +758,21 @@ describe("default model selection", () => {
 		expect(defaultModelPerProvider["qwen-token-plan-individual"]).toBe("qwen3.8-max");
 	});
 
-	test("findInitialModel accepts explicit provider custom model ids", async () => {
+	test("findInitialModel rejects a missing explicit OpenRouter model", async () => {
 		const registry = {
 			getModels: () => allModels,
 		} as unknown as Parameters<typeof findInitialModel>[0]["modelRuntime"];
 
-		const result = await findInitialModel({
-			cliProvider: "openrouter",
-			cliModel: "openrouter/openai/ghost-model",
-			scopedModels: [],
-			isContinuing: false,
-			modelRuntime: registry,
-		});
-
-		expect(result.model?.provider).toBe("openrouter");
-		expect(result.model?.id).toBe("openai/ghost-model");
+		await expect(
+			findInitialModel({
+				cliProvider: "openrouter",
+				cliModel: "openrouter/openai/ghost-model",
+				scopedModels: [],
+				isContinuing: false,
+				modelRuntime: registry,
+				strictModelSelection: true,
+			}),
+		).rejects.toThrow("not found");
 	});
 
 	test("findInitialModel selects ai-gateway default when available", async () => {
@@ -819,6 +835,7 @@ describe("default model selection", () => {
 			isContinuing: false,
 			defaultProvider: "deepseek",
 			defaultModelId: "deepseek-v4-flash",
+			strictModelSelection: false,
 			modelRuntime: registry,
 		});
 
