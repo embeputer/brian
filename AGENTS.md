@@ -19,6 +19,27 @@ Directory names did not change with the npm rename. `@punch-bot/cli` lives in `p
 | `@punch-bot/codemode` | `packages/codemode` |
 | `@punch-bot/a2a` | `packages/a2a` |
 
+## Merging upstream pi
+
+Punch dropped several parts of pi. Upstream merges bring changes to them back as modify/delete conflicts, new files, or edits to files that survived. Before resolving, check whether the code belongs to something Punch dropped, and do not restore it.
+
+- [PR #19](https://github.com/punch-bot/core/pull/19) made `@punch-bot/cli` headless. Only print, JSON, and RPC modes exist. Removed:
+  - `packages/tui` (`@punch-bot/tui`) and `packages/evals`;
+  - interactive mode (`src/modes/interactive`), the session picker, startup UI, config selector, and TUI keybindings;
+  - TUI-only extension APIs: `renderCall`/`renderResult`, tool renderers (`src/core/tools/renderers`), custom editors/footers/headers, `InteractiveMode`, `registerMarkdownTransformer`;
+  - the MCP manager UI (`src/extensions/mcp/ui.ts`), the codemode renderer, and experimental TUI entrypoints (`src/experimental/client-tui*.ts`, `src/experimental/*/{main,tui}.ts`);
+  - TUI-only examples and tests.
+  Theme tokens moved to `src/core/theme`.
+- [PR #9](https://github.com/punch-bot/core/pull/9) disabled GitHub Actions. Workflows live in `.github/workflows-disabled/`. Put new upstream workflows there, not in `.github/workflows/`.
+- [PR #30](https://github.com/punch-bot/core/pull/30) made model lookup exact. Do not merge back fuzzy matching.
+- Rename new upstream `@earendil-works/*` packages, imports, and docs references to `@punch-bot/*`, and add new packages to the table above.
+
+How to resolve:
+
+- Modify/delete conflicts on dropped paths: keep the deletion.
+- Upstream edits in surviving files that only serve the TUI: drop them. Port fixes that also affect print, JSON, or RPC mode, the SDK, or extensions.
+- Land upstream merges with a merge commit, not squash or rebase, so the upstream tag stays an ancestor. If `git merge-base HEAD <tag>` is older than the last merged upstream tag, preview with `git merge-tree --merge-base=<last merged tag> HEAD <tag>`.
+
 # Development Rules
 
 ## Conversational Style
