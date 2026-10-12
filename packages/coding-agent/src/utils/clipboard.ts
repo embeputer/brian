@@ -109,10 +109,10 @@ export async function copyToClipboard(text: string): Promise<void> {
 	}
 	if (copied) return;
 	if (oversized) throw new Error("Clipboard unavailable: text exceeds the OSC 52 size limit");
+	if (env.TERMUX_VERSION) {
+		throw new Error("Clipboard unavailable: install the Termux:API app and `termux-api` package");
+	}
 	if (p === "linux") {
-		if (env.TERMUX_VERSION) {
-			throw new Error("Clipboard unavailable: install the Termux:API app and `termux-api` package");
-		}
 		if (env.WAYLAND_DISPLAY) {
 			throw new Error("Clipboard unavailable: install `wl-clipboard` (`wl-copy`) or check Wayland access");
 		}

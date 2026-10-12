@@ -10,10 +10,7 @@
  * errors (`isError`) are error results for the model, but scripts still resolve to the result.
  */
 
-import { createHash, randomBytes } from "node:crypto";
-import { writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { createHash } from "node:crypto";
 import type { AgentToolResult } from "@punch-bot/agent";
 import type { ImageContent, JsonValue, TextContent } from "@punch-bot/ai";
 import {
@@ -25,7 +22,9 @@ import {
 } from "@punch-bot/mcp";
 import type { TSchema } from "typebox";
 import type { ToolAnnotations, ToolDefinition, ToolExposure, ToolNamespace } from "../../core/extensions/types.ts";
+import { READ_MCP_RESOURCE_TOOL } from "../../core/mcp-servers.ts";
 import { formatSize, truncateMiddle } from "../../core/tools/truncate.ts";
+import { writeOutputFile } from "../../utils/output-files.ts";
 import type { McpExposure } from "./config.ts";
 
 /**
@@ -41,7 +40,7 @@ const MAX_TOOL_NAME_LENGTH = 64;
 /** Model-facing text of an MCP result beyond this is cut in the middle. */
 export const MCP_OUTPUT_MAX_BYTES = 20 * 1024;
 /** Tool that reads the resources named by resource links. */
-export const READ_MCP_RESOURCE_TOOL = "read_mcp_resource";
+export { READ_MCP_RESOURCE_TOOL };
 
 export interface McpToolDetails {
 	server: string;
@@ -56,11 +55,8 @@ export interface McpToolDetails {
  */
 export type McpOutputSaver = (data: string | Uint8Array, extension: string) => Promise<string>;
 
-export async function saveToTempFile(data: string | Uint8Array, extension: string): Promise<string> {
-	const path = join(tmpdir(), `pi-mcp-${randomBytes(8).toString("hex")}${extension}`);
-	// Results can carry private data, so only the user may read the file.
-	await writeFile(path, data, { mode: 0o600 });
-	return path;
+export function saveToTempFile(data: string | Uint8Array, extension: string): Promise<string> {
+	return writeOutputFile("pi-mcp", extension, data);
 }
 
 export interface McpToolCaller {

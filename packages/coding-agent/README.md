@@ -12,9 +12,13 @@
 
 # Pi
 
-Pi is a minimal, extensible AI agent for the terminal. Adapt Pi to your workflow, not the other way around.
+Pi is a minimal, extensible agent harness that you can make your own.
 
-Ask Pi to create the prompt templates, skills, extensions, and themes you need, or install a Pi package. Use Pi directly, automate it in print, JSON, or RPC mode, or build applications with the TypeScript SDK.
+Adapt Pi to your workflows, not the other way around. Customize Pi with [extensions](docs/extensions.md), [skills](docs/skills.md), [prompt templates](docs/prompt-templates.md), and [themes](docs/themes.md). Bundle them as [Pi packages](docs/packages.md) and share via npm or git.
+
+Pi ships with powerful defaults but skips features like sub-agents and plan mode. Ask Pi to build what you want, or install a package that does it your way.
+
+Use Pi in [print or JSON mode](docs/cli.md), control it over [RPC](docs/rpc.md), or build apps with the [Pi TypeScript SDK](docs/sdk.md). See [OpenClaw](https://github.com/OpenClaw/OpenClaw) for a real-world integration.
 
 Pi runs in print or JSON, RPC for process integration, and an SDK for embedding in your own apps. Interactive TUI mode has been removed.
 
@@ -63,13 +67,7 @@ I regularly publish my own `pi-mono` work sessions here:
 npm install -g --ignore-scripts @punch-bot/cli
 ```
 
-This requires Node.js 22.19 or newer. Pi does not require dependency lifecycle scripts for a normal npm installation.
-
-On macOS or Linux, you can instead use the installer:
-
-```bash
-curl -fsSL https://pi.dev/install.sh | sh
-```
+Pi requires Node.js 22.19 or newer. The macOS, Linux, and Windows installers can install it if needed. Pi does not require dependency lifecycle scripts for a normal npm installation.
 
 Authenticate with an API key, then run in print mode:
 
@@ -347,11 +345,6 @@ Place in `~/.pi/agent/themes/`, `.pi/themes/`, or a [pi package](#pi-packages) t
 Bundle and share extensions, skills, prompts, and themes via npm or git. Find packages on [npmjs.com](https://www.npmjs.com/search?q=keywords%3Api-package) or [Discord](https://discord.com/channels/1456806362351669492/1457744485428629628).
 
 > **Security:** Pi packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
-
-```bash
-npm run check
-./test.sh
-```
 
 Packages install to `~/.pi/agent/git/` (git) or `~/.pi/agent/npm/` (npm). Use `-l` for project-local installs (`.pi/git/`, `.pi/npm/`). Git `@ref` values are pinned tags or commits; pinned packages are skipped by `pi update --extensions` and `pi update --all`, so use `pi install git:host/user/repo@new-ref` to move an existing package to a new ref. Git packages install dependencies with `npm install --omit=dev` by default, so runtime deps must be listed under `dependencies`; when `npmCommand` is configured, git packages use plain `install` for compatibility with wrappers. If you use a Node version manager and want package installs to reuse a stable npm context, set `npmCommand` in `settings.json`, for example `["mise", "exec", "node@20", "--", "npm"]`.
 
