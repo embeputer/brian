@@ -30,6 +30,7 @@
 				"./packages/durable/src/*/index.ts",
 				"./packages/durable/src/*"
 			],
+			"@punch-bot/env": ["./packages/env/src/index.ts"],
 			"@punch-bot/agent": ["./packages/agent/src/index.ts"],
 			"@punch-bot/a2a": ["./packages/a2a/src/index.ts"],
 			"@punch-bot/a2a/*": ["./packages/a2a/src/*"],

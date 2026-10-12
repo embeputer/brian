@@ -159,14 +159,11 @@ describe("resolveCliModel", () => {
 	});
 
 	test("rejects a bare ID that exists under more than one provider", () => {
-		const modelRuntime = runtimeFor([
-			withId("gpt-5.6-sol", "azure-openai-responses"),
-			withId("gpt-5.6-sol", "openai"),
-		]);
+		const modelRuntime = runtimeFor([withId("gpt-5.6-sol", "azure"), withId("gpt-5.6-sol", "openai")]);
 		const result = resolveCliModel({ cliModel: "gpt-5.6-sol", modelRuntime });
 		expect(result.model).toBeUndefined();
 		expect(result.error).toBe(
-			'Model "gpt-5.6-sol" is ambiguous: azure-openai-responses/gpt-5.6-sol, openai/gpt-5.6-sol. Use --provider or provider/model.',
+			'Model "gpt-5.6-sol" is ambiguous: azure/gpt-5.6-sol, openai/gpt-5.6-sol. Use --provider or provider/model.',
 		);
 	});
 });
@@ -227,7 +224,7 @@ describe("resolveModelScopeWithDiagnostics", () => {
 
 	test("limits provider-prefixed globs to that provider", async () => {
 		const gatewayModel = withId("openai/gpt-4o", "vercel-ai-gateway");
-		const azureModel = withId("gpt-4o-mini", "azure-openai-responses");
+		const azureModel = withId("gpt-4o-mini", "azure");
 		const modelRuntime = runtimeFor([...allModels, gatewayModel, azureModel]);
 		const prefixed = await resolveModelScopeWithDiagnostics(["openai/*:low"], modelRuntime);
 		expect(prefixed.scopedModels).toEqual([{ model: mockModels[1], thinkingLevel: "low" }]);
@@ -235,7 +232,7 @@ describe("resolveModelScopeWithDiagnostics", () => {
 		// Bare-ID globs match on model.id across providers; the gateway ID contains "/" and does not match.
 		expect(bare.scopedModels.map(({ model }) => `${model.provider}/${model.id}`)).toEqual([
 			"openai/gpt-4o",
-			"azure-openai-responses/gpt-4o-mini",
+			"azure/gpt-4o-mini",
 		]);
 	});
 

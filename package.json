@@ -12,13 +12,13 @@
 	],
 	"scripts": {
 		"clean": "npm run clean --workspaces",
-		"build": "cd packages/chord && npm run build && cd ../telemetry && npm run build && cd ../mcp && npm run build && cd ../codemode && npm run build && cd ../ai && npm run build && cd ../durable && npm run build && cd ../agent && npm run build && cd ../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../a2a && npm run build && cd ../coding-agent && npm run build",
-		"build:offline": "cd packages/chord && npm run build && cd ../telemetry && npm run build && cd ../mcp && npm run build && cd ../codemode && npm run build && cd ../ai && npm run build:offline && cd ../durable && npm run build && cd ../agent && npm run build && cd ../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../a2a && npm run build && cd ../coding-agent && npm run build",
+		"build": "cd packages/chord && npm run build && cd ../telemetry && npm run build && cd ../mcp && npm run build && cd ../codemode && npm run build && cd ../ai && npm run build && cd ../durable && npm run build && cd ../env && npm run build && cd ../agent && npm run build && cd ../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../a2a && npm run build && cd ../coding-agent && npm run build",
+		"build:offline": "cd packages/chord && npm run build && cd ../telemetry && npm run build && cd ../mcp && npm run build && cd ../codemode && npm run build && cd ../ai && npm run build:offline && cd ../durable && npm run build && cd ../env && npm run build && cd ../agent && npm run build && cd ../protocol && npm run build && cd ../client && npm run build && cd ../server && npm run build && cd ../a2a && npm run build && cd ../coding-agent && npm run build",
 		"check": "biome check --write --error-on-warnings . && npm run check:pinned-deps && npm run check:runtime-deps && npm run check:ts-imports && npm run check:entry-graphs && npm run check:shrinkwrap && npm run check:install-lock:coding-agent && tsc --noEmit && npm run check:browser-smoke",
 		"check:browser-smoke": "node scripts/check-browser-smoke.mjs",
 		"check:pinned-deps": "node scripts/check-pinned-deps.mjs",
 		"check:runtime-deps": "node scripts/check-runtime-deps.mjs",
-		"check:package-install": "node scripts/coding-agent-consumer.mjs",
+		"check:package-install": "node scripts/check-package-install.mjs",
 		"check:shrinkwrap": "node scripts/generate-coding-agent-shrinkwrap.mjs --check",
 		"check:install-lock:coding-agent": "node scripts/generate-coding-agent-install-lock.mjs --check",
 		"check:ts-imports": "node scripts/check-ts-relative-imports.mjs",
@@ -42,6 +42,7 @@
 		"publish:dry": "npm run prepublishOnly && node scripts/publish.mjs --dry-run",
 		"release:local": "node scripts/local-release.mjs",
 		"shrinkwrap:coding-agent": "node scripts/generate-coding-agent-shrinkwrap.mjs",
+		"pack:packages": "node scripts/pack-packages.mjs",
 		"install-lock:coding-agent": "node scripts/generate-coding-agent-install-lock.mjs",
 		"release:patch": "node scripts/release.mjs patch",
 		"release:minor": "node scripts/release.mjs minor",
@@ -55,8 +56,10 @@
 		"@types/node": "22.19.19",
 		"esbuild": "0.28.2",
 		"husky": "9.1.7",
-		"shx": "0.4.0",
-		"typescript": "7.0.2"
+		"pnpm": "11.15.1",
+		"shx": "0.3.4",
+		"typescript": "7.0.2",
+		"yaml": "2.9.0"
 	},
 	"engines": {
 		"node": ">=22.19.0"

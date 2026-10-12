@@ -1,6 +1,6 @@
 {
 	"name": "@punch-bot/a2a",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Agent2Agent (A2A) protocol integration for punch agents",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -45,7 +45,7 @@
 	},
 	"devDependencies": {
 		"@types/express": "5.0.3",
-		"shx": "0.4.0",
+		"shx": "0.3.4",
 		"vitest": "5.0.0"
 	}
 }
