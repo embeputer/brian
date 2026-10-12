@@ -78,11 +78,14 @@ export async function runClient(command: ClientCommand, options: RunClientOption
 			return { kind: "attached", serverId: match.route.serverId, sessionId };
 		}
 
-		let deliveryTail = Promise.resolve();
-		const unsubscribe = options.onView
+		const onView = options.onView;
+		let deliveredView: ConversationView | undefined;
+		let activeDelivery: Promise<void> = Promise.resolve();
+		const unsubscribe = onView
 			? match.transcript.state.subscribe((view) => {
-					deliveryTail = deliveryTail.then(() => options.onView?.(view));
-					return deliveryTail;
+					deliveredView = view;
+					activeDelivery = Promise.resolve(onView(view));
+					return activeDelivery;
 				})
 			: undefined;
 		try {
@@ -93,7 +96,10 @@ export async function runClient(command: ClientCommand, options: RunClientOption
 			return { kind: "prompted", serverId: match.route.serverId, sessionId, text: result.text };
 		} finally {
 			unsubscribe?.();
-			await deliveryTail;
+			await activeDelivery;
+			// Unsubscribing discards queued views, so deliver the final view if the consumer has not received it.
+			const finalView = match.transcript.state.value;
+			if (onView && finalView !== undefined && finalView !== deliveredView) await onView(finalView);
 		}
 	} finally {
 		await runtime.dispose();

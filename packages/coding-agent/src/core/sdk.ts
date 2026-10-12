@@ -442,6 +442,14 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		if (!hasThinkingEntry) {
 			sessionManager.appendThinkingLevelChange(thinkingLevel);
 		}
+		// Record an explicit model for an existing session. Otherwise the branch keeps naming the older saved model,
+		// and a later strict restore fails if that model is gone even though this one answered.
+		if (
+			options.model &&
+			(sessionModel?.provider !== options.model.provider || sessionModel?.modelId !== options.model.id)
+		) {
+			sessionManager.appendModelChange(options.model.provider, options.model.id);
+		}
 	} else {
 		// Save initial model and thinking level for new sessions so they can be restored on resume
 		if (model) {
