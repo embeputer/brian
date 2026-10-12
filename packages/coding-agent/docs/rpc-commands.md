@@ -209,7 +209,7 @@ Messages are `AgentMessage` objects (see [Message Types](message-types.md)).
 
 ### set_model
 
-Switch to a specific model.
+Switch to an exact provider and model ID. `modelId` is literal, including service suffixes; use `set_thinking_level` separately. Missing or unavailable IDs return an error and leave the current model selected.
 
 ```json
 {"type": "set_model", "provider": "anthropic", "modelId": "claude-sonnet-4-20250514"}

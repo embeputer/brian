@@ -61,15 +61,15 @@ pi --model sonnet:high
 See [Choose a Model](models.md) for model selection and [Providers](providers.md) for credentials.
 
 - `--provider <name>`<br>
-  Restricts `--model` lookup to one provider. It requires `--model`.
-- `--model <pattern>`<br>
-  Selects by exact ID or fuzzy ID/name match. It accepts `provider/id` and an optional `:<thinking>` suffix.
+  Selects the provider for `--model`. It requires `--model`. Provider names ignore case only when that leaves a single match.
+- `--model <id>`<br>
+  Selects one exact catalog ID as `provider/id` or with `--provider`. Case is ignored only when that leaves a single match. A bare ID offered by several providers requires a provider. One trailing `:<thinking>` suffix is parsed only when the full string is not a catalog ID.
 - `--api-key <key>`<br>
   Uses a non-persistent API-key override. It requires a model selected through `--model` or `--models`.
 - `--thinking <level>`<br>
   Sets `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max`. It overrides a `--model` suffix and is clamped to the model's capabilities.
-- `--models <patterns>`<br>
-  Sets a comma-separated scope for startup and cycling. It accepts exact IDs, fuzzy matches, case-insensitive globs, and optional `:<thinking>` suffixes.
+- `--models <ids>`<br>
+  Sets a comma-separated scope for startup and cycling. It accepts exact IDs, globs (`*`, `?`, `[...]`), and optional `:<thinking>` suffixes. An entry that matches nothing fails startup.
 - `--list-models [search]`<br>
   Lists available models, optionally filtered by a fuzzy search, then exits.
 

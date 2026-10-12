@@ -17,6 +17,8 @@ pi --mode rpc --no-session
 
 Normal CLI options still select the working folder, model, tools, resources, and session behavior. Common choices include `--provider`, `--model`, `--name`, `--no-session`, and `--session-dir`. See [Command Line](cli.md) for the complete, version-specific interface; `pi --help` is authoritative for the installed version.
 
+Model selection is exact. `--model` takes a catalog ID as `provider/id` or with `--provider`; case is ignored only when that leaves a single match. A missing ID fails without selecting another model. OpenRouter service suffixes such as `:free` are part of the ID, so if only `vendor/model:free` exists, requesting `vendor/model` fails. One trailing `:<thinking>` suffix is parsed only when the full string is not itself a catalog ID. Saved defaults and restored sessions also require their exact model. A failed `new_session`, `switch_session`, or `fork` keeps the current session. Switching to or forking a session with a saved model restores that model; startup `--model` applies to the first session and to new sessions.
+
 RPC mode rejects `@file` prompt arguments. Send prompts through the [`prompt`](rpc-commands.md#prompt) command instead.
 
 ## Protocol records

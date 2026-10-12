@@ -62,6 +62,10 @@ export default defineConfig({
 				find: /^@punch-bot\/ai\/providers\/(.+)$/,
 				replacement: `${workspaceSourcePaths.aiProviders}/$1.ts`,
 			},
+			{
+				find: /^@punch-bot\/ai\/(.+)$/,
+				replacement: fileURLToPath(new URL("./packages/ai/src/$1.ts", import.meta.url)),
+			},
 			{ find: /^@punch-bot\/agent$/, replacement: workspaceSourcePaths.agentIndex },
 			{ find: /^@punch-bot\/codemode$/, replacement: workspaceSourcePaths.codemodeIndex },
 			{ find: /^@punch-bot\/codemode\/declarations$/, replacement: workspaceSourcePaths.codemodeDeclarations },

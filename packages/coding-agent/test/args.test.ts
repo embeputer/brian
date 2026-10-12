@@ -91,8 +91,8 @@ describe("parseArgs", () => {
 		});
 
 		test("parses --model", () => {
-			const result = parseArgs(["--model", "gpt-4o"]);
-			expect(result.model).toBe("gpt-4o");
+			const result = parseArgs(["--model", "gpt-6-astra"]);
+			expect(result.model).toBe("gpt-6-astra");
 		});
 
 		test("parses --api-key", () => {
@@ -142,8 +142,11 @@ describe("parseArgs", () => {
 		});
 
 		test("parses --models as comma-separated list", () => {
-			const result = parseArgs(["--models", "gpt-4o,claude-sonnet,gemini-pro"]);
-			expect(result.models).toEqual(["gpt-4o", "claude-sonnet", "gemini-pro"]);
+			const result = parseArgs([
+				"--models",
+				"openai/gpt-6-astra,anthropic/claude-fable-5-1,google/gemini-3.8-flash",
+			]);
+			expect(result.models).toEqual(["openai/gpt-6-astra", "anthropic/claude-fable-5-1", "google/gemini-3.8-flash"]);
 		});
 	});
 
@@ -216,10 +219,10 @@ describe("parseArgs", () => {
 		});
 
 		test("works alongside other flags", () => {
-			const result = parseArgs(["--name", "named-run", "--print", "--model", "gpt-4o", "hello"]);
+			const result = parseArgs(["--name", "named-run", "--print", "--model", "gpt-6-astra", "hello"]);
 			expect(result.name).toBe("named-run");
 			expect(result.print).toBe(true);
-			expect(result.model).toBe("gpt-4o");
+			expect(result.model).toBe("gpt-6-astra");
 			expect(result.messages).toEqual(["hello"]);
 		});
 	});
@@ -517,7 +520,7 @@ describe("parseArgs", () => {
 				"--provider",
 				"anthropic",
 				"--model",
-				"claude-sonnet",
+				"claude-fable-5-1",
 				"--print",
 				"--thinking",
 				"high",
@@ -525,7 +528,7 @@ describe("parseArgs", () => {
 				"Do the task",
 			]);
 			expect(result.provider).toBe("anthropic");
-			expect(result.model).toBe("claude-sonnet");
+			expect(result.model).toBe("claude-fable-5-1");
 			expect(result.print).toBe(true);
 			expect(result.thinking).toBe("high");
 			expect(result.fileArgs).toEqual(["prompt.md"]);

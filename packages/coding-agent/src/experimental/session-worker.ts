@@ -770,7 +770,8 @@ export async function runSessionWorkerWithHarness(
 	}
 }
 
-async function createCodingAgentHarness(
+/** @internal Exported for testing */
+export async function createCodingAgentHarness(
 	databasePath: string,
 	options: SessionWorkerOptions,
 ): Promise<SessionWorkerRuntime> {
@@ -792,22 +793,30 @@ async function createCodingAgentHarness(
 			},
 			TODO_CONTEXT,
 		);
-		// The initial model applies only when the root conversation is created; later starts keep its durable model.
-		const created = (await harness.conversation(ROOT_CONVERSATION_ID, TODO_CONTEXT)) === undefined;
-		const initial = created
-			? await findInitialAgentModel(
-					settingsManager,
-					modelRuntime,
-					options.model === undefined ? undefined : { provider: options.provider, model: options.model },
-				)
-			: undefined;
-		const conversation = await harness.root(TODO_CONTEXT, {
-			agent: {
-				cwd,
-				...(initial?.model === undefined ? {} : { model: initial.model }),
-				...(initial?.thinkingLevel === undefined ? {} : { thinkingLevel: initial.thinkingLevel }),
-			},
-		});
+		// A requested model applies to new and restored root conversations. Without one, a new root uses pi's default
+		// resolution and a restored root keeps its durable model, which must still be in the catalog.
+		const restored = (await harness.conversation(ROOT_CONVERSATION_ID, TODO_CONTEXT)) !== undefined;
+		const requested = options.model === undefined ? undefined : { provider: options.provider, model: options.model };
+		const initial =
+			!restored || requested !== undefined
+				? await findInitialAgentModel(settingsManager, modelRuntime, requested)
+				: undefined;
+		const agent = {
+			...(initial?.model === undefined ? {} : { model: initial.model }),
+			...(initial?.thinkingLevel === undefined ? {} : { thinkingLevel: initial.thinkingLevel }),
+		};
+		const conversation = await harness.root(TODO_CONTEXT, { agent: { cwd, ...agent } });
+		// root() applies `agent` only when it creates the conversation.
+		if (restored && requested !== undefined) {
+			await conversation.configure(agent, TODO_CONTEXT);
+		} else if (restored) {
+			const { model } = await conversation.agent(TODO_CONTEXT);
+			if (model === undefined || modelRuntime.getModel(model.provider, model.modelId) === undefined) {
+				throw new Error(
+					`Session worker could not restore the session model: ${model === undefined ? "none saved" : `${model.provider}/${model.modelId}`}`,
+				);
+			}
+		}
 		return {
 			harness,
 			conversation,
