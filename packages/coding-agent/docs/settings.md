@@ -293,7 +293,7 @@ When multiple sources specify a session directory, precedence is `--session-dir`
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `enabledModels` | string[] | - | Model patterns available to the session (same format as `--models` CLI flag) |
+| `enabledModels` | string[] | - | Exact model IDs or globs available to the session (same format as `--models`); stale entries are skipped with a warning |
 
 ```json
 {

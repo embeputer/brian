@@ -47,6 +47,8 @@ export interface CreateAgentSessionOptions {
 
 	/** Model to use. Default: from settings, else first available */
 	model?: Model<any>;
+	/** Fail when a saved session/default model cannot be selected exactly. Default: true. */
+	strictModelSelection?: boolean;
 	/** Thinking level. Default: from settings, else 'medium' (clamped to model capabilities) */
 	thinkingLevel?: ThinkingLevel;
 	/** Models available for cycling (Ctrl+P in interactive mode) */
@@ -195,15 +197,21 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 
 	let model = options.model;
 	let modelFallbackMessage: string | undefined;
+	const strictModelSelection = options.strictModelSelection ?? true;
 
 	// If session has data, try to restore model from it
-	if (!model && hasExistingSession && existingSession.model) {
+	if (!model && existingSession.model && (hasExistingSession || strictModelSelection)) {
 		const restoredModel = modelRuntime.getModel(existingSession.model.provider, existingSession.model.modelId);
 		if (restoredModel && modelRuntime.hasConfiguredAuth(restoredModel.provider)) {
 			model = restoredModel;
 		}
 		if (!model) {
 			modelFallbackMessage = `Could not restore model ${existingSession.model.provider}/${existingSession.model.modelId}`;
+			if (strictModelSelection) {
+				throw new Error(
+					`${modelFallbackMessage}: ${restoredModel ? "no auth configured" : "model not found; define the exact model in models.json"}.`,
+				);
+			}
 		}
 	}
 
@@ -216,6 +224,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			defaultModelId: settingsManager.getDefaultModel(),
 			defaultThinkingLevel: settingsManager.getDefaultThinkingLevel(),
 			modelThinkingLevels: settingsManager.getAllModelThinkingLevels(),
+			strictModelSelection,
 			modelRuntime,
 		});
 		model = result.model;

@@ -41,7 +41,7 @@ import { AuthStorage, ReadOnlyAuthStorage } from "./core/auth-storage.ts";
 import { exportFromFile } from "./core/export-html/index.ts";
 import type { InlineExtension } from "./core/extensions/types.ts";
 import { applyHttpProxySettings, configureHttpDispatcher } from "./core/http-dispatcher.ts";
-import { resolveCliModel, resolveModelScope, type ScopedModel } from "./core/model-resolver.ts";
+import { resolveCliModel, resolveModelScopeWithDiagnostics, type ScopedModel } from "./core/model-resolver.ts";
 import { ModelRuntime } from "./core/model-runtime.ts";
 import { restoreStdout, takeOverStdout } from "./core/output-guard.ts";
 import { type AppMode, resolveProjectTrusted } from "./core/project-trust.ts";
@@ -429,6 +429,7 @@ function buildSessionOptions(
 	parsed: Args,
 	scopedModels: ScopedModel[],
 	hasExistingSession: boolean,
+	applyCliModel: boolean,
 	modelRuntime: ModelRuntime,
 	settingsManager: SettingsManager,
 ): {
@@ -440,14 +441,13 @@ function buildSessionOptions(
 	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
 	let cliThinkingFromModel = false;
 
-	// Model from CLI
-	// - supports --provider <name> --model <pattern>
-	// - supports --model <provider>/<pattern>
-	if (parsed.model) {
+	// Model from CLI (skipped when a restored session supplies its own model, so a stale --model cannot fail it)
+	// - supports --provider <name> --model <id>
+	// - supports --model <provider>/<id>
+	if (applyCliModel && parsed.model !== undefined) {
 		const resolved = resolveCliModel({
 			cliProvider: parsed.provider,
 			cliModel: parsed.model,
-			cliThinking: parsed.thinking,
 			modelRuntime,
 		});
 		if (resolved.warning) {
@@ -662,6 +662,8 @@ export async function main(args: string[], options?: MainOptions) {
 	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
 	const resolvedPromptTemplatePaths = resolveCliPaths(cwd, parsed.promptTemplates);
 	const resolvedThemePaths = resolveCliPaths(cwd, parsed.themes);
+	// Provider of the model resolved from startup --model, reused by later runtimes for --api-key.
+	let cliModelProvider: string | undefined;
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 		cwd,
 		agentDir,
@@ -741,10 +743,23 @@ export async function main(args: string[], options?: MainOptions) {
 		];
 
 		const modelPatterns = parsed.models ?? settingsManager.getEnabledModels();
-		const scopedModels =
+		const scope =
 			modelPatterns && modelPatterns.length > 0
-				? await resolveModelScope(modelPatterns, modelRuntime, { signal: AbortSignal.timeout(15_000) })
-				: [];
+				? await resolveModelScopeWithDiagnostics(modelPatterns, modelRuntime, {
+						signal: AbortSignal.timeout(15_000),
+					})
+				: { scopedModels: [], diagnostics: [] };
+		// An explicit --models must resolve fully. Stale enabledModels settings only warn.
+		const scopeError = scope.diagnostics.find((diagnostic) => diagnostic.code === "no-match");
+		if (scopeError && !parsed.help && parsed.listModels === undefined && parsed.models !== undefined) {
+			throw new Error(scopeError.message);
+		}
+		diagnostics.push(...scope.diagnostics);
+		const scopedModels = scope.scopedModels;
+		const sessionContext = sessionManager.buildSessionContext();
+		const hasSavedModel = sessionContext.model !== null;
+		// Startup --model applies to the first runtime and sessions with no saved model; others restore theirs.
+		const applyCliModel = isInitialRuntime || !hasSavedModel;
 		const {
 			options: sessionOptions,
 			cliThinkingFromModel,
@@ -752,20 +767,26 @@ export async function main(args: string[], options?: MainOptions) {
 		} = buildSessionOptions(
 			parsed,
 			scopedModels,
-			sessionManager.buildSessionContext().messages.length > 0,
+			sessionContext.messages.length > 0 || hasSavedModel,
+			applyCliModel,
 			modelRuntime,
 			settingsManager,
 		);
 		diagnostics.push(...sessionOptionDiagnostics);
+		const modelError = sessionOptionDiagnostics.find((diagnostic) => diagnostic.type === "error");
+		if (modelError) throw new Error(modelError.message);
+		if (sessionOptions.model) cliModelProvider = sessionOptions.model.provider;
 
+		// --api-key targets the startup model's provider, which may differ from the current runtime's model.
+		const apiKeyProvider = sessionOptions.model?.provider ?? cliModelProvider;
 		if (parsed.apiKey) {
-			if (!sessionOptions.model) {
+			if (!apiKeyProvider) {
 				diagnostics.push({
 					type: "error",
 					message: "--api-key requires a model to be specified via --model, --provider/--model, or --models",
 				});
 			} else {
-				await modelRuntime.setRuntimeApiKey(sessionOptions.model.provider, parsed.apiKey);
+				await modelRuntime.setRuntimeApiKey(apiKeyProvider, parsed.apiKey);
 			}
 		}
 
@@ -774,6 +795,7 @@ export async function main(args: string[], options?: MainOptions) {
 			sessionManager,
 			sessionStartEvent,
 			model: sessionOptions.model,
+			strictModelSelection: !parsed.help && parsed.listModels === undefined,
 			thinkingLevel: sessionOptions.thinkingLevel,
 			scopedModels: sessionOptions.scopedModels,
 			tools: sessionOptions.tools,
@@ -797,6 +819,9 @@ export async function main(args: string[], options?: MainOptions) {
 		cwd: sessionManager.getCwd(),
 		agentDir,
 		sessionManager,
+	}).catch((error: unknown) => {
+		console.error(chalk.red(`Error: ${error instanceof Error ? error.message : String(error)}`));
+		process.exit(1);
 	});
 	time("createAgentSessionRuntime");
 	const { services, session } = runtime;

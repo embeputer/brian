@@ -12,10 +12,14 @@ pi --mode rpc [options]
 
 Common options:
 - `--provider <name>`: Set the LLM provider (anthropic, openai, google, etc.)
-- `--model <pattern>`: Model pattern or ID (supports `provider/id` and optional `:<thinking>`)
+- `--model <id>`: Exact model ID (supports `provider/id` and optional `:<thinking>`)
 - `--name <name>` / `-n <name>`: Set the session display name at startup
 - `--no-session`: Disable session persistence
 - `--session-dir <path>`: Custom session storage directory
+
+Model selection requires an exact catalog ID. Case is ignored only when that leaves a single match. An ID shared by multiple providers requires `--provider` or a provider prefix. Missing IDs return an error without selecting another provider or model. OpenRouter service suffixes such as `:free` and `:batch` are part of the ID; if only `vendor/model:free` exists, requesting `vendor/model` fails. Add a missing model through authoritative catalog metadata or its own explicit `models.json` definition.
+
+A complete catalog ID takes precedence over thinking shorthand. For example, `openrouter/vendor/model:free:high` selects `vendor/model:free` with high thinking only when the full `vendor/model:free:high` ID does not exist. `--thinking` overrides shorthand. Saved defaults and restored sessions also require their exact model; a failed `new_session` or `switch_session` leaves the current session active. Switching to a session with a saved model restores that model; startup `--model` applies to the first session and to new sessions.
 
 ## Protocol Overview
 
@@ -239,10 +243,10 @@ Messages are `AgentMessage` objects (see [Message Types](#message-types)).
 
 #### set_model
 
-Switch to a specific model.
+Switch to an exact provider and model ID. `modelId` is literal, including service suffixes; use `set_thinking_level` separately. Missing or unavailable IDs return an error and leave the current model selected.
 
 ```json
-{"type": "set_model", "provider": "anthropic", "modelId": "claude-sonnet-4-20250514"}
+{"type": "set_model", "provider": "openrouter", "modelId": "openai/gpt-6-astra"}
 ```
 
 Response contains the full [Model](#model) object:
@@ -1410,20 +1414,20 @@ Source files:
 
 ```json
 {
-  "id": "claude-sonnet-4-20250514",
-  "name": "Claude Sonnet 4",
+  "id": "claude-fable-5-1",
+  "name": "Claude Fable 5.1",
   "api": "anthropic-messages",
   "provider": "anthropic",
   "baseUrl": "https://api.anthropic.com",
   "reasoning": true,
   "input": ["text", "image"],
-  "contextWindow": 200000,
-  "maxTokens": 16384,
+  "contextWindow": 1000000,
+  "maxTokens": 128000,
   "cost": {
-    "input": 3.0,
-    "output": 15.0,
-    "cacheRead": 0.3,
-    "cacheWrite": 3.75
+    "input": 10.0,
+    "output": 50.0,
+    "cacheRead": 0.25,
+    "cacheWrite": 12.5
   }
 }
 ```
@@ -1453,13 +1457,13 @@ The `content` field can be a string or an array of `TextContent`/`ImageContent` 
   ],
   "api": "anthropic-messages",
   "provider": "anthropic",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-fable-5-1",
   "usage": {
     "input": 100,
     "output": 50,
     "cacheRead": 0,
     "cacheWrite": 0,
-    "cost": {"input": 0.0003, "output": 0.00075, "cacheRead": 0, "cacheWrite": 0, "total": 0.00105}
+    "cost": {"input": 0.001, "output": 0.0025, "cacheRead": 0, "cacheWrite": 0, "total": 0.0035}
   },
   "stopReason": "stop",
   "timestamp": 1733234567890

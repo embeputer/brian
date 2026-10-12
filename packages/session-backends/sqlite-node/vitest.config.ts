@@ -31,6 +31,10 @@ export default defineConfig({
 			{ find: /^@punch-bot\/agent\/node$/, replacement: agentNode },
 			{ find: /^@punch-bot\/agent$/, replacement: agentIndex },
 			{ find: /^@punch-bot\/ai$/, replacement: aiIndex },
+			{
+				find: /^@punch-bot\/ai\/(.+)$/,
+				replacement: fileURLToPath(new URL("../../ai/src/$1.ts", import.meta.url)),
+			},
 			{ find: /^@earendil-works\/pi-telemetry$/, replacement: telemetryIndex },
 			{ find: /^@earendil-works\/pi-agent-core\/node$/, replacement: agentNode },
 			{ find: /^@earendil-works\/pi-agent-core\/harness\/session\/testing$/, replacement: agentSessionTesting },
