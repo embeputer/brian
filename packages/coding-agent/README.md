@@ -1,20 +1,24 @@
 <p align="center">
   <a href="https://pi.dev">
-    <img alt="pi logo" src="https://pi.dev/logo-auto.svg" width="128">
+    <img alt="Pi logo" src="https://pi.dev/logo-auto.svg" width="128">
   </a>
 </p>
 <p align="center">
   <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
-  <a href="https://www.npmjs.com/package/@punch-bot/cli"><img alt="npm" src="https://img.shields.io/npm/v/@punch-bot/cli?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@punch-bot/cli"><img alt="npm" src="https://img.shields.io/npm/v/@punch-bot/cli?style=flat-square&logo=npm&logoColor=white" /></a>
 </p>
 
-> New issues and PRs from new contributors are auto-closed by default. Maintainers review auto-closed issues daily. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
+> New issues and PRs from new contributors are closed automatically. Maintainers review closed submissions daily. See [CONTRIBUTING.md](https://github.com/earendil-works/pi/blob/main/CONTRIBUTING.md).
 
----
+# Pi
 
-Pi is a minimal terminal coding harness. Adapt pi to your workflows, not the other way around, without having to fork and modify pi internals. Extend it with TypeScript [Extensions](#extensions), [Skills](#skills), [Prompt Templates](#prompt-templates), and [Themes](#themes). Put your extensions, skills, prompt templates, and themes in [Pi Packages](#pi-packages) and share them with others via npm or git.
+Pi is a minimal, extensible agent harness that you can make your own.
 
-Pi ships with powerful defaults but skips features like sub agents and plan mode. Instead, you can ask pi to build what you want or install a third party pi package that matches your workflow.
+Adapt Pi to your workflows, not the other way around. Customize Pi with [extensions](docs/extensions.md), [skills](docs/skills.md), [prompt templates](docs/prompt-templates.md), and [themes](docs/themes.md). Bundle them as [Pi packages](docs/packages.md) and share via npm or git.
+
+Pi ships with powerful defaults but skips features like sub-agents and plan mode. Ask Pi to build what you want, or install a package that does it your way.
+
+Use Pi in [print or JSON mode](docs/cli.md), control it over [RPC](docs/rpc.md), or build apps with the [Pi TypeScript SDK](docs/sdk.md). See [OpenClaw](https://github.com/OpenClaw/OpenClaw) for a real-world integration.
 
 Pi runs in print or JSON, RPC for process integration, and an SDK for embedding in your own apps. Interactive TUI mode has been removed.
 
@@ -63,13 +67,7 @@ I regularly publish my own `pi-mono` work sessions here:
 npm install -g --ignore-scripts @punch-bot/cli
 ```
 
-`--ignore-scripts` disables dependency lifecycle scripts during install. Pi does not require install scripts for normal npm installs.
-
-Installer alternative:
-
-```bash
-curl -fsSL https://pi.dev/install.sh | sh
-```
+Pi requires Node.js 22.19 or newer. The macOS, Linux, and Windows installers can install it if needed. Pi does not require dependency lifecycle scripts for a normal npm installation.
 
 Authenticate with an API key, then run in print mode:
 
@@ -124,6 +122,7 @@ For each built-in provider, pi maintains a list of tool-capable models. Configur
 - Together AI
 - Baseten
 - Kimi For Coding
+- Meta
 - MiniMax
 - Xiaomi MiMo
 - Xiaomi MiMo Token Plan (China)
@@ -184,6 +183,15 @@ Long sessions can exhaust context windows. Compaction summarizes older messages 
 **Automatic:** Enabled by default. Triggers on context overflow (recovers and retries) or when approaching the limit (proactive). Configure it in `settings.json` or with the RPC `set_auto_compaction` command.
 
 Compaction is lossy. The full history remains in the JSONL file and is available through RPC tree and entry commands. Customize compaction behavior via [extensions](#extensions). See [docs/compaction.md](docs/compaction.md) for internals.
+
+Session model context is projected from append-only history. Extensions can append a `context_edit` to omit or replace an earlier message only for future model requests; raw history and usage remain unchanged:
+
+```typescript
+const assistantId = sessionManager.appendMessage(partialAssistant);
+sessionManager.appendContextEdit(assistantId, null); // Hidden from model context, retained in JSONL.
+```
+
+A retain-none compaction uses `appendCompaction(summary, null, tokensBefore)` to make the exact summary the new context root while preserving prior raw entries.
 
 ---
 
@@ -284,6 +292,33 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
+`turn_end` and `agent_before_settle` are actionable persistence boundaries. Handlers can append structural entries and request one continuation. Later handlers see earlier proposals:
+
+```typescript
+let replacedResponse = false;
+pi.on("turn_end", (event) => {
+  if (replacedResponse || event.outcome !== "completed" || event.toolResults.length > 0) return;
+  replacedResponse = true;
+  return {
+    entries: [
+      ...event.entries,
+      { type: "context_edit", targetId: event.messageEntryId, replacement: null },
+      {
+        type: "custom_message",
+        customType: "replacement-instruction",
+        content: "Answer again using the persisted user request.",
+        display: false,
+      },
+    ],
+    continue: true,
+  };
+});
+```
+
+Continuation is one-shot per boundary result, not per registered handler. It ensures one next provider request: tool-result, steering, or follow-up scheduling can satisfy that request without adding another one; otherwise Pi makes one context-only request. Guard handlers like the example above because an unconditional `continue: true` is evaluated again after the next response and can loop indefinitely. Error and aborted responses remain hard exits.
+
+Use `agent_before_settle` for final actions after retries, compaction, and queued input are exhausted. See [docs/extensions.md](docs/extensions.md#agent_start--agent_end--agent_before_settle--agent_settled).
+
 The default export can also be `async`. pi waits for async extension factories before startup continues, which is useful for one-time initialization such as fetching remote model lists before calling `pi.registerProvider()`.
 
 **What's possible:**
@@ -310,30 +345,6 @@ Place in `~/.pi/agent/themes/`, `.pi/themes/`, or a [pi package](#pi-packages) t
 Bundle and share extensions, skills, prompts, and themes via npm or git. Find packages on [npmjs.com](https://www.npmjs.com/search?q=keywords%3Api-package) or [Discord](https://discord.com/channels/1456806362351669492/1457744485428629628).
 
 > **Security:** Pi packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
-
-```bash
-pi install npm:@foo/pi-tools
-pi install npm:@foo/pi-tools@1.2.3      # pinned version
-pi install git:github.com/user/repo
-pi install git:github.com/user/repo@v1  # tag or commit
-pi install git:git@github.com:user/repo
-pi install git:git@github.com:user/repo@v1  # tag or commit
-pi install https://github.com/user/repo
-pi install https://github.com/user/repo@v1      # tag or commit
-pi install ssh://git@github.com/user/repo
-pi install ssh://git@github.com/user/repo@v1    # tag or commit
-pi remove npm:@foo/pi-tools
-pi uninstall npm:@foo/pi-tools          # alias for remove
-pi list
-pi update                               # update pi only
-pi update --all                         # update pi and packages
-pi update --extensions                  # update packages only
-pi update --models                      # refresh model catalogs only
-pi update --self                        # update pi only
-pi update --self --force                # reinstall pi even if current
-pi update npm:@foo/pi-tools             # update one package
-pi config                               # enable/disable extensions, skills, prompts, themes
-```
 
 Packages install to `~/.pi/agent/git/` (git) or `~/.pi/agent/npm/` (npm). Use `-l` for project-local installs (`.pi/git/`, `.pi/npm/`). Git `@ref` values are pinned tags or commits; pinned packages are skipped by `pi update --extensions` and `pi update --all`, so use `pi install git:host/user/repo@new-ref` to move an existing package to a new ref. Git packages install dependencies with `npm install --omit=dev` by default, so runtime deps must be listed under `dependencies`; when `npmCommand` is configured, git packages use plain `install` for compatibility with wrappers. If you use a Node version manager and want package installs to reuse a stable npm context, set `npmCommand` in `settings.json`, for example `["mise", "exec", "node@20", "--", "npm"]`.
 

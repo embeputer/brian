@@ -159,14 +159,11 @@ describe("resolveCliModel", () => {
 	});
 
 	test("rejects a bare ID that exists under more than one provider", () => {
-		const modelRuntime = runtimeFor([
-			withId("gpt-5.6-sol", "azure-openai-responses"),
-			withId("gpt-5.6-sol", "openai"),
-		]);
+		const modelRuntime = runtimeFor([withId("gpt-5.6-sol", "azure"), withId("gpt-5.6-sol", "openai")]);
 		const result = resolveCliModel({ cliModel: "gpt-5.6-sol", modelRuntime });
 		expect(result.model).toBeUndefined();
 		expect(result.error).toBe(
-			'Model "gpt-5.6-sol" is ambiguous: azure-openai-responses/gpt-5.6-sol, openai/gpt-5.6-sol. Use --provider or provider/model.',
+			'Model "gpt-5.6-sol" is ambiguous: azure/gpt-5.6-sol, openai/gpt-5.6-sol. Use --provider or provider/model.',
 		);
 	});
 });
@@ -227,7 +224,7 @@ describe("resolveModelScopeWithDiagnostics", () => {
 
 	test("limits provider-prefixed globs to that provider", async () => {
 		const gatewayModel = withId("openai/gpt-4o", "vercel-ai-gateway");
-		const azureModel = withId("gpt-4o-mini", "azure-openai-responses");
+		const azureModel = withId("gpt-4o-mini", "azure");
 		const modelRuntime = runtimeFor([...allModels, gatewayModel, azureModel]);
 		const prefixed = await resolveModelScopeWithDiagnostics(["openai/*:low"], modelRuntime);
 		expect(prefixed.scopedModels).toEqual([{ model: mockModels[1], thinkingLevel: "low" }]);
@@ -235,7 +232,7 @@ describe("resolveModelScopeWithDiagnostics", () => {
 		// Bare-ID globs match on model.id across providers; the gateway ID contains "/" and does not match.
 		expect(bare.scopedModels.map(({ model }) => `${model.provider}/${model.id}`)).toEqual([
 			"openai/gpt-4o",
-			"azure-openai-responses/gpt-4o-mini",
+			"azure/gpt-4o-mini",
 		]);
 	});
 
@@ -264,7 +261,7 @@ describe("resolveModelScopeWithDiagnostics", () => {
 describe("default model selection", () => {
 	test("openai defaults track current models", () => {
 		expect(defaultModelPerProvider.openai).toBe("gpt-5.5");
-		expect(defaultModelPerProvider["openai-codex"]).toBe("gpt-5.5");
+		expect(defaultModelPerProvider["openai-codex"]).toBe("gpt-6.1-sol");
 	});
 
 	test("zai, minimax, cerebras, and ant-ling defaults track current models", () => {
@@ -276,11 +273,16 @@ describe("default model selection", () => {
 		expect(defaultModelPerProvider["ant-ling"]).toBe("Ring-2.6-1T");
 	});
 
-	test("built-in defaults exist in generated provider catalogs", () => {
+	test("built-in chat providers have defaults in their generated catalogs", () => {
 		for (const provider of getBuiltinProviders()) {
+			const chatModels = getBuiltinModels(provider);
 			const defaultId = defaultModelPerProvider[provider];
+			if (chatModels.length === 0) {
+				expect(defaultId, `${provider} has no chat models and should have no chat default`).toBeUndefined();
+				continue;
+			}
 			expect(
-				getBuiltinModels(provider).some((model) => model.id === defaultId),
+				chatModels.some((model) => model.id === defaultId),
 				`${provider} default ${defaultId} should exist in its generated catalog`,
 			).toBe(true);
 		}
@@ -291,7 +293,7 @@ describe("default model selection", () => {
 	});
 
 	test("xai default tracks current model", () => {
-		expect(defaultModelPerProvider.xai).toBe("grok-4.6");
+		expect(defaultModelPerProvider.xai).toBe("grok-4.7");
 	});
 
 	test("qwen token plan individual default tracks current model", () => {
