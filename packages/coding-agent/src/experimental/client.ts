@@ -82,6 +82,7 @@ export async function runClient(command: ClientCommand, options: RunClientOption
 		const unsubscribe = options.onView
 			? match.transcript.state.subscribe((view) => {
 					deliveryTail = deliveryTail.then(() => options.onView?.(view));
+					return deliveryTail;
 				})
 			: undefined;
 		try {

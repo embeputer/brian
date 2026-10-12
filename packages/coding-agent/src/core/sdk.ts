@@ -203,9 +203,16 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 
 	// Assistant messages name the physical model that answered, so a virtual selection is only in
 	// model_change entries.
-	const sessionModel = getBranchSelection(sessionManager.getBranch(), (provider, modelId) =>
-		modelRuntime.getModel(provider, modelId),
-	);
+	const branch = sessionManager.getBranch();
+	const savedChange = branch.findLast((entry) => entry.type === "model_change");
+	// getBranchSelection falls back to the last physical response when the saved virtual model is gone. Strict
+	// selection fails on the missing saved model instead of silently running another one.
+	const sessionModel =
+		strictModelSelection &&
+		savedChange?.type === "model_change" &&
+		!modelRuntime.getModel(savedChange.provider, savedChange.modelId)
+			? { provider: savedChange.provider, modelId: savedChange.modelId }
+			: getBranchSelection(branch, (provider, modelId) => modelRuntime.getModel(provider, modelId));
 
 	// Restore the session's saved model. Strict selection also restores a saved model with no messages.
 	if (!model && sessionModel && (hasExistingSession || strictModelSelection)) {

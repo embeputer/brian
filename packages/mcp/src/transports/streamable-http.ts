@@ -262,7 +262,7 @@ export class StreamableHttpTransport extends TransportEvents implements McpTrans
 			const timeout = setTimeout(() => controller.abort(), 1_000);
 			try {
 				const { headers } = await this.headers();
-				await this.fetch(this.url, { method: "DELETE", headers, signal: controller.signal })
+				await this.fetch(this.url, { method: "DELETE", headers, signal: controller.signal, redirect: "manual" })
 					.then(discard)
 					.catch(() => undefined);
 			} catch {
@@ -290,6 +290,7 @@ export class StreamableHttpTransport extends TransportEvents implements McpTrans
 				headers,
 				body: init.body,
 				signal: this.controller.signal,
+				redirect: "manual",
 			});
 			if (attempt > 0 || !onUnauthorized || !needsAuthorization(response)) return response;
 			try {
@@ -317,6 +318,12 @@ export class StreamableHttpTransport extends TransportEvents implements McpTrans
 
 	private async checkResponse(response: Response): Promise<void> {
 		if (response.ok) return;
+		// Redirects are refused: following one would send configured credential headers and the request body to
+		// another origin.
+		if (response.type === "opaqueredirect" || (response.status >= 300 && response.status < 400)) {
+			await discard(response);
+			throw new McpHttpError(response.status, "MCP HTTP redirects are not supported");
+		}
 		const body = (await response.text().catch(() => "")).slice(0, MAX_ERROR_BODY_BYTES);
 		if (response.status === 401) throw new McpAuthRequiredError(response, body);
 		if (response.status === 404 && this.sessionIdValue) throw new McpSessionExpiredError(body);

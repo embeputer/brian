@@ -194,6 +194,8 @@ function editMcpServers(
 	const servers = isRecord(parsed.mcpServers) ? parsed.mcpServers : undefined;
 	if (!edit(servers, parsed)) return;
 	const indent = (text && /^([ \t]+)\S/m.exec(text)?.[1]) || "  ";
-	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(path, `${JSON.stringify(parsed, null, indent)}\n`);
+	// mcp.json can hold literal credentials. The modes apply only to a newly created directory or file, so existing
+	// permissions are kept.
+	mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+	writeFileSync(path, `${JSON.stringify(parsed, null, indent)}\n`, { mode: 0o600 });
 }
