@@ -16,11 +16,6 @@ const banner = {
 	js: 'import { createRequire as __piCreateRequire } from "node:module"; const require = __piCreateRequire(import.meta.url);',
 };
 const allowedExternalPackages = new Set([
-	"@punch-bot/chord",
-	"@punch-bot/chord/bundler",
-	"@punch-bot/chord/context",
-	"@punch-bot/chord/delta",
-	"@punch-bot/chord/node",
 	"@silvia-odwyer/photon-node",
 	"jiti",
 	// Optional native accelerators. Their callers fall back to JavaScript when absent.
@@ -93,7 +88,7 @@ function commonBuildOptions() {
 		banner,
 		bundle: true,
 		define: { PI_BUNDLED_NODE: "true" },
-		external: ["@punch-bot/chord", "@silvia-odwyer/photon-node", "playwright", "playwright-core"],
+		external: ["@silvia-odwyer/photon-node", "playwright", "playwright-core"],
 		format: "esm",
 		legalComments: "none",
 		logLevel: "warning",

@@ -1,8 +1,7 @@
-import { Client } from "@punch-bot/client";
+import { createHost, memoryLinkPair, replicatedState } from "@punch-bot/chord";
 import { createAssistantMessageEventStream, Type } from "@punch-bot/ai";
 import { complete, getModel, getProviders, streamSimple } from "@punch-bot/ai/compat";
 import { Agent, streamProxy } from "@punch-bot/agent";
-import { decodeCbor, encodeCbor, PROTOCOL_VERSION } from "@punch-bot/protocol";
 
 // Keep this entry browser-safe. It is bundled by scripts/check-browser-smoke.mjs
 // to catch accidental Node-only runtime imports in browser-facing package exports.
@@ -21,7 +20,7 @@ console.log(
 	typeof stream.push,
 	agent.hasQueuedMessages(),
 	typeof streamProxy,
-	typeof Client,
-	PROTOCOL_VERSION,
-	decodeCbor(encodeCbor({ browser: true })),
+	typeof createHost,
+	typeof memoryLinkPair,
+	replicatedState({ browser: true }).value.browser,
 );
