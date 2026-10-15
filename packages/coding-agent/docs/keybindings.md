@@ -12,7 +12,6 @@ Map each action identifier to one key or a list of keys:
 
 ```json
 {
-  "$schema": "https://pi.dev/schemas/keybindings.schema.json",
   "app.session.new": "ctrl+shift+n",
   "app.session.tree": ["ctrl+shift+t", "alt+shift+t"]
 }

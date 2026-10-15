@@ -2,7 +2,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
-export const REPO = "earendil-works/pi";
+export const REPO = "punch-bot/core";
 const MAX_BODY = 16_000;
 
 export interface Issue {
