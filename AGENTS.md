@@ -10,9 +10,6 @@ Directory names did not change with the npm rename. `@punch-bot/cli` lives in `p
 | `@punch-bot/agent` | `packages/agent` |
 | `@punch-bot/ai` | `packages/ai` |
 | `@punch-bot/telemetry` | `packages/telemetry` |
-| `@punch-bot/protocol` | `packages/protocol` |
-| `@punch-bot/client` | `packages/client` |
-| `@punch-bot/server` | `packages/server` |
 | `@punch-bot/chord` | `packages/chord` |
 | `@punch-bot/durable` | `packages/durable` |
 | `@punch-bot/mcp` | `packages/mcp` |
@@ -86,7 +83,7 @@ How to resolve:
 
 ## Dependency and Install Security
 
-- Treat npm dep and lockfile changes as reviewed code. Direct external deps stay pinned to exact versions.
+- Treat npm dep and lockfile changes as reviewed code. Direct registry deps, including internal workspace deps, stay pinned to exact versions.
 - When updating `undici`, you MUST read its changelog/release notes for the target version and evaluate whether any changes may affect functionality before applying the update.
 - Hydrate/update locally with `npm install --ignore-scripts`; clean/CI-style with `npm ci --ignore-scripts`. Don't run lifecycle scripts unless the user asks.
 - If dep metadata changes, refresh `package-lock.json` with `npm install --package-lock-only --ignore-scripts`.

@@ -25,7 +25,8 @@ function runSyncVersions(root) {
 	});
 }
 
-test("synchronizes private dependencies without touching registry aliases, generated manifests, or published lockstep", async () => {
+// #10865: caret ranges allowed older agents to install incompatible newer workspace dependencies.
+test("pins published and private dependencies without touching registry aliases, generated manifests, or published lockstep", async () => {
 	const root = await mkdtemp(join(tmpdir(), "pi-sync-versions-"));
 	try {
 		await writeManifest(root, "packages/ai", {
@@ -35,6 +36,15 @@ test("synchronizes private dependencies without touching registry aliases, gener
 		await writeManifest(root, "packages/coding-agent", {
 			name: "@punch-bot/cli",
 			version: "2.0.0",
+			dependencies: {
+				"@punch-bot/ai": "^2.0.0",
+			},
+			devDependencies: {
+				"@punch-bot/ai": "~1.0.0",
+			},
+			optionalDependencies: {
+				"@punch-bot/ai": "1.0.0",
+			},
 		});
 		await writeManifest(root, "packages/private-app", {
 			name: "@punch-bot/private-app",
@@ -57,11 +67,19 @@ test("synchronizes private dependencies without touching registry aliases, gener
 		const result = runSyncVersions(root);
 		assert.equal(result.status, 0, result.stderr);
 
+		const agentManifest = await readManifest(root, "packages/coding-agent");
+		for (const section of ["dependencies", "devDependencies", "optionalDependencies"]) {
+			assert.equal(agentManifest[section]["@punch-bot/ai"], "2.0.0");
+		}
 		const privateManifest = await readManifest(root, "packages/private-app");
-		assert.equal(privateManifest.dependencies["@punch-bot/cli"], "^2.0.0");
+		assert.equal(privateManifest.dependencies["@punch-bot/cli"], "2.0.0");
 		assert.equal(privateManifest.dependencies["@mariozechner/pi-ai"], "npm:@punch-bot/ai@1.0.0");
 		const generatedManifest = await readManifest(root, "packages/coding-agent/install-lock");
 		assert.equal(generatedManifest.dependencies["@punch-bot/cli"], "^1.0.0");
+
+		const alreadySynced = runSyncVersions(root);
+		assert.equal(alreadySynced.status, 0, alreadySynced.stderr);
+		assert.match(alreadySynced.stdout, /All inter-package dependencies are already in sync/);
 
 		await writeManifest(root, "packages/ai", {
 			name: "@punch-bot/ai",

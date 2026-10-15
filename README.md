@@ -18,9 +18,6 @@ CLI docs: [packages/coding-agent/README.md](packages/coding-agent/README.md).
 | **[@punch-bot/agent](packages/agent)** | `packages/agent` | Agent runtime with tool calling and state management |
 | **[@punch-bot/ai](packages/ai)** | `packages/ai` | Unified multi-provider LLM API |
 | **[@punch-bot/telemetry](packages/telemetry)** | `packages/telemetry` | Vendor-neutral telemetry contracts and reference adapter |
-| **[@punch-bot/protocol](packages/protocol)** | `packages/protocol` | Session protocol schemas, CBOR encoding, and framing |
-| **[@punch-bot/client](packages/client)** | `packages/client` | Transport-neutral client for remote sessions |
-| **[@punch-bot/server](packages/server)** | `packages/server` | Experimental session server |
 | **[@punch-bot/env](packages/env)** | `packages/env` | SSH remote execution environments and daemon |
 | **[@punch-bot/sqlite-node](packages/session-backends/sqlite-node)** | `packages/session-backends/sqlite-node` | Node SQLite session backend for `@punch-bot/agent` |
 
@@ -120,7 +117,7 @@ The source archive includes the generated provider model data used for that rele
 
 Treat npm dependency changes as reviewed code.
 
-- Direct external dependencies are pinned to exact versions. Internal workspace packages remain version-ranged.
+- Direct registry dependencies, including internal workspace packages, are pinned to exact versions.
 - `.npmrc` sets `save-exact=true` and `min-release-age=2` to avoid same-day dependency releases during npm resolution.
 - `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1` is set.
 - `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap and install lock.

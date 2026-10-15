@@ -13,7 +13,6 @@ const internalPackagePrefix = "@punch-bot/";
 const internalPackageNames = new Set(["@punch-bot/chord"]);
 const allowedInstallScriptPackages = new Map([
 	["@google/genai@2.21.0", "preinstall is a no-op in the published package"],
-	["esbuild@0.28.2", "postinstall selects and verifies the platform-specific esbuild binary"],
 	["protobufjs@7.6.5", "postinstall only warns about protobufjs version scheme mismatches"],
 	["fsevents@2.3.2", "optional macOS dep of playwright-core; install script is a no-op on other platforms"],
 ]);
