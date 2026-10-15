@@ -13,7 +13,6 @@ In:
 - Contents and ranking of /model, thinking level selection.
 
 Not here:
-- How the model selector is drawn: tui.
 - Wire format and request contents: providers.
 
 Examples: #9566, #9884, #10160, #9099, #10236, #10552, #8810, #10507.

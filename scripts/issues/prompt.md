@@ -12,7 +12,7 @@ Work in this order:
 3. Pick exactly one category, using the category definitions:
    - MCP, codemode/tool_search, and durable/new-harness issues always go to those categories, whatever the symptom.
    - Otherwise pick the component that behaves wrongly, or that must change for a feature request, based on the described behavior.
-   - Something shown wrongly (layout, colors, flicker) is tui. Wrong information shown (wrong models listed, wrong cost) belongs to the subsystem owning that information.
+   - Punch is headless (print, JSON, and RPC modes). Malformed mode output goes to cli; wrong information in the output (wrong models listed, wrong cost) belongs to the subsystem owning that information.
    - Specific beats general: compaction over agent-loop, tools over agent-loop, models over providers for metadata and selection, extensions over sdk when the API is used from an extension.
    - Documentation issues go to the category of the documented subsystem.
    - If torn between two, pick one, set confidence to low, and name the other as alternative.

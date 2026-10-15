@@ -12,7 +12,6 @@ In:
 - Images in tool results (resizing, limits).
 
 Not here:
-- How tool calls are rendered: tui.
 - MCP tools: mcp.
 - Codemode and tool_search: codemode.
 
