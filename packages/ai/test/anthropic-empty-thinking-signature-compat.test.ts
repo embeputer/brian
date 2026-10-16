@@ -19,7 +19,7 @@ class PayloadCaptured extends Error {
 function makeModel(allowEmptySignature?: boolean): Model<"anthropic-messages"> {
 	return {
 		id: "mimo-v2.6-pro",
-		name: "MiMo-V2.5-Pro",
+		name: "MiMo-V2.6-Pro",
 		api: "anthropic-messages",
 		provider: "xiaomi-token-plan-ams",
 		baseUrl: "http://127.0.0.1:9/anthropic",
