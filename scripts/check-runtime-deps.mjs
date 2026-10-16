@@ -54,8 +54,6 @@ function checkSource(source, pkg) {
 				const path = relative(resolve(directory, "src"), targetPath);
 				if (path.startsWith("..") || isAbsolute(path) || !existsSync(targetPath)) {
 					failures.push(`${file}: package import target ${target} must name an existing file inside src`);
-				} else {
-					checkSource(pkg.importTargetSource(targetPath), pkg);
 				}
 			} else {
 				checkRuntimeSpecifier(target, node, seen);
@@ -179,26 +177,30 @@ try {
 	const snapshot = api.updateSnapshot({ openProjects: [...syntheticConfigs.keys(), ...packages.map(({ configPath }) => configPath)] });
 	for (const { directory, sourceDirectory, manifest, configPath, importTargetsConfigPath } of packages) {
 		const project = snapshot.getProject(configPath);
-		const importTargetsProgram = importTargetsConfigPath ? snapshot.getProject(importTargetsConfigPath).program : undefined;
-		const pkg = {
-			manifest,
-			directory,
-			checkedSources: new Set(),
-			importTargetSource: (path) => importTargetsProgram.getSourceFile(path),
-		};
+		const pkg = { manifest, directory, checkedSources: new Set() };
 		const diagnostics = project.program.getConfigFileParsingDiagnostics();
 		if (diagnostics.length > 0) throw new Error(diagnostics.map((diagnostic) => diagnostic.text).join("\n"));
 		const roots = new Set(project.rootFiles.map((file) => resolve(file)));
-		for (const fileName of project.program.getSourceFileNames()) {
-			if (/\.d\.[cm]?ts$/.test(fileName) || fileName.endsWith(".json")) continue;
+		const isPackageSource = (fileName) => {
+			if (/\.d\.[cm]?ts$/.test(fileName) || fileName.endsWith(".json")) return false;
 			const path = relative(sourceDirectory, resolve(fileName));
-			if (path.startsWith("..") || isAbsolute(path)) continue;
+			return !path.startsWith("..") && !isAbsolute(path);
+		};
+		for (const fileName of project.program.getSourceFileNames()) {
+			if (!isPackageSource(fileName)) continue;
 			// TypeScript's exclude only filters roots: imports can pull excluded files
 			// back into the build. Reject that too, including type-only imports.
 			if (!roots.has(resolve(fileName))) {
 				failures.push(`${fileName} is excluded from ${manifest.name}'s build but imported by it`);
 			}
 			checkSource(project.program.getSourceFile(fileName), pkg);
+		}
+		// Package import targets and the local files they import are published even when the build skips them.
+		if (importTargetsConfigPath) {
+			const importTargetsProgram = snapshot.getProject(importTargetsConfigPath).program;
+			for (const fileName of importTargetsProgram.getSourceFileNames()) {
+				if (isPackageSource(fileName)) checkSource(importTargetsProgram.getSourceFile(fileName), pkg);
+			}
 		}
 	}
 } finally {

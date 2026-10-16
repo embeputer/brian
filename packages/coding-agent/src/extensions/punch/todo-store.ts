@@ -79,6 +79,7 @@ export class TodoStore {
 		}
 		const row = this.#db.prepare("SELECT next_id FROM todo_states WHERE session_id = ?").get(sessionId) as
 			| { next_id: number }
+			| null
 			| undefined;
 		if (!row) return { todos: [], nextId: 1, log: [] };
 		const items = this.#db

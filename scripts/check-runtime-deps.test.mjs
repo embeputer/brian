@@ -99,6 +99,16 @@ test("inspects local package import wrappers excluded from TypeScript roots", as
 	assert.doesNotMatch(result.stderr, /: declared is not declared/);
 });
 
+test("inspects local files imported by package import wrappers", async (t) => {
+	const result = await check(t, { imports: { "#driver": "./src/driver.mjs" } }, 'import "#driver";', {
+		"packages/example/tsconfig.build.json": JSON.stringify({ include: ["src/**/*.ts"] }),
+		"packages/example/src/driver.mjs": 'export * from "./helper.mjs";',
+		"packages/example/src/helper.mjs": 'import "undeclared-helper-dep";',
+	});
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /src[\\/]helper\.mjs:1: undeclared-helper-dep is not declared/);
+});
+
 test("rejects dev-only dependencies, side-effect imports, mixed exports, and literal runtime loads", async (t) => {
 	const result = await check(t, { devDependencies: { dev: "1.0.0" } }, `
 import "dev";

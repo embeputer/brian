@@ -2,7 +2,8 @@
 // Driver changes must be checked with both Node and a compiled Bun smoke test.
 interface Statement {
 	run(...params: Array<string | number>): unknown;
-	get(...params: Array<string | number>): Record<string, unknown> | undefined;
+	// node:sqlite returns undefined for no row; bun:sqlite returns null.
+	get(...params: Array<string | number>): Record<string, unknown> | null | undefined;
 	all(...params: Array<string | number>): Array<Record<string, unknown>>;
 }
 
