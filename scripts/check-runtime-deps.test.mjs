@@ -148,6 +148,12 @@ test("ignores tests, declarations, and private packages", async (t) => {
 	const result = await check(t, {}, "", {
 		"packages/example/test/test.ts": 'import "test-only";',
 		"packages/example/src/index.d.ts": 'import "declaration-only";',
+		"packages/example/tsconfig.build.json": JSON.stringify({
+			include: ["src/**/*.ts"],
+			compilerOptions: { module: "nodenext", moduleResolution: "nodenext" },
+		}),
+		"packages/example/src/driver.d.mts": 'import "module-declaration-only"; export interface Driver {}',
+		"packages/example/src/index.ts": 'export type { Driver } from "./driver.mjs";',
 		"packages/private/package.json": JSON.stringify({ name: "private", private: true }),
 		"packages/private/src/index.ts": 'import "private-only";',
 	});

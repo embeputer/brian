@@ -190,7 +190,7 @@ try {
 		if (diagnostics.length > 0) throw new Error(diagnostics.map((diagnostic) => diagnostic.text).join("\n"));
 		const roots = new Set(project.rootFiles.map((file) => resolve(file)));
 		for (const fileName of project.program.getSourceFileNames()) {
-			if (fileName.endsWith(".d.ts") || fileName.endsWith(".json")) continue;
+			if (/\.d\.[cm]?ts$/.test(fileName) || fileName.endsWith(".json")) continue;
 			const path = relative(sourceDirectory, resolve(fileName));
 			if (path.startsWith("..") || isAbsolute(path)) continue;
 			// TypeScript's exclude only filters roots: imports can pull excluded files
