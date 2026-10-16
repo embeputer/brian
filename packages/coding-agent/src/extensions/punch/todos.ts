@@ -17,6 +17,11 @@ export interface TodoItem {
 	createdAt: number;
 }
 
+/** `todo` tool result details, so RPC clients can render the list from `tool_execution_end` events. */
+export interface TodoToolDetails {
+	todos: Array<Pick<TodoItem, "id" | "text" | "done">>;
+}
+
 export interface TodoLogEntry {
 	at: number;
 	summary: string;
@@ -299,7 +304,10 @@ export function installTodos(pi: ExtensionAPI, store: TodoStore): void {
 			}
 			const changes = formatRecentChanges(result.state);
 			const text = changes ? `${result.text}\n\n${changes}` : result.text;
-			return { content: [{ type: "text", text }], details: {} };
+			const details: TodoToolDetails = {
+				todos: result.state.todos.map(({ id, text, done }) => ({ id, text, done })),
+			};
+			return { content: [{ type: "text", text }], details };
 		},
 	});
 }

@@ -2,6 +2,14 @@
 
 The Punch `todo` tool stores ordered tasks in `todos.sqlite` under `PI_DATA_DIR`, or under the user agent directory when `PI_DATA_DIR` is unset. Each task list belongs to one core session ID and the original working directory recorded in its session header. Resuming with a working directory override keeps the same list. A new session starts with an empty list. Sessions without persistence keep their tasks in memory. The context hook reads that session's current list before model requests.
 
+Every `todo` tool result carries the session's full list after the action in `details.todos`, in plan order. RPC clients can read it from the `tool_execution_end` event's `result.details` without polling the HTTP API:
+
+```json
+{ "todos": [{ "id": 1, "text": "Write tests", "done": true }, { "id": 2, "text": "Ship", "done": false }] }
+```
+
+A failed action, such as toggling a missing ID, ends with `isError: true` and empty `details`; keep the last list you received.
+
 The embedded Punch HTTP server provides authenticated task access:
 
 | Method | Path | Result |

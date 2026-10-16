@@ -643,6 +643,39 @@ describe("installTodos", () => {
 		expect(store.load("session-one").todos.map((todo) => todo.text)).toEqual(["step one", "step two"]);
 	});
 
+	it("returns the current list in tool result details", async () => {
+		const { todoTool, ctx } = setup();
+		const run = (callId: string, args: Record<string, unknown>) =>
+			todoTool?.execute?.(callId, args, undefined, undefined, ctx);
+		expect((await run("call-0", { action: "list" }))?.details).toEqual({ todos: [] });
+		await run("call-1", { action: "add", text: "step one" });
+		await run("call-2", { action: "add", text: "step two" });
+		await run("call-3", { action: "toggle", id: 1 });
+		const split = await run("call-4", { action: "split", id: 2, parts: ["part a", "part b"] });
+		expect(split?.details).toEqual({
+			todos: [
+				{ id: 1, text: "step one", done: true },
+				{ id: 3, text: "part a", done: false },
+				{ id: 4, text: "part b", done: false },
+			],
+		});
+		expect((await run("call-5", { action: "list" }))?.details).toEqual(split?.details);
+		expect((await run("call-6", { action: "clear" }))?.details).toEqual({ todos: [] });
+	});
+
+	it("returns ephemeral session lists in tool result details", async () => {
+		const { todoTool, ctx, setSessionFile } = setup();
+		setSessionFile(undefined);
+		const result = await todoTool?.execute?.(
+			"call-1",
+			{ action: "add", text: "temporary" },
+			undefined,
+			undefined,
+			ctx,
+		);
+		expect(result?.details).toEqual({ todos: [{ id: 1, text: "temporary", done: false }] });
+	});
+
 	it("keeps tasks and reset protection when resuming with a cwd override", async () => {
 		const originalCwd = join(dir, "original");
 		const movedCwd = join(dir, "moved");
