@@ -2,9 +2,19 @@
 
 ## [Unreleased]
 
+### New Features
+
+- **Punch todos per session**: the Punch `todo` tool keeps each core session's plan in SQLite instead of one shared `todos.json`, and every result returns the current list in `details.todos` for RPC clients. See [Punch todos](docs/punch-todos.md).
+
 ### Added
 
 - Changing the thinking level mid-session on OpenAI GPT-6 models (API key) now keeps the prompt cache ([#10853](https://github.com/earendil-works/pi/issues/10853))
+- Added authenticated `GET` and `DELETE /todos/{sessionId}` endpoints to the Punch HTTP server for reading or discarding a session's todo list ([#32](https://github.com/punch-bot/core/pull/32))
+- Added the current list to Punch `todo` tool results as `details.todos` (`id`, `text`, `done`), so RPC clients can render it from `tool_execution_end` events ([#32](https://github.com/punch-bot/core/pull/32))
+
+### Changed
+
+- Changed Punch todos to persist per core session in `todos.sqlite` (`node:sqlite` on Node, `bun:sqlite` in the Bun binary); ephemeral sessions keep todos in memory, and an existing `todos.json` imports once into the first persistent session without stored tasks ([#32](https://github.com/punch-bot/core/pull/32))
 
 ### Fixed
 
@@ -14,6 +24,7 @@
 - Fixed repeated codemode timeouts or aborts accumulating surviving workers; admission now limits live workers to two across sessions, counting cancelled workers until actual exit ([#10748](https://github.com/earendil-works/pi/issues/10748))
 - Fixed `read` line-range labels for numeric-string or null arguments in the TUI, session tree, HTML exports, and examples ([#9887](https://github.com/earendil-works/pi/issues/9887))
 - Fixed prompt templates dropping empty quoted arguments (`""` or `''`), which shifted later positional arguments and prevented positional defaults from applying ([#10867](https://github.com/earendil-works/pi/issues/10867))
+- Fixed the Xiaomi providers' default model pointing at the removed `mimo-v2.5-pro`; it is now `mimo-v2.6-pro`
 
 ## [1.2.0] - 2026-10-12
 
