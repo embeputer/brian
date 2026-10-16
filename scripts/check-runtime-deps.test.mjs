@@ -54,6 +54,61 @@ export { type OtherType } from "export-inline-type-only";
 	assert.equal(result.status, 0, result.stderr);
 });
 
+test("accepts declared package imports and rejects undeclared ones", async (t) => {
+	const result = await check(t, { imports: { "#driver": "./src/driver.ts" } }, 'import "#driver"; import "#missing";', {
+		"packages/example/src/driver.ts": "export {};",
+	});
+	assert.equal(result.status, 1);
+	assert.doesNotMatch(result.stderr, /#driver is not declared/);
+	assert.match(result.stderr, /#missing is not declared/);
+});
+
+test("checks external dependencies behind conditional package imports", async (t) => {
+	const result = await check(t, {
+		imports: { "#driver": { types: "type-only", node: "declared/subpath", default: "undeclared/subpath" } },
+		dependencies: { declared: "1.0.0" },
+	}, 'import "#driver";');
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /undeclared\/subpath is not declared/);
+	assert.doesNotMatch(result.stderr, /type-only is not declared/);
+});
+
+test("rejects package imports pointing outside src or to a missing file", async (t) => {
+	const result = await check(t, {
+		imports: { "#outside": "./runtime.mjs", "#missing": "./src/missing.mjs" },
+	}, 'import "#outside"; import "#missing";', {
+		"packages/example/runtime.mjs": "export {};",
+	});
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /package import target \.\/runtime\.mjs must name an existing file inside src/);
+	assert.match(result.stderr, /package import target \.\/src\/missing\.mjs must name an existing file inside src/);
+});
+
+test("inspects local package import wrappers excluded from TypeScript roots", async (t) => {
+	const result = await check(t, {
+		imports: { "#driver": { bun: "./src/bun-driver.mjs", default: "./src/node-driver.mjs" } },
+		dependencies: { declared: "1.0.0" },
+	}, 'import "#driver";', {
+		"packages/example/tsconfig.build.json": JSON.stringify({ include: ["src/**/*.ts"] }),
+		"packages/example/src/bun-driver.mjs": 'export { Database } from "bun:sqlite"; import "undeclared";',
+		"packages/example/src/node-driver.mjs": 'export { DatabaseSync } from "node:sqlite"; import "declared";',
+	});
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /src[\\/]bun-driver\.mjs:1: undeclared is not declared/);
+	assert.doesNotMatch(result.stderr, /bun:sqlite is not declared/);
+	assert.doesNotMatch(result.stderr, /: declared is not declared/);
+});
+
+test("inspects local files imported by package import wrappers", async (t) => {
+	const result = await check(t, { imports: { "#driver": "./src/driver.mjs" } }, 'import "#driver";', {
+		"packages/example/tsconfig.build.json": JSON.stringify({ include: ["src/**/*.ts"] }),
+		"packages/example/src/driver.mjs": 'export * from "./helper.mjs";',
+		"packages/example/src/helper.mjs": 'import "undeclared-helper-dep";',
+	});
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /src[\\/]helper\.mjs:1: undeclared-helper-dep is not declared/);
+});
+
 test("rejects dev-only dependencies, side-effect imports, mixed exports, and literal runtime loads", async (t) => {
 	const result = await check(t, { devDependencies: { dev: "1.0.0" } }, `
 import "dev";
@@ -103,6 +158,12 @@ test("ignores tests, declarations, and private packages", async (t) => {
 	const result = await check(t, {}, "", {
 		"packages/example/test/test.ts": 'import "test-only";',
 		"packages/example/src/index.d.ts": 'import "declaration-only";',
+		"packages/example/tsconfig.build.json": JSON.stringify({
+			include: ["src/**/*.ts"],
+			compilerOptions: { module: "nodenext", moduleResolution: "nodenext" },
+		}),
+		"packages/example/src/driver.d.mts": 'import "module-declaration-only"; export interface Driver {}',
+		"packages/example/src/index.ts": 'export type { Driver } from "./driver.mjs";',
 		"packages/private/package.json": JSON.stringify({ name: "private", private: true }),
 		"packages/private/src/index.ts": 'import "private-only";',
 	});
