@@ -273,21 +273,13 @@ describe("createAgentSession with virtual models", () => {
 	});
 
 	/** Resume a transcript where the virtual model was selected and the large model answered. */
-	async function resume(runtime: ModelRuntime, model?: Model<string>, strictModelSelection?: boolean) {
+	async function resume(runtime: ModelRuntime, model?: Model<string>) {
 		const sessionManager = SessionManager.inMemory(tempDir);
 		sessionManager.appendModelChange("router", "auto");
 		sessionManager.appendMessage({ role: "user", content: "hi", timestamp: 1 });
 		sessionManager.appendMessage(assistantFrom(runtime.getModel("faux", "large")!, "hello"));
 		const resourceLoader = createTestResourceLoader();
-		const options = {
-			cwd: tempDir,
-			agentDir: tempDir,
-			modelRuntime: runtime,
-			sessionManager,
-			resourceLoader,
-			model,
-			strictModelSelection,
-		};
+		const options = { cwd: tempDir, agentDir: tempDir, modelRuntime: runtime, sessionManager, resourceLoader, model };
 		const { session } = await createAgentSession(options);
 		onTestFinished(() => session.dispose());
 		return { session, sessionManager };
@@ -324,24 +316,17 @@ describe("createAgentSession with virtual models", () => {
 		expect(session.model).toMatchObject({ provider: "late", id: "auto" });
 	});
 
-	it("fails strict resume when the virtual model is not registered", async () => {
+	it("falls back to the physical model when the virtual model is not registered", async () => {
 		const { runtime } = await createRuntime();
 		runtime.unregisterVirtualModel("router", "auto");
 
-		await expect(resume(runtime)).rejects.toThrow("Could not restore model router/auto: model not found");
-	});
-
-	it("falls back to the physical model when the virtual model is not registered and selection is not strict", async () => {
-		const { runtime } = await createRuntime();
-		runtime.unregisterVirtualModel("router", "auto");
-
-		const { session } = await resume(runtime, undefined, false);
+		const { session } = await resume(runtime);
 
 		expect(session.model).toMatchObject({ provider: "faux", id: "large" });
 		expect(session.routedModel).toBeUndefined();
 	});
 
-	it("falls back to the last physical response when the transcript ends with a routing failure and selection is not strict", async () => {
+	it("falls back to the last physical response when the transcript ends with a routing failure", async () => {
 		const { runtime, virtual } = await createRuntime();
 		const sessionManager = SessionManager.inMemory(tempDir);
 		sessionManager.appendModelChange("router", "auto");
@@ -361,7 +346,6 @@ describe("createAgentSession with virtual models", () => {
 			modelRuntime: runtime,
 			sessionManager,
 			resourceLoader: createTestResourceLoader(),
-			strictModelSelection: false,
 		});
 		onTestFinished(() => session.dispose());
 
@@ -440,7 +424,7 @@ describe("createAgentSession with virtual models", () => {
 		expect(modelChanges()).toBe(initial);
 	});
 
-	it("records an explicit model override when the session opens", async () => {
+	it("records an explicit model override on resume with the next prompt", async () => {
 		const { runtime, faux } = await createRuntime();
 		faux.setResponses([fauxAssistantMessage("ok")]);
 		const lastModelChange = () =>
@@ -450,8 +434,8 @@ describe("createAgentSession with virtual models", () => {
 				.at(-1);
 
 		const { session, sessionManager } = await resume(runtime, runtime.getModel("faux", "small"));
-		// Opening the session records the override, so a later strict restore does not fail on the older selection.
-		expect(lastModelChange()).toMatchObject({ provider: "faux", modelId: "small" });
+		// Opening the session does not write to it.
+		expect(lastModelChange()).toMatchObject({ provider: "router", modelId: "auto" });
 
 		await session.prompt("again");
 		expect(lastModelChange()).toMatchObject({ provider: "faux", modelId: "small" });

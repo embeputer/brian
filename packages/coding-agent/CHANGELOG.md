@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- Removed the `strictModelSelection` option from `createAgentSession()` and `createAgentSessionFromServices()`. A restored session or saved default whose model is gone falls back to an available model again, and `modelFallbackMessage` names both models
+
 ### New Features
 
 - **Punch todos per session**: the Punch `todo` tool keeps each core session's plan in SQLite instead of one shared `todos.json`, and every result returns the current list in `details.todos` for RPC clients. See [Punch todos](docs/punch-todos.md).
@@ -15,11 +19,14 @@
 ### Changed
 
 - Changed Punch todos to persist per core session in `todos.sqlite` (`node:sqlite` on Node, `bun:sqlite` in the Bun binary); ephemeral sessions keep todos in memory, and an existing `todos.json` imports once into the first persistent session without stored tasks ([#32](https://github.com/punch-bot/core/pull/32))
+- Changed `--model`, `--models`, and `enabledModels` back to pi's partial matching. A partial match prints a warning naming the selected model; among partial matches a base ID beats its catalog variants (`gemini-2.5-pro` selects `google/gemini-2.5-pro`, not `:batch`), and an ID ending in the typed text beats one continuing it (`sonnet-5` selects `claude-sonnet-5`, not `claude-sonnet-5.5`). An explicit `--models` entry that matches nothing warns instead of failing startup. RPC `set_model` and `resolve_model` stay exact
+- Changed startup to warn when a saved default or restored session model is unavailable, naming the model used instead
 
 ### Fixed
 
 - Fixed the Xiaomi providers' default model pointing at the removed `mimo-v2.5-pro`; it is now `mimo-v2.6-pro`
-- Fixed OpenRouter routing suffixes (`:exacto`, `:floor`, `:nitro`, `:online`) on catalog model IDs failing with "Model not found" in `--model`, RPC `set_model`, saved defaults, and restored sessions. Unknown suffixes and unknown base IDs still fail
+- Fixed the published `pi` bin failing under Bun with `Could not resolve: "node:sqlite"`; the bundle now selects `bun:sqlite` or `node:sqlite` at runtime
+- Fixed suffix variants that the catalog does not list, such as OpenRouter's routing variants (`openai/gpt-6.1-sol:nitro`, `:floor:exacto`), failing with "Model not found" in `--model`, RPC `set_model`, saved defaults, and restored sessions. They use the base catalog model's limits and prices; a thinking level is never treated as a variant suffix
 
 ## [1.2.0] - 2026-10-12
 
