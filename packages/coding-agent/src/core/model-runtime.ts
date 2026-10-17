@@ -71,6 +71,7 @@ import { operationSignal, raceWithAbortSignal } from "../utils/abort.ts";
 import { AuthStorage as DefaultAuthStorage } from "./auth-storage.ts";
 import { ModelConfig } from "./model-config.ts";
 import { FileModelsStore, InMemoryCodingAgentModelsStore } from "./models-store.ts";
+import { resolveOpenRouterRoutingVariant } from "./openrouter-routing.ts";
 import {
 	type AuthStatus,
 	type CompatibilityRequestConfig,
@@ -450,8 +451,12 @@ export class ModelRuntime implements Models {
 		return this.models.getModels(providerId);
 	}
 
+	/** Find a catalog model by exact ID. OpenRouter IDs may carry routing suffixes such as ":floor". */
 	getModel(providerId: string, modelId: string): Model<Api> | undefined {
-		return this.models.getModel(providerId, modelId);
+		return (
+			this.models.getModel(providerId, modelId) ??
+			resolveOpenRouterRoutingVariant(providerId, modelId, (baseId) => this.models.getModel(providerId, baseId))
+		);
 	}
 
 	getModelsOfType<TType extends ModelType>(type: TType, providerId?: string): readonly ModelTypeMap[TType][] {
@@ -1035,7 +1040,7 @@ export class ModelRuntime implements Models {
 
 	/** A catalog chat model that is not virtual. */
 	getPhysicalModel(providerId: string, modelId: string): Model<Api> | undefined {
-		const model = this.models.getModel(providerId, modelId);
+		const model = this.getModel(providerId, modelId);
 		return model && !isVirtualModel(model) ? model : undefined;
 	}
 }

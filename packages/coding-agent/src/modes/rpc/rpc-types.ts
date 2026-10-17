@@ -32,6 +32,7 @@ export type RpcCommand =
 
 	// Model
 	| { id?: string; type: "set_model"; provider: string; modelId: string }
+	| { id?: string; type: "resolve_model"; provider: string; modelId: string }
 	| { id?: string; type: "cycle_model" }
 	| { id?: string; type: "get_available_models" }
 
@@ -146,6 +147,13 @@ export type RpcResponse =
 			id?: string;
 			type: "response";
 			command: "set_model";
+			success: true;
+			data: Model<any>;
+	  }
+	| {
+			id?: string;
+			type: "response";
+			command: "resolve_model";
 			success: true;
 			data: Model<any>;
 	  }

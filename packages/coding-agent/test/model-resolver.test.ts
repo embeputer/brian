@@ -13,10 +13,11 @@ import {
 	findInitialModel,
 	resolveCliModel,
 	resolveModelScopeWithDiagnostics,
+	restoreModelFromSession,
 } from "../src/core/model-resolver.ts";
 import { SessionManager } from "../src/core/session-manager.ts";
 import { SettingsManager } from "../src/core/settings-manager.ts";
-import { createModelRegistry, getModelRuntime } from "./model-runtime-test-utils.ts";
+import { createInMemoryModelRegistry, createModelRegistry, getModelRuntime } from "./model-runtime-test-utils.ts";
 import { createTestResourceLoader } from "./utilities.ts";
 
 // Mock models for testing
@@ -165,6 +166,136 @@ describe("resolveCliModel", () => {
 		expect(result.error).toBe(
 			'Model "gpt-5.6-sol" is ambiguous: azure/gpt-5.6-sol, openai/gpt-5.6-sol. Use --provider or provider/model.',
 		);
+	});
+});
+
+describe("OpenRouter routing suffixes", () => {
+	const base = withId("vendor/base", "openrouter");
+	const free = withId("vendor/base:free", "openrouter");
+	const literalOnline = withId("vendor/other:online", "openrouter");
+	const gateway = withId("vendor/base", "vercel-ai-gateway");
+	const modelRuntime = runtimeFor([...allModels, base, free, literalOnline, gateway]);
+	const resolve = (cliModel: string, cliProvider?: string) => resolveCliModel({ cliProvider, cliModel, modelRuntime });
+
+	test("resolves an allowed suffix on a catalog model to a copy with the suffixed ID", () => {
+		for (const result of [resolve("openrouter/vendor/base:floor"), resolve("vendor/base:floor", "openrouter")]) {
+			expect(result.error).toBeUndefined();
+			expect(result.model).toEqual({ ...base, id: "vendor/base:floor", name: "vendor/base (floor)" });
+		}
+		for (const suffix of ["nitro", "online", "exacto"]) {
+			expect(resolve(`openrouter/vendor/base:${suffix}`).model?.id).toBe(`vendor/base:${suffix}`);
+		}
+		expect(resolve("openrouter/vendor/base:nitro:exacto").model).toMatchObject({
+			id: "vendor/base:nitro:exacto",
+			name: "vendor/base (nitro, exacto)",
+		});
+	});
+
+	test("rejects unknown, repeated, or differently cased suffixes", () => {
+		for (const cliModel of [
+			"openrouter/vendor/base:turbo",
+			"openrouter/vendor/base:floor:floor",
+			"openrouter/vendor/base:FLOOR",
+			"openrouter/vendor/base:",
+			"openrouter/vendor/base:floor:turbo",
+		]) {
+			expect(resolve(cliModel)).toMatchObject({
+				model: undefined,
+				error: `Model "${cliModel}" not found. Use --list-models or define the exact model in models.json.`,
+			});
+		}
+	});
+
+	test("rejects an allowed suffix on an unknown or near-miss base", () => {
+		for (const cliModel of [
+			"openrouter/vendor/missing:floor",
+			"openrouter/vendor/bas:floor",
+			"openrouter/vendor:floor",
+		]) {
+			expect(resolve(cliModel).model).toBeUndefined();
+			expect(resolve(cliModel).error).toContain("not found");
+		}
+	});
+
+	test("resolves catalog variants and literal suffixed IDs exactly", () => {
+		expect(resolve("openrouter/vendor/base:free").model).toBe(free);
+		expect(resolve("openrouter/vendor/other:online").model).toBe(literalOnline);
+		expect(resolve("openrouter/qwen/qwen3-coder:exacto").model).toBe(mockOpenRouterModels[0]);
+		expect(resolve("openrouter/vendor/base:free:nitro").model).toMatchObject({
+			id: "vendor/base:free:nitro",
+			cost: free.cost,
+		});
+	});
+
+	test("parses one thinking suffix after routing suffixes", () => {
+		expect(resolve("openrouter/vendor/base:floor:high")).toMatchObject({
+			model: { id: "vendor/base:floor" },
+			thinkingLevel: "high",
+		});
+		expect(resolve("openrouter/vendor/base:high")).toMatchObject({ model: base, thinkingLevel: "high" });
+		expect(resolve("openrouter/vendor/base:high:floor").model).toBeUndefined();
+	});
+
+	test("does not apply routing suffixes to other providers", () => {
+		expect(resolve("openai/gpt-4o:floor").model).toBeUndefined();
+		expect(resolve("gpt-4o:nitro", "openai").model).toBeUndefined();
+		expect(resolve("vercel-ai-gateway/vendor/base:floor").model).toBeUndefined();
+		// Without a provider, only the OpenRouter base can take the suffix.
+		expect(resolve("vendor/base:floor").model).toMatchObject({ provider: "openrouter", id: "vendor/base:floor" });
+	});
+
+	test("accepts a suffixed scope entry when its base is available", async () => {
+		const result = await resolveModelScopeWithDiagnostics(
+			["openrouter/vendor/base:nitro", "openrouter/vendor/base:turbo"],
+			runtimeFor([base, gateway], [base]),
+		);
+		expect(result.scopedModels.map((scoped) => scoped.model.id)).toEqual(["vendor/base:nitro"]);
+		expect(result.diagnostics).toHaveLength(1);
+	});
+
+	describe("model runtime lookups", () => {
+		const builtinBase = getBuiltinModels("openrouter").find((model) => !model.id.includes(":"))!;
+
+		async function createRuntime() {
+			const authStorage = AuthStorage.inMemory({ openrouter: { type: "api_key", key: "test-key" } });
+			return getModelRuntime(await createInMemoryModelRegistry(authStorage));
+		}
+
+		test("getModel resolves routing suffixes for saved defaults and restored sessions", async () => {
+			const runtime = await createRuntime();
+			const suffixedId = `${builtinBase.id}:floor`;
+			expect(runtime.getModel("openrouter", suffixedId)).toMatchObject({
+				provider: "openrouter",
+				id: suffixedId,
+				contextWindow: builtinBase.contextWindow,
+			});
+			expect(runtime.getModel("openrouter", `${builtinBase.id}:turbo`)).toBeUndefined();
+
+			const initial = await findInitialModel({
+				scopedModels: [],
+				isContinuing: false,
+				defaultProvider: "openrouter",
+				defaultModelId: suffixedId,
+				modelRuntime: runtime,
+			});
+			expect(initial.model?.id).toBe(suffixedId);
+
+			const restored = await restoreModelFromSession("openrouter", suffixedId, undefined, false, runtime);
+			expect(restored).toEqual({ model: expect.objectContaining({ id: suffixedId }), fallbackMessage: undefined });
+		});
+
+		test("a saved default with an unknown suffix still fails", async () => {
+			const runtime = await createRuntime();
+			await expect(
+				findInitialModel({
+					scopedModels: [],
+					isContinuing: false,
+					defaultProvider: "openrouter",
+					defaultModelId: `${builtinBase.id}:turbo`,
+					modelRuntime: runtime,
+				}),
+			).rejects.toThrow("model not found");
+		});
 	});
 });
 

@@ -17,6 +17,7 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { Api, Model } from "@punch-bot/ai";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.ts";
 import { deliveryFromMessage } from "../../core/delivery.ts";
 import type {
@@ -25,6 +26,7 @@ import type {
 	ExtensionWidgetOptions,
 	WorkingIndicatorOptions,
 } from "../../core/extensions/index.ts";
+import { resolveOpenRouterRoutingVariant } from "../../core/openrouter-routing.ts";
 import {
 	flushRawStdout,
 	takeOverStdout,
@@ -359,6 +361,13 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 	await rebindSession();
 	registerSignalHandlers();
 
+	// set_model and resolve_model pick an authenticated model by exact ID, plus OpenRouter routing suffixes.
+	const findAvailableModel = (provider: string, modelId: string): Model<Api> | undefined => {
+		const models = session.modelRuntime.getAvailableSnapshot();
+		const find = (id: string) => models.find((m) => m.provider === provider && m.id === id);
+		return find(modelId) ?? resolveOpenRouterRoutingVariant(provider, modelId, find);
+	};
+
 	// Handle a single command
 	const handleCommand = async (command: RpcCommand): Promise<RpcResponse | undefined> => {
 		const id = command.id;
@@ -445,13 +454,20 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 			// =================================================================
 
 			case "set_model": {
-				const models = session.modelRuntime.getAvailableSnapshot();
-				const model = models.find((m) => m.provider === command.provider && m.id === command.modelId);
+				const model = findAvailableModel(command.provider, command.modelId);
 				if (!model) {
 					return error(id, "set_model", `Model not found: ${command.provider}/${command.modelId}`);
 				}
 				await session.setModel(model);
 				return success(id, "set_model", model);
+			}
+
+			case "resolve_model": {
+				const model = findAvailableModel(command.provider, command.modelId);
+				if (!model) {
+					return error(id, "resolve_model", `Model not found: ${command.provider}/${command.modelId}`);
+				}
+				return success(id, "resolve_model", model);
 			}
 
 			case "cycle_model": {

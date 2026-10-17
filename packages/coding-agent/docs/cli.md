@@ -63,7 +63,7 @@ See [Choose a Model](models.md) for model selection and [Providers](providers.md
 - `--provider <name>`<br>
   Selects the provider for `--model`. It requires `--model`. Provider names ignore case only when that leaves a single match.
 - `--model <id>`<br>
-  Selects one exact catalog ID as `provider/id` or with `--provider`. Case is ignored only when that leaves a single match. A bare ID offered by several providers requires a provider. One trailing `:<thinking>` suffix is parsed only when the full string is not a catalog ID.
+  Selects one exact catalog ID as `provider/id` or with `--provider`. Case is ignored only when that leaves a single match. A bare ID offered by several providers requires a provider. For `openrouter`, an exact catalog ID may also carry OpenRouter routing suffixes (`:exacto`, `:floor`, `:nitro`, `:online`), each at most once, for example `openrouter/openai/gpt-6.1-sol:floor`; other suffixes fail. One trailing `:<thinking>` suffix is parsed only when the full string is not a catalog ID, including after routing suffixes (`openrouter/openai/gpt-6.1-sol:floor:high`).
 - `--api-key <key>`<br>
   Uses a non-persistent API-key override. It requires a model selected through `--model` or `--models`. It does not choose between providers that offer the same model.
 - `--thinking <level>`<br>
