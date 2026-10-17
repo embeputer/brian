@@ -209,7 +209,7 @@ Messages are `AgentMessage` objects (see [Message Types](message-types.md)).
 
 ### set_model
 
-Switch to an exact provider and model ID. `modelId` is literal, including service suffixes; use `set_thinking_level` separately. Missing or unavailable IDs return an error and leave the current model selected.
+Switch to an exact provider and model ID. `modelId` is literal, including catalog suffixes such as `:free`; use `set_thinking_level` separately. For `openrouter`, an available catalog ID may also carry OpenRouter routing suffixes (`:exacto`, `:floor`, `:nitro`, `:online`, each at most once, in any order), for example `openai/gpt-6.1-sol:floor`. The selected model is a copy of the base catalog model whose `id` keeps the suffixes, so they reach OpenRouter verbatim, and whose `name` lists them. Missing or unavailable IDs, unknown suffixes, and suffixes on other providers return an error and leave the current model selected.
 
 ```json
 {"type": "set_model", "provider": "anthropic", "modelId": "claude-sonnet-4-20250514"}
@@ -222,6 +222,34 @@ Response contains the full [Model](#model-object) object:
   "command": "set_model",
   "success": true,
   "data": {...}
+}
+```
+
+### resolve_model
+
+Resolve a provider and model ID exactly as `set_model` would, without changing the session's model. Use it to validate a model reference before saving it.
+
+```json
+{"type": "resolve_model", "provider": "openrouter", "modelId": "openai/gpt-6.1-sol:floor"}
+```
+
+Response contains the full [Model](#model-object) object `set_model` would select:
+```json
+{
+  "type": "response",
+  "command": "resolve_model",
+  "success": true,
+  "data": {"provider": "openrouter", "id": "openai/gpt-6.1-sol:floor", "name": "OpenAI: GPT-6.1 Sol (floor)", ...}
+}
+```
+
+A reference `set_model` would reject returns the same error message:
+```json
+{
+  "type": "response",
+  "command": "resolve_model",
+  "success": false,
+  "error": "Model not found: openrouter/openai/gpt-6.1-sol:turbo"
 }
 ```
 
@@ -251,7 +279,7 @@ The `model` field is a full [Model](#model-object) object.
 
 ### get_available_models
 
-List all configured models.
+List all configured models. OpenRouter routing-suffix variants are not listed; use `resolve_model` to check one.
 
 ```json
 {"type": "get_available_models"}

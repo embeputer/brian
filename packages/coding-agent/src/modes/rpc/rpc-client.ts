@@ -262,6 +262,14 @@ export class RpcClient {
 	}
 
 	/**
+	 * Resolve a model reference the way setModel would, without changing the session's model.
+	 */
+	async resolveModel(provider: string, modelId: string): Promise<ModelInfo> {
+		const response = await this.send({ type: "resolve_model", provider, modelId });
+		return this.getData(response);
+	}
+
+	/**
 	 * Cycle to next model.
 	 */
 	async cycleModel(): Promise<{

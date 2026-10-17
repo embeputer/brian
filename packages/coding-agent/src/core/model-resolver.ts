@@ -9,6 +9,7 @@ import { minimatch } from "minimatch";
 import { isValidThinkingLevel } from "../cli/args.ts";
 import { DEFAULT_THINKING_LEVEL } from "./defaults.ts";
 import type { ModelRuntime } from "./model-runtime.ts";
+import { resolveOpenRouterRoutingVariant } from "./openrouter-routing.ts";
 
 /** Default chat model IDs for providers with built-in chat models. */
 export const defaultModelPerProvider: Partial<Record<KnownProvider, string>> = {
@@ -159,7 +160,9 @@ export function resolveModelScopeFromModels(
 			diagnostics.push({ type: "warning", code: "no-match", message: exact.error ?? "", pattern });
 			continue;
 		}
-		if (!availableModels.some((available) => modelsAreEqual(available, model))) {
+		const findAvailable = (id: string) =>
+			availableModels.find((available) => available.provider === model.provider && available.id === id);
+		if (!findAvailable(model.id) && !resolveOpenRouterRoutingVariant(model.provider, model.id, findAvailable)) {
 			diagnostics.push({
 				type: "warning",
 				code: "no-match",
@@ -252,10 +255,20 @@ function resolveExactModelReference(
 		const matches = candidates.filter((model) => model.id === id);
 		return matches.length > 0 ? matches : candidates.filter((model) => model.id.toLowerCase() === id.toLowerCase());
 	};
+	// OpenRouter routing suffixes (e.g. :floor) only apply to an OpenRouter catalog model.
+	const findModelOrVariant = (id: string) => {
+		const matches = findMatches(id);
+		if (matches.length > 0 || (provider !== undefined && provider !== "openrouter")) return matches;
+		const variant = resolveOpenRouterRoutingVariant("openrouter", id, (baseId) => {
+			const bases = findMatches(baseId).filter((model) => model.provider === "openrouter");
+			return bases.length === 1 ? bases[0] : undefined;
+		});
+		return variant ? [variant] : [];
+	};
 	// With --provider, the raw ID may itself start with that provider name
 	// (for example OpenRouter's openrouter/fusion).
 	const ids = literalId === undefined || literalId === modelId ? [modelId] : [literalId, modelId];
-	let matches = ids.map(findMatches).find((matches) => matches.length > 0) ?? [];
+	let matches = ids.map(findModelOrVariant).find((matches) => matches.length > 0) ?? [];
 	let thinkingLevel: ThinkingLevel | undefined;
 	// A literal catalog ID takes precedence, including IDs ending in :high.
 	// Strip at most one thinking suffix, and only resolve the remaining ID exactly.
@@ -264,7 +277,7 @@ function resolveExactModelReference(
 			const colon = id.lastIndexOf(":");
 			const suffix = id.slice(colon + 1);
 			if (colon !== -1 && isValidThinkingLevel(suffix)) {
-				matches = findMatches(id.slice(0, colon));
+				matches = findModelOrVariant(id.slice(0, colon));
 				if (matches.length > 0) {
 					thinkingLevel = suffix;
 					break;
@@ -299,6 +312,8 @@ function resolveExactModelReference(
  *
  * The ID must name one catalog model exactly. Case is ignored only when that
  * leaves a single match. There is no partial matching or custom-model fallback.
+ * An OpenRouter catalog ID may carry routing suffixes such as ":floor"
+ * (see resolveOpenRouterRoutingVariant).
  *
  * Note: This does not apply the thinking level by itself, but it may *parse* and
  * return a thinking level from "<id>:<thinking>" so the caller can apply it.

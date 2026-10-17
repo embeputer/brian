@@ -8,6 +8,7 @@
 
 ### Added
 
+- Added the `resolve_model` RPC command, which resolves a provider and model ID exactly as `set_model` would and returns the Model object or the same error, without changing the session's model
 - Changing the thinking level mid-session on OpenAI GPT-6 models (API key) now keeps the prompt cache ([#10853](https://github.com/earendil-works/pi/issues/10853))
 - Added authenticated `GET` and `DELETE /todos/{sessionId}` endpoints to the Punch HTTP server for reading or discarding a session's todo list ([#32](https://github.com/punch-bot/core/pull/32))
 - Added the current list to Punch `todo` tool results as `details.todos` (`id`, `text`, `done`), so RPC clients can render it from `tool_execution_end` events ([#32](https://github.com/punch-bot/core/pull/32))
@@ -25,6 +26,7 @@
 - Fixed `read` line-range labels for numeric-string or null arguments in the TUI, session tree, HTML exports, and examples ([#9887](https://github.com/earendil-works/pi/issues/9887))
 - Fixed prompt templates dropping empty quoted arguments (`""` or `''`), which shifted later positional arguments and prevented positional defaults from applying ([#10867](https://github.com/earendil-works/pi/issues/10867))
 - Fixed the Xiaomi providers' default model pointing at the removed `mimo-v2.5-pro`; it is now `mimo-v2.6-pro`
+- Fixed OpenRouter routing suffixes (`:exacto`, `:floor`, `:nitro`, `:online`) on catalog model IDs failing with "Model not found" in `--model`, RPC `set_model`, saved defaults, and restored sessions. Unknown suffixes and unknown base IDs still fail
 
 ## [1.2.0] - 2026-10-12
 
