@@ -199,6 +199,12 @@ describe("regression #3042: OpenRouter RPC startup and session selection", () =>
 		expect(rpcIo.hosts).toEqual([]);
 	});
 
+	it("reports once that no model is available", async () => {
+		writeFileSync(join(agentDir, "models.json"), JSON.stringify({ providers: {} }));
+		await start();
+		expect(diagnostics.filter((line) => line.includes("No models available"))).toHaveLength(1);
+	});
+
 	it("warns instead of failing startup for a stale enabledModels setting", async () => {
 		writeFileSync(
 			join(agentDir, "settings.json"),

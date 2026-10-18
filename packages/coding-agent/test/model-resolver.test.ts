@@ -15,6 +15,7 @@ import {
 	resolveCliModel,
 	resolveModelReference,
 	resolveModelScope,
+	resolveModelScopeFromModels,
 	resolveModelScopeWithDiagnostics,
 	restoreModelFromSession,
 } from "../src/core/model-resolver.ts";
@@ -426,6 +427,21 @@ describe("resolveModelScopeWithDiagnostics", () => {
 				},
 			]);
 		}
+	});
+
+	test("limits provider-prefixed globs to that provider", () => {
+		const models = [
+			referenceModel("anthropic", "claude-x"),
+			referenceModel("openrouter", "anthropic/claude-x"),
+			referenceModel("openrouter", "openai/gpt-x"),
+		];
+		const scope = (pattern: string) =>
+			resolveModelScopeFromModels([pattern], models).scopedModels.map((s) => modelRef(s.model));
+		expect(scope("anthropic/*")).toEqual(["anthropic/claude-x"]);
+		expect(scope("ANTHROPIC/claude-*")).toEqual(["anthropic/claude-x"]);
+		expect(scope("openrouter/anthropic/*")).toEqual(["openrouter/anthropic/claude-x"]);
+		// A prefix that names no provider still matches provider/id and gateway ids
+		expect(scope("*/claude-*")).toEqual(["anthropic/claude-x", "openrouter/anthropic/claude-x"]);
 	});
 
 	test("resolves bracketed model ids as exact references before glob matching", async () => {
@@ -979,6 +995,19 @@ describe("suffix variants", () => {
 
 	test("a catalog variant resolves as itself", () => {
 		expect(resolve("openrouter/vendor/base:free").model).toBe(free);
+	});
+
+	test("a scope entry selects the suffix variant instead of dropping the suffix as a thinking level", () => {
+		for (const [pattern, thinkingLevel] of [
+			["openrouter/vendor/base:nitro", undefined],
+			["openrouter/vendor/base:nitro:high", "high"],
+		] as const) {
+			const result = resolveModelScopeFromModels([pattern], [base, free]);
+			expect(result.scopedModels).toEqual([
+				{ model: { ...base, id: "vendor/base:nitro", name: "vendor/base (nitro)" }, thinkingLevel },
+			]);
+			expect(result.diagnostics).toEqual([]);
+		}
 	});
 
 	describe("model runtime lookups", () => {

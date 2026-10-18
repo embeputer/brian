@@ -446,7 +446,7 @@ function buildSessionOptions(
 	const diagnostics: AgentSessionRuntimeDiagnostic[] = [];
 	let cliThinkingFromModel = false;
 
-	// Model from CLI (skipped when a resumed session restores its own model)
+	// Model from CLI (skipped when a later runtime switches to a session that restores its own model)
 	// - supports --provider <name> --model <id>
 	// - supports --model <provider>/<id>
 	if (parsed.provider && parsed.model === undefined) {

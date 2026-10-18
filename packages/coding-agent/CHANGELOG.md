@@ -21,7 +21,7 @@
 ### Changed
 
 - Changed Punch todos to persist per core session in `todos.sqlite` (`node:sqlite` on Node, `bun:sqlite` in the Bun binary); ephemeral sessions keep todos in memory, and an existing `todos.json` imports once into the first persistent session without stored tasks ([#32](https://github.com/punch-bot/core/pull/32))
-- Changed `--model`, `--models`, and `enabledModels` back to pi's partial matching. A partial match prints a warning naming the selected model; among partial matches a base ID beats its catalog variants (`gemini-2.5-pro` selects `google/gemini-2.5-pro`, not `:batch`), and an ID ending in the typed text beats one continuing it (`sonnet-5` selects `claude-sonnet-5`, not `claude-sonnet-5.5`). An explicit `--models` entry that matches nothing warns instead of failing startup. RPC `set_model` and `resolve_model` stay exact
+- Changed `--model`, `--models`, and `enabledModels` back to pi's partial matching. A partial match prints a warning naming the selected model; among partial matches a base ID beats its catalog variants (`gemini-2.5-pro` selects `google/gemini-2.5-pro`, not `:batch`), and an ID ending in the typed text beats one continuing it (`sonnet-5` selects `claude-sonnet-5`, not `claude-sonnet-5.5`). An explicit `--models` entry that matches nothing warns instead of failing startup. RPC `set_model` and `resolve_model` never match partially; they accept exact IDs and suffix variants
 - Changed startup to warn when a saved default or restored session model is unavailable, naming the model used instead
 - Changed model switching to drop thinking blocks from earlier assistant messages produced by a different model, instead of sending them as plain text. The new model previously saw the old model's reasoning as part of its replies and could start writing its own reasoning into the visible answer ([#10995](https://github.com/earendil-works/pi/issues/10995))
 
@@ -31,7 +31,7 @@
 - Fixed Anthropic and Bedrock Claude requests failing with a 400 when an error tool result contains images; the images are now sent after the tool results of the turn, so the model still sees them ([#10794](https://github.com/earendil-works/pi/issues/10794))
 - Fixed `--model` choosing a provider by catalog order when several providers offer the match; Pi now prefers the provider with credentials and otherwise reports the ambiguity. `--models` and `enabledModels` add a model for each provider that offers it and warn about the ambiguity ([#10160](https://github.com/earendil-works/pi/issues/10160))
 - Fixed the published `pi` bin failing under Bun with `Could not resolve: "node:sqlite"`; the bundle now selects `bun:sqlite` or `node:sqlite` at runtime
-- Fixed suffix variants that the catalog does not list, such as OpenRouter's routing variants (`openai/gpt-6.1-sol:nitro`, `:floor:exacto`), failing with "Model not found" in `--model`, RPC `set_model`, saved defaults, and restored sessions. They use the base catalog model's limits and prices; a thinking level is never treated as a variant suffix
+- Fixed suffix variants that the catalog does not list, such as OpenRouter's routing variants (`openai/gpt-6.1-sol:nitro`, `:floor:exacto`), failing with "Model not found" in `--model`, `--models`, RPC `set_model`, saved defaults, and restored sessions. They use the base catalog model's limits and prices; a thinking level is never treated as a variant suffix
 
 ## [1.2.0] - 2026-10-12
 

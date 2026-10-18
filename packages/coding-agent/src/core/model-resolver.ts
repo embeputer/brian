@@ -423,17 +423,41 @@ export function resolveModelScopeFromModels(
 				matches = exact.candidates;
 				ambiguous(pattern, matches);
 			} else {
-				// Match against "provider/modelId" format OR just model ID
-				// This allows "*sonnet*" to match without requiring "anthropic/*sonnet*"
-				matches = models.filter(
-					(m) =>
-						minimatch(`${m.provider}/${m.id}`, globPattern, { nocase: true }) ||
-						minimatch(m.id, globPattern, { nocase: true }),
+				// A glob naming a provider (`anthropic/*`) only matches that provider's ids, not gateway ids such as
+				// OpenRouter's `anthropic/claude-sonnet-5`. Other globs match "provider/modelId" or just the model id,
+				// so "*sonnet*" matches without requiring "anthropic/*sonnet*".
+				const slash = globPattern.indexOf("/");
+				const prefix = slash === -1 ? undefined : globPattern.slice(0, slash).toLowerCase();
+				const namedProvider = prefix !== undefined && models.some((m) => m.provider.toLowerCase() === prefix);
+				matches = models.filter((m) =>
+					namedProvider
+						? m.provider.toLowerCase() === prefix &&
+							minimatch(m.id, globPattern.slice(slash + 1), { nocase: true })
+						: minimatch(`${m.provider}/${m.id}`, globPattern, { nocase: true }) ||
+							minimatch(m.id, globPattern, { nocase: true }),
 				);
 			}
 			if (matches.length === 0) noMatch(pattern);
 			for (const model of matches) add(model, thinkingLevel);
 			continue;
+		}
+
+		// `provider/<catalog id>:<suffix>` (OpenRouter's `:nitro`) selects that variant, before the lenient
+		// fallback below would drop the suffix as an invalid thinking level and select the base model
+		const exact = resolveModelReference(
+			{ text: pattern, thinkingSuffix: "strict", fuzzy: false },
+			models,
+			() => true,
+		);
+		if (exact.status === "not-found" && exact.target) {
+			const { target } = exact;
+			const variant = findModelOrSuffixVariant(target.modelId, (id) =>
+				target.providerModels.find((model) => model.id === id),
+			);
+			if (variant) {
+				add(variant, target.thinkingLevel);
+				continue;
+			}
 		}
 
 		const result = resolveModelReference(
