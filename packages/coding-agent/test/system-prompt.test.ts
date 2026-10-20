@@ -49,14 +49,15 @@ describe("buildSystemPrompt", () => {
 			});
 
 			expect(defaultPrompt.startsWith("# Punch identity\n\nYou are Punch, a personal assistant")).toBe(true);
-			// A custom prompt replaces only the opening; with no tool snippets the rules follow it directly.
-			expect(customPrompt.startsWith("You are Exact.\n\n<rules>")).toBe(true);
+			// A custom prompt replaces only the opening; the tool list follows it.
+			expect(customPrompt.startsWith("You are Exact.\n\n<tools>\n(none)\n")).toBe(true);
 		});
 
-		test("keeps tool and extension rules but drops pi docs under a custom prompt", () => {
+		test("keeps the tool list and rules but drops pi docs under a custom prompt", () => {
 			const prompt = buildSystemPrompt({
 				customPrompt: "You are Exact.",
 				selectedTools: ["todo"],
+				toolSnippets: { todo: "Track multi-step work" },
 				toolGuidelines: { todo: ["Use todo for multi-step work."] },
 				promptGuidelines: ["Call report_progress at milestones."],
 				contextFiles: [],
@@ -64,6 +65,7 @@ describe("buildSystemPrompt", () => {
 				cwd: "/tmp",
 			});
 
+			expect(prompt).toContain("<tools>\n- todo: Track multi-step work\n");
 			expect(prompt).toContain("- Use todo for multi-step work.\n- Call report_progress at milestones.");
 			expect(prompt).not.toContain("<docs>");
 		});

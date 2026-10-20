@@ -2,9 +2,9 @@
 
 ## [Unreleased]
 
-### Changed
+### Breaking Changes
 
-- Changed a custom system prompt (`--system-prompt`, `SYSTEM.md`) to replace only the opening of the default prompt. The tool list and rules, including tool and extension guidelines, now follow it; the pi documentation pointers stay out ([#38](https://github.com/punch-bot/core/pull/38))
+- Changed a custom system prompt (`--system-prompt`, `SYSTEM.md`, SDK `systemPromptOverride` or `ResourceLoader.getSystemPrompt()`, `BuildSystemPromptOptions.customPrompt`) to replace only the opening of the default prompt. The `<tools>` and `<rules>` sections, including tool and extension guidelines, now follow it; the pi documentation pointers stay out. To send an exact prompt with no Pi sections, return `systemPrompt` from a `before_agent_start` handler ([#38](https://github.com/punch-bot/core/pull/38))
 
 ## [1.3.0] - 2026-10-17
 
