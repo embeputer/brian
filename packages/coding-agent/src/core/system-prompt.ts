@@ -7,7 +7,7 @@ import { getDocsPath, getExamplesPath, getReadmePath } from "../config.ts";
 import { formatSkillsForPrompt, type Skill } from "./skills.ts";
 
 export interface BuildSystemPromptOptions {
-	/** Custom system prompt (replaces the default prefix). */
+	/** Custom system prompt (replaces the default opening; tools and rules sections are kept, pi docs are left out). */
 	customPrompt?: string;
 	/** Exact full prompt replacement set by a before_agent_start handler. */
 	forceSystemPrompt?: string;
@@ -209,17 +209,17 @@ export function buildSystemPromptSections(input: BuildSystemPromptOptions): Syst
 
 	const declaredTools = selectedTools.filter((name) => !hiddenTools.includes(name));
 	const promptSections: Record<string, string> = {};
-	if (customPrompt) {
-		promptSections.preamble = customPrompt;
-	} else {
-		promptSections.preamble =
-			PUNCH_PERSONA +
+	promptSections.preamble =
+		customPrompt ||
+		PUNCH_PERSONA +
 			"You are an expert coding assistant operating inside pi, a coding agent harness. You help users by reading files, executing commands, editing code, and writing new files.";
-		const visibleTools = declaredTools.filter((name) => !!toolSnippets[name]);
-		const tools =
-			visibleTools.length > 0 ? visibleTools.map((name) => `- ${name}: ${toolSnippets[name]}`).join("\n") : "(none)";
-		promptSections.tools = `${tools}\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.`;
-		promptSections.rules = buildRules(declaredTools, toolGuidelines, promptGuidelines);
+	const visibleTools = declaredTools.filter((name) => !!toolSnippets[name]);
+	const tools =
+		visibleTools.length > 0 ? visibleTools.map((name) => `- ${name}: ${toolSnippets[name]}`).join("\n") : "(none)";
+	promptSections.tools = `${tools}\n\nIn addition to the tools above, you may have access to other custom tools depending on the project.`;
+	promptSections.rules = buildRules(declaredTools, toolGuidelines, promptGuidelines);
+	// A custom prompt means an embedding app, where pointers to pi's own docs are noise.
+	if (!customPrompt) {
 		promptSections.docs = `Pi documentation (read only when the user asks about pi itself, its SDK, extensions, themes, skills, or TUI):
 - Main documentation: ${getReadmePath()}
 - Additional docs: ${getDocsPath()}

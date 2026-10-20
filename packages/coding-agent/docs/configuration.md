@@ -16,7 +16,7 @@ The agent directory is shown as `<agent-dir>` below. Set its location with the `
 | `<agent-dir>/models.json` | [Compatible endpoints, models, and model overrides](models.md#configure-a-compatible-endpoint). |
 | `<agent-dir>/auth.json` | Saved API keys and OAuth credentials. |
 | `<agent-dir>/AGENTS.override.md`, `AGENTS.md`, `AGENTS.MD`, `CLAUDE.md`, or `CLAUDE.MD` | User instructions applied across working directories. |
-| `<agent-dir>/SYSTEM.md` | Replaces Pi’s default system prompt. |
+| `<agent-dir>/SYSTEM.md` | Replaces the opening of Pi’s default system prompt. The tool list and rules still follow it. |
 | `<agent-dir>/APPEND_SYSTEM.md` | Adds instructions to Pi’s system prompt. |
 | `<agent-dir>/extensions/` | User [extensions](extensions.md). |
 | `<agent-dir>/skills/` | User [skills](skills.md) and supporting files. |
@@ -29,7 +29,7 @@ The agent directory is shown as `<agent-dir>` below. Set its location with the `
 |---|---|
 | `.pi/settings.json` | Project-level [settings](settings.md), resource paths, and Pi package declarations. |
 | `.pi/mcp.json` | Project [MCP servers](mcp.md). |
-| `.pi/SYSTEM.md` | Replaces the system prompt for the project. |
+| `.pi/SYSTEM.md` | Replaces the opening of the system prompt for the project. The tool list and rules still follow it. |
 | `.pi/APPEND_SYSTEM.md` | Adds project-specific instructions to the system prompt. |
 | `.pi/extensions/` | Project extensions. |
 | `.pi/skills/` | Project skills and supporting files. |
