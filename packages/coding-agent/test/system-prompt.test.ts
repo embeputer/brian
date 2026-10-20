@@ -49,7 +49,23 @@ describe("buildSystemPrompt", () => {
 			});
 
 			expect(defaultPrompt.startsWith("# Punch identity\n\nYou are Punch, a personal assistant")).toBe(true);
-			expect(customPrompt.startsWith("You are Exact.\n\n<cwd>")).toBe(true);
+			// A custom prompt replaces only the opening; with no tool snippets the rules follow it directly.
+			expect(customPrompt.startsWith("You are Exact.\n\n<rules>")).toBe(true);
+		});
+
+		test("keeps tool and extension rules but drops pi docs under a custom prompt", () => {
+			const prompt = buildSystemPrompt({
+				customPrompt: "You are Exact.",
+				selectedTools: ["todo"],
+				toolGuidelines: { todo: ["Use todo for multi-step work."] },
+				promptGuidelines: ["Call report_progress at milestones."],
+				contextFiles: [],
+				skills: [],
+				cwd: "/tmp",
+			});
+
+			expect(prompt).toContain("- Use todo for multi-step work.\n- Call report_progress at milestones.");
+			expect(prompt).not.toContain("<docs>");
 		});
 
 		test("preserves an exact forced prompt without sections", () => {

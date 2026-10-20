@@ -47,10 +47,12 @@ Use context files for project conventions, commands, safety rules, and preferenc
 
 ### System Prompt Files
 
-Replace the default system prompt with:
+Replace the opening of the default system prompt (Pi's persona and role) with:
 
 - `.pi/SYSTEM.md` for a project
 - `~/.pi/agent/SYSTEM.md` globally
+
+The tool list and rules, including tool and extension guidelines, still follow the custom opening. Pi's documentation pointers are left out.
 
 Run `pi` from the folder you want to work in. Pi uses that folder to discover files, instructions, and configuration, and to group saved sessions. If you have not installed Pi or chosen a model yet, follow the [Quickstart](quickstart.md).
 
@@ -173,7 +175,7 @@ Pi saves sessions automatically unless session persistence is disabled.
 
 | Option | Description |
 |--------|-------------|
-| `--system-prompt <text>` | Replace default prompt; context files and skills are still appended |
+| `--system-prompt <text>` | Replace the default prompt's opening; tools, rules, context files, and skills are still appended |
 | `--append-system-prompt <text>` | Append to system prompt |
 | `--use-theme <name[/name]>` | Set the theme for this run without changing settings |
 | `--verbose` | Force verbose startup |

@@ -244,7 +244,7 @@ Disable context file loading with `--no-context-files` (or `-nc`).
 
 ### System Prompt
 
-Replace the default system prompt with `.pi/SYSTEM.md` (project) or `~/.pi/agent/SYSTEM.md` (global). Append without replacing via `APPEND_SYSTEM.md`.
+Replace the opening of the default system prompt with `.pi/SYSTEM.md` (project) or `~/.pi/agent/SYSTEM.md` (global). The tool list and rules still follow it. Append without replacing via `APPEND_SYSTEM.md`.
 
 ---
 
@@ -517,7 +517,7 @@ Combine `--no-*` with explicit flags to load exactly what you need, ignoring set
 
 | Option | Description |
 |--------|-------------|
-| `--system-prompt <text>` | Replace default prompt (context files and skills still appended) |
+| `--system-prompt <text>` | Replace the default prompt's opening (tools, rules, context files, and skills still appended) |
 | `--append-system-prompt <text>` | Append to system prompt |
 | `--use-theme <name[/name]>` | Set the theme for this run without changing settings |
 | `--verbose` | Force verbose startup |

@@ -9,7 +9,7 @@ import { createAgentSession, DefaultResourceLoader, getAgentDir, SessionManager 
 const cwd = process.cwd();
 const agentDir = getAgentDir();
 
-// Option 1: Replace prompt entirely
+// Option 1: Replace the prompt's opening (tool list and rules still follow)
 const loader1 = new DefaultResourceLoader({
 	cwd,
 	agentDir,
