@@ -4,7 +4,7 @@ import { stream as streamMistral } from "../src/api/mistral-conversations.ts";
 import { getModel, normalizeContext } from "../src/compat.ts";
 import type { Api, FetchFunction, Model, ProviderResponse } from "../src/types.ts";
 
-const PI_USER_AGENT = "punch-bot";
+const PI_USER_AGENT = "punch-agent";
 
 function createSseResponse(events: unknown[], headers?: Record<string, string>): Response {
 	const body = `${events.map((event) => `data: ${JSON.stringify(event)}`).join("\r\n\r\n")}\r\n\r\ndata: [DONE]\r\n\r\n`;

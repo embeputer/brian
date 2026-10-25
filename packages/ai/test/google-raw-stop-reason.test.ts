@@ -98,7 +98,7 @@ beforeEach(() => {
 	googleGenAiMock.streamChunks = undefined;
 });
 
-const PI_USER_AGENT = "punch-bot";
+const PI_USER_AGENT = "punch-agent";
 
 const context = normalizeContext({
 	messages: [{ role: "user", content: "hello", timestamp: Date.now() }],

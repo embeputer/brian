@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Changed the default provider request User-Agent from `punch-bot (<platform> <kernel release>; <arch>)` to `punch-bot`, so requests no longer expose the host kernel version or CPU architecture
+- Changed the default provider request User-Agent from `punch-bot (<platform> <kernel release>; <arch>)` to `punch-agent`, so requests no longer expose the host kernel version or CPU architecture
 
 ## [1.3.0] - 2026-10-17
 

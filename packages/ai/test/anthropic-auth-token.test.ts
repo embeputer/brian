@@ -54,7 +54,7 @@ vi.mock("@anthropic-ai/sdk", () => {
 	return { default: FakeAnthropic };
 });
 
-const PI_USER_AGENT = "punch-bot";
+const PI_USER_AGENT = "punch-agent";
 const neverAbortedSignal = new AbortController().signal;
 
 const context = normalizeContext({

@@ -51,7 +51,7 @@ vi.mock("openai", () => {
 	return { AzureOpenAI };
 });
 
-const PI_USER_AGENT = "punch-bot";
+const PI_USER_AGENT = "punch-agent";
 
 const context: Context = {
 	messages: [{ role: "user", content: "hello", timestamp: Date.now() }],

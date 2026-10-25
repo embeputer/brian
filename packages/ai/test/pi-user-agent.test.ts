@@ -6,7 +6,7 @@ describe("getPiUserAgent", () => {
 	it("does not expose the host kernel version or CPU architecture", () => {
 		const userAgent = getPiUserAgent();
 
-		expect(userAgent).toBe("punch-bot");
+		expect(userAgent).toBe("punch-agent");
 		expect(userAgent).not.toContain(release());
 	});
 });
