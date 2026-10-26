@@ -38,8 +38,8 @@ import { mcpNamespace } from "../../core/mcp-servers.ts";
 
 const CALLBACK_HOST = "127.0.0.1";
 const CALLBACK_PATH = "/callback";
-/** Where pi.dev serves brian's Client ID Metadata Documents: `client.json` and `<callback ID>/client.json`. */
-const CLIENT_METADATA_BASE_URL = "https://pi.dev/oauth";
+/** brian's Client ID Metadata Document, `oauth/client.json` in the brian repository. */
+const CLIENT_METADATA_URL = "https://raw.githubusercontent.com/embeputer/brian/main/oauth/client.json";
 /** Redirect URI for refreshes when none is stored. Refreshing never redirects the user. */
 const FALLBACK_REDIRECT_URL = `http://${CALLBACK_HOST}${CALLBACK_PATH}`;
 /** Access tokens this close to expiry are refreshed before they are sent. */
@@ -235,13 +235,6 @@ function registeredRedirectUrls(client: OAuthClientInformationMixed | undefined)
 	return client && "redirect_uris" in client ? client.redirect_uris : [];
 }
 
-/** 12 characters identifying an MCP server URL in callback paths, computed like Codex does. */
-function callbackId(serverUrl: string): string {
-	const url = new URL(serverUrl);
-	url.hash = "";
-	return createHash("sha256").update(url.href).digest().subarray(0, 9).toString("base64url");
-}
-
 /**
  * brian's Client ID Metadata Document, for `clientRegistration: "cimd"`, chosen like Codex chooses its own.
  * The configuration ensures the default callback path. Without the `iss` parameter in authorization
@@ -249,7 +242,7 @@ function callbackId(serverUrl: string): string {
  * cannot be mixed up with one from another authorization server (RFC 9700 section 4.4.2.2).
  */
 function clientMetadataDocument(
-	serverUrl: string,
+	_serverUrl: string,
 	redirectUrl: string,
 	metadata: AuthorizationServerMetadata | undefined,
 ): OAuthClientMetadataDocument {
@@ -261,13 +254,12 @@ function clientMetadataDocument(
 			'The authorization server does not support Client ID Metadata Documents for public clients; remove oauth.clientRegistration "cimd"',
 		);
 	}
-	if (metadata.authorization_response_iss_parameter_supported) {
-		return { url: `${CLIENT_METADATA_BASE_URL}/client.json`, redirectUrl };
+	if (!metadata.authorization_response_iss_parameter_supported) {
+		throw new Error(
+			'The authorization server does not send the "iss" parameter (RFC 9207), which brian\'s static Client ID Metadata Document requires; remove oauth.clientRegistration "cimd"',
+		);
 	}
-	const id = callbackId(serverUrl);
-	const redirect = new URL(redirectUrl);
-	redirect.pathname = `${CALLBACK_PATH}/${id}`;
-	return { url: `${CLIENT_METADATA_BASE_URL}/${id}/client.json`, redirectUrl: redirect.href };
+	return { url: CLIENT_METADATA_URL, redirectUrl };
 }
 
 function createProvider(
@@ -488,13 +480,7 @@ export async function signInMcpServer(options: {
 	const preferredPort =
 		callbackOptions.port ?? (registered ? Number(new URL(registered).port) || undefined : undefined);
 	const cimd = settings.clientRegistration === "cimd";
-	const callback = await listenForCallback(
-		callbackOptions,
-		// The redirect URI of a server-specific Client ID Metadata Document.
-		cimd ? [`${CALLBACK_PATH}/${callbackId(serverUrl)}`] : [],
-		preferredPort,
-		callbackOptions.port !== undefined,
-	);
+	const callback = await listenForCallback(callbackOptions, [], preferredPort, callbackOptions.port !== undefined);
 	const redirectUrl = callbackOptions.fixedRedirectUrl ?? callback.redirectUrl;
 	try {
 		if (stored) {

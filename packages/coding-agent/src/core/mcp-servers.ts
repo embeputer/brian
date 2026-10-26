@@ -113,8 +113,9 @@ export interface McpOAuthConfig {
 	clientName?: string;
 	/**
 	 * How brian identifies itself without `clientId`. `dcr` (default): dynamic client registration. `cimd`:
-	 * brian's Client ID Metadata Document on pi.dev, for authorization servers that allow brian by that URL. The
-	 * server must support it for public clients, and the callback must use the default path `/callback`.
+	 * brian's Client ID Metadata Document (`oauth/client.json` in the brian repository), for authorization servers
+	 * that allow brian by that URL. The server must support it for public clients and send the `iss` parameter
+	 * (RFC 9207), and the callback must use the default path `/callback`.
 	 */
 	clientRegistration?: "dcr" | "cimd";
 	/**
