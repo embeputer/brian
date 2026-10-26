@@ -21,8 +21,8 @@ import { ensureMemoryVault, listMemoryNotes, writeMemoryNote } from "../core/mem
 import { SettingsManager } from "../core/settings-manager.ts";
 import { loadSkills } from "../core/skills.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
-import { runRoutinesCommand } from "./routines-command.ts";
 import { connectModel, saveDefaultModel } from "./connect-model.ts";
+import { runRoutinesCommand } from "./routines-command.ts";
 
 export const BRIAN_COMMANDS = [
 	"setup",
