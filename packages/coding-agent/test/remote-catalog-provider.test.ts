@@ -12,7 +12,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { VERSION } from "../src/config.ts";
 import {
 	type PersonalizeCatalog,
-	REMOTE_CATALOG_MODEL_TYPES,
 	withPersonalizedCatalog,
 	withRemoteCatalog,
 } from "../src/core/remote-catalog-provider.ts";
@@ -51,7 +50,7 @@ function builtinProvider(): Provider {
 }
 
 function testProvider(localGeneratedAt?: number) {
-	return withRemoteCatalog(builtinProvider(), "https://pi.dev", localGeneratedAt);
+	return withRemoteCatalog(builtinProvider(), "https://catalog.test/base", localGeneratedAt);
 }
 
 async function refreshProvider(
@@ -99,8 +98,7 @@ describe("remote catalog provider", () => {
 			"User-Agent": expect.stringContaining(`brian/${VERSION}`),
 		});
 		const requested = new URL(String(fetchSpy.mock.calls[0]?.[0]));
-		expect(requested.pathname).toBe("/api/models/providers/test-provider");
-		expect(requested.searchParams.get("types")).toBe(REMOTE_CATALOG_MODEL_TYPES.join(","));
+		expect(requested.href).toBe("https://catalog.test/base/v1/providers/test-provider.json");
 	});
 
 	it("overlays image and classifier models and drops unknown model types", async () => {
@@ -285,7 +283,7 @@ describe("remote catalog provider", () => {
 		expect((await store.read(provider.id))?.models.map((entry) => entry.id)).toEqual(["newer"]);
 	});
 
-	it("treats unimplemented pi.dev catalog routes as an unavailable overlay", async () => {
+	it("treats missing provider catalogs as an unavailable overlay", async () => {
 		vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("not implemented", { status: 501 }));
 		const provider = testProvider();
 		const store = new InMemoryModelsStore();
@@ -332,8 +330,8 @@ describe("personalized catalog provider", () => {
 		const store = new InMemoryModelsStore();
 		const provider = withPersonalizedCatalog(builtinProvider(), personalize);
 
-		// brian versions before per-key lists stored the plain pi.dev catalog here, and saved an empty list
-		// after a missing pi.dev catalog or a failed first request. Only such an entry can be empty.
+		// brian versions before per-key lists stored the plain remote catalog here, and saved an empty list
+		// after a missing remote catalog or a failed first request. Only such an entry can be empty.
 		await store.write(provider.id, { models: [], checkedAt: 1 });
 		await refreshProvider(provider, store, { allowNetwork: false });
 		expect(provider.getModels().map((entry) => entry.id)).toEqual(["static"]);

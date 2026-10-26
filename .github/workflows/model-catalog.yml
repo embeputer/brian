@@ -1,0 +1,62 @@
+name: Model Catalog
+
+# Rebuilds the model catalog from models.dev and provider model lists and publishes it to the
+# `model-catalog` branch, which brian reads at runtime. New models reach users without a release.
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: model-catalog
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Generate model catalog JSON
+        run: npm run generate:model-catalog
+
+      - name: Check out catalog branch
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin model-catalog >/dev/null; then
+            git fetch --depth 1 origin model-catalog
+            git worktree add catalog-branch FETCH_HEAD
+          else
+            git worktree add --detach catalog-branch
+            git -C catalog-branch checkout --orphan model-catalog
+            git -C catalog-branch rm -rfq .
+          fi
+
+      - name: Write catalog
+        run: node scripts/publish-model-catalog.mjs --input .artifacts/model-catalog --output catalog-branch --source-commit "$GITHUB_SHA"
+
+      - name: Push catalog
+        working-directory: catalog-branch
+        run: |
+          set -euo pipefail
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Catalog unchanged."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "Update model catalog $(node -p 'require("./v1/catalog.json").revision')"
+          git push origin HEAD:refs/heads/model-catalog
