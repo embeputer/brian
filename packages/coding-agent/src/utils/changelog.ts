@@ -9,9 +9,10 @@ export interface ChangelogEntry {
 	content: string;
 }
 
-const GITHUB_REPO = "earendil-works/pi";
+const GITHUB_REPO = "embeputer/brian";
 const CHANGELOG_LINK_BASE_PATH = "packages/coding-agent";
 const LEGACY_REPO_RE = /^https:\/\/github\.com\/(?:badlogic|earendil-works)\/pi-mono(?=\/|$)/;
+const UPSTREAM_REPO = "earendil-works/pi";
 const URL_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
 const INLINE_MARKDOWN_LINK_RE = /(!?\[[^\]\n]+\]\()([^\s)]+)((?:\s+[^)]*)?\))/g;
 
@@ -68,14 +69,15 @@ function isDirectoryTarget(originalPath: string, repositoryPath: string): boolea
 }
 
 function normalizeChangelogLinkTarget(target: string, tag: string): string {
-	let canonicalTarget = target.replace(LEGACY_REPO_RE, `https://github.com/${GITHUB_REPO}`);
-	const repoUrl = `https://github.com/${GITHUB_REPO}`;
-
-	for (const route of ["blob", "tree"]) {
-		for (const branch of ["main", "master"]) {
-			const floatingRefPrefix = `${repoUrl}/${route}/${branch}/`;
-			if (canonicalTarget.startsWith(floatingRefPrefix)) {
-				canonicalTarget = `${repoUrl}/${route}/${tag}/${canonicalTarget.slice(floatingRefPrefix.length)}`;
+	let canonicalTarget = target.replace(LEGACY_REPO_RE, `https://github.com/${UPSTREAM_REPO}`);
+	for (const repo of [GITHUB_REPO, UPSTREAM_REPO]) {
+		const repoUrl = `https://github.com/${repo}`;
+		for (const route of ["blob", "tree"]) {
+			for (const branch of ["main", "master"]) {
+				const floatingRefPrefix = `${repoUrl}/${route}/${branch}/`;
+				if (canonicalTarget.startsWith(floatingRefPrefix)) {
+					canonicalTarget = `${repoUrl}/${route}/${tag}/${canonicalTarget.slice(floatingRefPrefix.length)}`;
+				}
 			}
 		}
 	}

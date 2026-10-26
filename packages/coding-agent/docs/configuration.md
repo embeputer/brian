@@ -2,7 +2,7 @@
 
 Brian supports user-level and project configuration. User-level configuration lives in the agent directory, which defaults to `~/.brian/agent`. Project configuration lives in `.brian` under the working directory and loads after [project trust](security.md#understand-project-trust) is granted. The only exception is `sessionDir`, which Brian reads before resolving trust so it can locate sessions.
 
-In interactive mode, use `/settings` to change common preferences. For other options, ask Brian to update the configuration or edit the relevant files directly. Run `/reload` after manually changing settings, keybindings, instructions, or resources.
+Ask Brian to update the configuration or edit the relevant files directly. Run `/reload` after manually changing settings, keybindings, instructions, or resources.
 
 ## Agent directory
 
@@ -11,7 +11,6 @@ The agent directory is shown as `<agent-dir>` below. Set its location with the `
 | Path | Responsibility |
 |---|---|
 | `<agent-dir>/settings.json` | User-level [settings](settings.md), including preferences, defaults, resource paths, and Brian package declarations. |
-| `<agent-dir>/keybindings.json` | Custom terminal UI and application [keybindings](keybindings.md). |
 | `<agent-dir>/mcp.json` | [MCP servers](mcp.md) available in every project. |
 | `<agent-dir>/models.json` | [Compatible endpoints, models, and model overrides](models.md#configure-a-compatible-endpoint). |
 | `<agent-dir>/auth.json` | Saved API keys and OAuth credentials. |

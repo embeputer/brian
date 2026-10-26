@@ -98,7 +98,6 @@ brian config                    # Print resolved package resource paths as JSON
 
 A message sent with `Enter` waits until the current response and its tool calls finish, then guides the next response. A follow-up sent with `Alt+Enter` waits until Brian finishes the current task. Aborting returns queued messages to the editor.
 
-Windows Terminal reserves some Alt shortcuts. See [Terminal Setup](terminal-setup.md) for the Windows alternatives.
 
 ## Change the model or settings
 
@@ -227,7 +226,6 @@ brian --tools read,grep,find,ls -p "Review the code"
 brian --exclude-tools ask_question
 ```
 
-Terminal support for mouse input, keyboard shortcuts, and inline images varies. See [Terminal Setup](terminal-setup.md) for platform-specific configuration and [Keybindings](keybindings.md) for every configurable shortcut. Run `/hotkeys` to inspect the shortcuts active in your current session.
 
 ## Collect diagnostic information
 

@@ -64,4 +64,3 @@ See [Configure shell commands](shell-aliases.md) for command prefixes, aliases, 
 
 ## Configure Windows Terminal
 
-Windows Terminal reserves or rewrites some modified keys. See [Windows Terminal](terminal-setup.md#windows-terminal) to configure `Shift+Enter` and `Alt+Enter`, and [Keybindings](keybindings.md) for Brian's Windows and WSL shortcut defaults.

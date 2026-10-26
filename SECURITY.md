@@ -3,7 +3,7 @@
 This document should guide you about understanding the security concept behind
 Brian and also where the boundaries are.
 
-In general Brian is a coding agent that runs locally within the security boundary
+In general Brian is an agent that runs locally within the security boundary
 of the user that is running it.  It's the responsibility of the user to monitor
 its operations or to contain it within a container, virtual machine or other
 Sandbox solution.
@@ -24,10 +24,9 @@ coding agent trivially and this cannot be protected against.
 ## Reporting a Vulnerability
 
 If you believe you found a security vulnerability in brian or another package in
-this repository, please report it privately by either:
+this repository, please report it privately through:
 
-- Emailing `security@earendil.com`, or
-- Opening a private report through GitHub Security Advisories for this repository
+- Opening a private report through [GitHub Security Advisories](https://github.com/embeputer/brian/security/advisories/new) for this repository
 
 Please include:
 
@@ -42,12 +41,13 @@ reports and coordinate disclosure as appropriate.
 ## Scope
 
 Security issues in the distributed packages, command-line tools, APIs, and
-repository code are in scope as well as earendil operated infrastructure
-on `pi.dev`.
+repository code are in scope. Third-party services Brian calls (model
+providers, Beeper, pi.dev's model catalog) are out of scope; report those to
+their operators.
 
 ## Out Of Scope
 
-- Local code execution or sandboxing behavior (the Brian coding agent intentionally does not have a sandbox)
+- Local code execution or sandboxing behavior (Brian intentionally does not have a sandbox)
 - Behavior of brian extensions or skills installed by the user
 - Risks from working in untrusted repositories
 - Risks from installing untrusted extensions, skills, packages, or tools
@@ -63,7 +63,7 @@ on `pi.dev`.
   profiles, or dotfile managers, unless the report shows how Brian itself grants
   that access.
 - Issues caused by intentionally weakened user configuration.
-- Resource/DOS claims that require trusted local input/config against the brian coding agent.
+- Resource/DOS claims that require trusted local input/config against Brian.
 - Reports about malicious model output.
 - User-approved or user-initiated local actions presented as vulnerabilities.
 
@@ -82,6 +82,4 @@ is out of scope.
 When possible, include the exact affected path, package version or commit SHA,
 configuration, and a proof of concept against the latest release or latest
 `main`.  For dependency reports, include evidence that the shipped dependency is
-affected and that the issue is reachable through Brian.  For exposed-secret reports,
-include evidence that the credential is owned by Earendil or grants access to
-Earendil-operated infrastructure or services.
+affected and that the issue is reachable through Brian. 

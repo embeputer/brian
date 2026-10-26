@@ -10,10 +10,8 @@ Extensions are TypeScript modules that extend brian's behavior. They can subscri
 - **Custom tools** - Register tools the LLM can call via `brian.registerTool()`
 - **Event interception** - Block or modify tool calls, inject context, customize compaction
 - **User interaction** - Prompt users via `ctx.ui` (select, confirm, input, notify)
-- **Custom UI components** - Full TUI components with keyboard input via `ctx.ui.custom()` for complex interactions
 - **Custom commands** - Register commands like `/mycommand` via `brian.registerCommand()`
 - **Session persistence** - Store state that survives restarts via `brian.appendEntry()`
-- **Custom rendering** - Control how tool calls/results and messages appear in TUI
 
 **Example use cases:**
 - Permission gates (confirm before `rm -rf`, `sudo`, etc.)
@@ -143,7 +141,6 @@ To share extensions via npm or git as brian packages, see [packages.md](packages
 | `@brian-agent/cli` | Extension types (`ExtensionAPI`, `ExtensionContext`, events) |
 | `typebox` | Schema definitions for tool parameters |
 | `@brian-agent/ai` | AI utilities (`StringEnum` for Google-compatible enums) |
-| `@brian-agent/tui` | TUI components for custom rendering |
 
 npm dependencies work too. Add a `package.json` next to your extension (or in a parent directory), run `npm install`, and imports from `node_modules/` are resolved automatically.
 
@@ -1719,7 +1716,7 @@ brian.appendEntry("status-card", { title: "Indexed files", count: 17 });
 
 ### brian.registerShortcut(shortcut, options)
 
-Register a keyboard shortcut. See [keybindings.md](keybindings.md) for the shortcut format and built-in keybindings.
+Register a keyboard shortcut.
 
 ```typescript
 brian.registerShortcut("ctrl+shift+p", {
@@ -2321,7 +2318,6 @@ export default function (brian: ExtensionAPI) {
 
 ### Custom Rendering
 
-Tools can provide `renderCall` and `renderResult` for custom TUI display. See [tui.md](tui.md) for the full component API and [tool-execution.ts](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/src/modes/interactive/components/tool-execution.ts) for how tool rows are composed.
 
 By default, tool output is wrapped in a `Box` that handles padding and background. A defined `renderCall` or `renderResult` must return a `Component`. If a slot renderer is not defined, `tool-execution.ts` uses fallback rendering for that slot.
 
@@ -2422,7 +2418,6 @@ Use namespaced keybinding ids:
 - Coding-agent ids use the `app.*` namespace, for example `app.tools.expand`, `app.editor.external`, `app.session.rename`
 - Shared TUI ids use the `tui.*` namespace, for example `tui.select.confirm`, `tui.select.cancel`, `tui.input.tab`
 
-For the exhaustive list of keybinding ids and defaults, see [keybindings.md](keybindings.md). `keybindings.json` uses those same namespaced ids.
 
 Custom editors and `ctx.ui.custom()` components receive `keybindings: KeybindingsManager` as an injected argument. They should use that injected manager directly instead of calling `getKeybindings()` or `setKeybindings()`.
 
@@ -2682,7 +2677,6 @@ Register an entry or message renderer when custom stored content should appear i
 
 `ctx.ui` provides dialogs, notifications, status text, widgets, titles, editor access, and custom components.
 Use `ctx.ui.custom()` only when the interaction needs its own rendering and input.
-See [Terminal UI](tui.md) for component, focus, overlay, theme, and performance guidance.
 
 Extensions load in interactive, RPC, JSON, and print modes.
 Interactive mode provides the complete terminal UI.
@@ -2710,4 +2704,4 @@ Use `ctx.shutdown()` to request an orderly process shutdown.
 The checked [extension examples](../examples/extensions/) cover tools, lifecycle events, commands, flags, shortcuts, state, rendering, providers, OAuth, remote execution, and terminal components.
 Start with the smallest example matching your integration point.
 
-Use [Custom Providers](custom-provider.md) for model-service integrations, [Terminal UI](tui.md) for custom components, and [Brian Packages](packages.md) to install or distribute extensions with other resources.
+Use [Custom Providers](custom-provider.md) for model-service integrations, and [Brian Packages](packages.md) to install or distribute extensions with other resources.
