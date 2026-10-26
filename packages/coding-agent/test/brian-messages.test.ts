@@ -15,6 +15,7 @@ import {
 	BRIAN_REPLY_PREFIX,
 	type Decider,
 	findChat,
+	INTERRUPTED_SEND_REASON,
 	MessagingStore,
 	ownerName,
 	parseDecision,
@@ -201,6 +202,62 @@ describe("pollMessages", () => {
 		const result = await pollMessages(client, store, decide, now);
 		expect(result.errors).toEqual(["Alex: model down"]);
 		expect(result.drafts).toHaveLength(1);
+	});
+});
+
+describe("restarts", () => {
+	function setup() {
+		const store = new MessagingStore(join(root, "messaging.json"));
+		store.setLastPoll(since);
+		store.setIntro({ ownerName: "Sam" });
+		store.setPolicy({ chatID: "c1", title: "Alex", mode: "auto" });
+		return store;
+	}
+
+	it("does not answer a chat again when a restart cut off the poll after it replied", async () => {
+		const store = setup();
+		const { client, sent } = fakeBeeper([chat("c1", "Alex")], {
+			c1: [msg("c1", "m1", "2026-10-26T11:30:00Z", "dinner tonight?")],
+		});
+		const decide = vi.fn<Decider>(async () => ({ action: "reply", text: "yes!", confident: true }));
+		await pollMessages(client, store, decide, now);
+		// Simulate the process dying before the end of the poll: the poll time was never saved.
+		store.setLastPoll(since);
+		await pollMessages(client, store, decide, now);
+		expect(decide).toHaveBeenCalledTimes(1);
+		expect(sent.filter((s) => JSON.stringify(s.body).includes("yes!"))).toHaveLength(1);
+	});
+
+	it("turns a send cut off by a restart into a draft instead of sending it again", async () => {
+		const store = setup();
+		store.addOutbox({ chatID: "c1", chatTitle: "Alex", text: "yes!", replyTo: "m1", by: "auto" });
+		const { client, sent } = fakeBeeper([], {});
+		const result = await pollMessages(client, store, vi.fn<Decider>(), now);
+		expect(sent).toEqual([]);
+		expect(result.drafts).toEqual([
+			expect.objectContaining({ chatID: "c1", text: "yes!", replyTo: "m1", reason: INTERRUPTED_SEND_REASON }),
+		]);
+		expect(store.read().outbox).toEqual([]);
+	});
+
+	it("leaves no outbox entry when a send fails with an error", async () => {
+		const store = setup();
+		const client = new BeeperClient({ baseURL: "http://beeper.test", accessToken: "tok" }, async () => {
+			throw new Error("Beeper is closed");
+		});
+		await expect(sendAsBrian(client, store, { id: "c1", title: "Alex" }, "yes!", { by: "manual" })).rejects.toThrow(
+			/Beeper is closed/,
+		);
+		expect(store.read().outbox).toEqual([]);
+	});
+
+	it("finds an identical recent send", () => {
+		const store = setup();
+		store.logSent({ chatID: "c1", chatTitle: "Alex", text: `yes!${SENT_BY_BRIAN}`, by: "manual" });
+		expect(store.recentlySent("c1", `yes!${SENT_BY_BRIAN}`, 60_000)).toBeDefined();
+		expect(store.recentlySent("c1", `no${SENT_BY_BRIAN}`, 60_000)).toBeUndefined();
+		expect(store.recentlySent("c2", `yes!${SENT_BY_BRIAN}`, 60_000)).toBeUndefined();
+		expect(store.recentlySent("c1", `yes!${SENT_BY_BRIAN}`, 60_000, Date.now() + 120_000)).toBeUndefined();
 	});
 });
 

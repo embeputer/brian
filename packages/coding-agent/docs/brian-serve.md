@@ -33,6 +33,15 @@ It runs:
 - **gateway**: your chats through Beeper every 30s, once `brian connect beeper` is done (no restart needed);
 - **local API** on `127.0.0.1:7333` for apps such as the desktop app.
 
+### Restarts
+
+Brian can stop at any moment (a crash, `brian sleep`, logging out) without redoing work or double-sending:
+
+- **Task routines resume.** Each run is saved to its own session in `~/.brian/agent/routine-runs/` as it goes. After a restart Brian continues that session, and is told that tool calls without a result may or may not have run, so it checks before repeating anything with side effects. A run cut off more than twice is recorded as failed.
+- **Chats are not answered twice.** The gateway saves which messages it handled after each chat, not after the whole poll.
+- **Interrupted sends become drafts.** Brian records each reply before sending it. If it stops mid-send, the reply shows up as a draft marked "may or may not have been sent" instead of being sent again.
+- **No identical repeats.** The `messages` tool won't send the exact same text to the same chat twice within an hour.
+
 ## Local API
 
 The token is created on first start and stored in `~/.brian/agent/serve.json` (mode `0600`). Send it as `Authorization: Bearer <token>`.

@@ -33,6 +33,15 @@ export interface Routine {
 	lastStatus: "succeeded" | "failed" | null;
 	lastError: string | null;
 	createdAt: number;
+	/** Set while a task runs, so a run cut off by a restart can resume from its saved session. */
+	run?: RoutineRunInProgress;
+}
+
+export interface RoutineRunInProgress {
+	startedAt: number;
+	sessionFile: string;
+	/** How many times the run has been resumed after being cut off. */
+	resumes: number;
 }
 
 export interface RoutineRun {
@@ -322,12 +331,23 @@ export class RoutineStore {
 		return this.list().filter((r) => r.enabled && r.nextRunAt !== null && r.nextRunAt <= now);
 	}
 
+	/** Mark a task run as started, or count a resume of one that was cut off. Returns the run. */
+	startRun(id: string, start: Omit<RoutineRunInProgress, "resumes">): RoutineRunInProgress {
+		return this.update((data) => {
+			const routine = data.routines.find((r) => r.id === id);
+			if (!routine) throw new Error(`no routine ${id}`);
+			routine.run = routine.run ? { ...routine.run, resumes: routine.run.resumes + 1 } : { ...start, resumes: 0 };
+			return routine.run;
+		});
+	}
+
 	/** Record a run and schedule the next one. One-shot routines are disabled after they run. */
 	recordRun(id: string, run: Omit<RoutineRun, "routineId">): void {
 		this.update((data) => {
 			const routine = data.routines.find((r) => r.id === id);
 			data.history.push({ routineId: id, ...run, output: run.output.slice(0, MAX_OUTPUT) });
 			if (!routine) return;
+			delete routine.run;
 			routine.lastRunAt = run.startedAt;
 			routine.lastStatus = run.status;
 			routine.lastError = run.status === "failed" ? run.output.slice(0, 500) : null;
