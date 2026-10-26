@@ -18,9 +18,7 @@ CLI docs: [packages/coding-agent/README.md](packages/coding-agent/README.md).
 | **[@punch-bot/agent](packages/agent)** | `packages/agent` | Agent runtime with tool calling and state management |
 | **[@punch-bot/ai](packages/ai)** | `packages/ai` | Unified multi-provider LLM API |
 | **[@punch-bot/telemetry](packages/telemetry)** | `packages/telemetry` | Vendor-neutral telemetry contracts and reference adapter |
-| **[@punch-bot/protocol](packages/protocol)** | `packages/protocol` | Session protocol schemas, CBOR encoding, and framing |
-| **[@punch-bot/client](packages/client)** | `packages/client` | Transport-neutral client for remote sessions |
-| **[@punch-bot/server](packages/server)** | `packages/server` | Experimental session server |
+| **[@punch-bot/env](packages/env)** | `packages/env` | SSH remote execution environments and daemon |
 | **[@punch-bot/sqlite-node](packages/session-backends/sqlite-node)** | `packages/session-backends/sqlite-node` | Node SQLite session backend for `@punch-bot/agent` |
 
 ## Install
@@ -60,6 +58,48 @@ npm run check                 # Lint, format, and type check
 
 See [AGENTS.md](AGENTS.md) for agent and maintainer rules, and [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor gate.
 
+### Using local packages outside the monorepo
+
+Build every public package into one coherent local artifact set:
+
+```bash
+npm run pack:packages -- --out .artifacts/pi-packages
+```
+
+This refreshes model data before building `pi-ai`. To avoid network access when
+model data is already hydrated, pass `--offline-model-data`.
+
+Then configure an external project to consume one package and resolve all of
+its Pi dependencies from the same artifact set. npm is the default:
+
+```bash
+node scripts/use-local-packages.mjs \
+  --manifest .artifacts/pi-packages/manifest.json \
+  --consumer ../my-project \
+  --package @punch-bot/durable \
+  --package @punch-bot/agent
+cd ../my-project
+npm install --ignore-scripts
+```
+
+For a pnpm project, point `--consumer` at the workspace root:
+
+```bash
+node scripts/use-local-packages.mjs \
+  --manifest .artifacts/pi-packages/manifest.json \
+  --consumer ../my-project \
+  --package @punch-bot/agent \
+  --package-manager pnpm
+cd ../my-project
+pnpm install --ignore-scripts
+```
+
+Repeat `--package` for each direct dependency. The command updates the
+consumer's `package.json` with content-addressed local `file:` references. It
+writes transitive overrides to `package.json` for npm or `pnpm-workspace.yaml`
+for pnpm. Keep the artifact directory available while installing or updating
+the consumer. Re-run both commands after changing Pi source.
+
 ## Building standalone binaries from release source
 
 GitHub releases include a versioned source archive covered by the release `SHA256SUMS` file. Extract it and run the same build script used for official standalone binaries:
@@ -77,15 +117,15 @@ The source archive includes the generated provider model data used for that rele
 
 Treat npm dependency changes as reviewed code.
 
-- Direct external dependencies are pinned to exact versions. Internal workspace packages remain version-ranged.
+- Direct registry dependencies, including internal workspace packages, are pinned to exact versions.
 - `.npmrc` sets `save-exact=true` and `min-release-age=2` to avoid same-day dependency releases during npm resolution.
 - `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1` is set.
-- `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap.
-- The published CLI package includes `packages/coding-agent/npm-shrinkwrap.json`, generated from the root lockfile, to pin transitive deps for npm users.
-- Release smoke tests use `npm run release:local` to build, pack, and create isolated npm and Bun installs outside the repo before tagging a release.
+- `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap and install lock.
+- The pi.dev installer installs from `packages/coding-agent/install-lock/`, generated from the root lockfile, to pin transitive deps. The npm package also keeps a generated shrinkwrap to pin transitive deps.
+- Local release smoke tests and npm publication use the same tarball packer; npm publishes the validated tarballs rather than repacking workspace directories.
 - Local release installs, documented npm installs, and `pi update --self` use `--ignore-scripts` where supported.
 - CI installs with `npm ci --ignore-scripts`, and a scheduled GitHub workflow runs `npm audit --omit=dev` plus `npm audit signatures --omit=dev`.
-- Shrinkwrap generation has an explicit allowlist for dependency lifecycle scripts; new lifecycle-script deps fail checks until reviewed.
+- Shrinkwrap and install lock generation have explicit allowlists for dependency lifecycle scripts; new lifecycle-script deps fail checks until reviewed.
 
 ## License
 

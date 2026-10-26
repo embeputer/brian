@@ -21,23 +21,54 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WORKSPACE = {
 	"@punch-bot/chord": "packages/chord/src",
 	"@punch-bot/ai": "packages/ai/src",
+	"@punch-bot/durable": "packages/durable/src",
 	"@punch-bot/agent": "packages/agent/src",
+	"@punch-bot/codemode": "packages/codemode/src",
 	"@punch-bot/telemetry": "packages/telemetry/src",
+	"@punch-bot/mcp": "packages/mcp/src",
 };
 
 /**
- * Budgets are deliberate. `.` and `./node` are batteries-included entries and stay unbounded; every
- * narrow entry states the graph it is allowed to reach.
+ * Budgets are deliberate. Entries with no budget remain unbounded; each listed entry states the
+ * graph it is allowed to reach.
  */
 const BUDGETS = {
 	"packages/ai": {
+		"./models": {
+			maxFiles: 15,
+			forbid: ["providers/", "models.generated.ts", "index.ts", "utils/validation.ts", "utils/typebox-helpers.ts"],
+		},
 		"./utils/*": { maxFiles: 3, forbid: ["providers/", "api/", "index.ts"] },
 	},
-	"packages/agent": {
-		"./harness/runtime/reducer": { maxFiles: 1 },
-		"./harness/context": { maxFiles: 6, forbid: ["harness/runtime/", "harness/execution/", "packages/ai/"] },
-		"./harness/env/nodejs": { maxFiles: 5, forbid: ["packages/ai/", "harness/runtime/"] },
-		"./harness/session": { maxFiles: 25, forbid: ["harness/runtime/", "harness/execution/", "packages/ai/src/index.ts"] },
+	"packages/codemode": {
+		// Node and Bun users never load the Cloudflare entry, which imports the `cloudflare:workers` built-in.
+		".": { maxFiles: 12, forbid: ["codemode/src/cloudflare.ts"] },
+		// Runtimes without Node built-ins (Workers, browsers) import these; neither may reach the worker-thread host
+		// or the file-based wasm loader.
+		"./portable": {
+			maxFiles: 8,
+			forbid: ["codemode/src/index.ts", "runtime/host.ts", "runtime/worker.ts", "codemode/src/wasm.ts"],
+		},
+		"./cloudflare": {
+			maxFiles: 9,
+			forbid: ["codemode/src/index.ts", "runtime/host.ts", "runtime/worker.ts", "codemode/src/wasm.ts"],
+		},
+	},
+	"packages/durable": {
+		".": {
+			// Tool argument validation reaches TypeBox; provider-session creation reaches pi-ai's lean UUID utility; the
+			// memory and SQLite storages share scan order and cursor handling. Values from Chord's root (copyJson,
+			// replicatedState) reach its host runtime through the root barrel.
+			maxFiles: 66,
+			forbid: [
+				"packages/ai/src/index.ts",
+				"packages/ai/src/utils/typebox-helpers.ts",
+				// Photon (WebAssembly) loads only through `./images`.
+				"packages/durable/src/images/",
+			],
+		},
+		// The file tools reach their environment helpers and the Harness definitions they need, not the Harness itself.
+		"./tools": { maxFiles: 17, forbid: ["packages/durable/src/images/"] },
 	},
 };
 

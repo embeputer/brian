@@ -91,8 +91,8 @@ describe("parseArgs", () => {
 		});
 
 		test("parses --model", () => {
-			const result = parseArgs(["--model", "gpt-4o"]);
-			expect(result.model).toBe("gpt-4o");
+			const result = parseArgs(["--model", "gpt-6-astra"]);
+			expect(result.model).toBe("gpt-6-astra");
 		});
 
 		test("parses --api-key", () => {
@@ -113,16 +113,6 @@ describe("parseArgs", () => {
 		test("parses multiple --append-system-prompt flags", () => {
 			const result = parseArgs(["--append-system-prompt", "Context A", "--append-system-prompt", "Context B"]);
 			expect(result.appendSystemPrompt).toEqual(["Context A", "Context B"]);
-		});
-
-		test("parses --mode", () => {
-			const result = parseArgs(["--mode", "json"]);
-			expect(result.mode).toBe("json");
-		});
-
-		test("parses --mode rpc", () => {
-			const result = parseArgs(["--mode", "rpc"]);
-			expect(result.mode).toBe("rpc");
 		});
 
 		test("parses --session", () => {
@@ -152,8 +142,59 @@ describe("parseArgs", () => {
 		});
 
 		test("parses --models as comma-separated list", () => {
-			const result = parseArgs(["--models", "gpt-4o,claude-sonnet,gemini-pro"]);
-			expect(result.models).toEqual(["gpt-4o", "claude-sonnet", "gemini-pro"]);
+			const result = parseArgs([
+				"--models",
+				"openai/gpt-6-astra,anthropic/claude-fable-5-1,google/gemini-3.8-flash",
+			]);
+			expect(result.models).toEqual(["openai/gpt-6-astra", "anthropic/claude-fable-5-1", "google/gemini-3.8-flash"]);
+		});
+
+		// Issue #10334
+		test("ignores empty entries in --models", () => {
+			const result = parseArgs(["--models", "gpt-4o, ,claude-sonnet,"]);
+			expect(result.models).toEqual(["gpt-4o", "claude-sonnet"]);
+		});
+	});
+
+	// Issue #9045
+	describe("--mode flag", () => {
+		test.each(["text", "json", "rpc"] as const)("parses --mode %s", (mode) => {
+			const result = parseArgs(["--mode", mode]);
+			expect(result.mode).toBe(mode);
+			expect(result.diagnostics).toEqual([]);
+		});
+
+		test.each(["yaml", ""])("rejects invalid --mode value %j", (mode) => {
+			const result = parseArgs(["--mode", mode, "--version"]);
+			expect(result.mode).toBeUndefined();
+			expect(result.version).toBe(true);
+			expect(result.messages).toEqual([]);
+			expect(result.unknownFlags.size).toBe(0);
+			expect(result.diagnostics).toEqual([
+				{ type: "error", message: `Invalid mode "${mode}". Valid values: text, json, rpc` },
+			]);
+		});
+
+		test("reports a missing --mode value", () => {
+			const result = parseArgs(["--mode"]);
+			expect(result.mode).toBeUndefined();
+			expect(result.unknownFlags.size).toBe(0);
+			expect(result.diagnostics).toEqual([{ type: "error", message: "--mode requires text, json, or rpc" }]);
+		});
+
+		test("does not consume another option as a --mode value", () => {
+			const result = parseArgs(["--mode", "--version"]);
+			expect(result.mode).toBeUndefined();
+			expect(result.version).toBe(true);
+			expect(result.unknownFlags.size).toBe(0);
+			expect(result.diagnostics).toEqual([{ type: "error", message: "--mode requires text, json, or rpc" }]);
+		});
+
+		test("reports an invalid --mode value after a valid one", () => {
+			const result = parseArgs(["--mode", "json", "--mode", "yaml"]);
+			expect(result.diagnostics).toEqual([
+				{ type: "error", message: 'Invalid mode "yaml". Valid values: text, json, rpc' },
+			]);
 		});
 	});
 
@@ -184,10 +225,10 @@ describe("parseArgs", () => {
 		});
 
 		test("works alongside other flags", () => {
-			const result = parseArgs(["--name", "named-run", "--print", "--model", "gpt-4o", "hello"]);
+			const result = parseArgs(["--name", "named-run", "--print", "--model", "gpt-6-astra", "hello"]);
 			expect(result.name).toBe("named-run");
 			expect(result.print).toBe(true);
-			expect(result.model).toBe("gpt-4o");
+			expect(result.model).toBe("gpt-6-astra");
 			expect(result.messages).toEqual(["hello"]);
 		});
 	});
@@ -241,6 +282,14 @@ describe("parseArgs", () => {
 			const result = parseArgs(["--no-extensions", "-e", "foo.ts", "-e", "bar.ts"]);
 			expect(result.noExtensions).toBe(true);
 			expect(result.extensions).toEqual(["foo.ts", "bar.ts"]);
+		});
+	});
+
+	describe("--no-mcp flag", () => {
+		test("parses --no-mcp flag", () => {
+			const result = parseArgs(["--no-mcp"]);
+			expect(result.noMcp).toBe(true);
+			expect(result.unknownFlags.size).toBe(0);
 		});
 	});
 
@@ -422,6 +471,31 @@ describe("parseArgs", () => {
 			expect(result.tools).toEqual(["read", "bash"]);
 		});
 
+		test("parses +name and -name tool modifiers", () => {
+			const result = parseArgs(["-t", "+codemode,-write"]);
+			expect(result.tools).toEqual(["+codemode", "-write"]);
+			expect(result.diagnostics).toEqual([]);
+		});
+
+		test("rejects tool names mixed with modifiers", () => {
+			const result = parseArgs(["--tools", "read,+codemode"]);
+			expect(result.tools).toBeUndefined();
+			expect(result.diagnostics).toEqual([
+				{ type: "error", message: "--tools: tool names cannot be mixed with +name or -name entries" },
+			]);
+		});
+
+		test("rejects patterns in tool modifiers", () => {
+			const result = parseArgs(["-t", "+mcp__radius__*"]);
+			expect(result.tools).toBeUndefined();
+			expect(result.diagnostics).toEqual([
+				{
+					type: "error",
+					message: "-t: +name and -name entries take exact tool names, not patterns: +mcp__radius__*",
+				},
+			]);
+		});
+
 		test("parses --exclude-tools flag", () => {
 			const result = parseArgs(["--exclude-tools", "read,bash"]);
 			expect(result.excludeTools).toEqual(["read", "bash"]);
@@ -485,7 +559,7 @@ describe("parseArgs", () => {
 				"--provider",
 				"anthropic",
 				"--model",
-				"claude-sonnet",
+				"claude-fable-5-1",
 				"--print",
 				"--thinking",
 				"high",
@@ -493,7 +567,7 @@ describe("parseArgs", () => {
 				"Do the task",
 			]);
 			expect(result.provider).toBe("anthropic");
-			expect(result.model).toBe("claude-sonnet");
+			expect(result.model).toBe("claude-fable-5-1");
 			expect(result.print).toBe(true);
 			expect(result.thinking).toBe("high");
 			expect(result.fileArgs).toEqual(["prompt.md"]);

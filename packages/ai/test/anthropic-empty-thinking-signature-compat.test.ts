@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getModel, streamSimple } from "../src/compat.ts";
+import { getModel, getModels, streamSimple } from "../src/compat.ts";
 import type { AssistantMessage, Context, Model } from "../src/types.ts";
 
 interface AnthropicPayload {
@@ -18,8 +18,8 @@ class PayloadCaptured extends Error {
 
 function makeModel(allowEmptySignature?: boolean): Model<"anthropic-messages"> {
 	return {
-		id: "mimo-v2.5-pro",
-		name: "MiMo-V2.5-Pro",
+		id: "mimo-v2.6-pro",
+		name: "MiMo-V2.6-Pro",
 		api: "anthropic-messages",
 		provider: "xiaomi-token-plan-ams",
 		baseUrl: "http://127.0.0.1:9/anthropic",
@@ -36,7 +36,7 @@ function makeContext(
 	thinkingSignature: string,
 	thinking = "internal reasoning",
 	provider = "xiaomi-token-plan-ams",
-	model = "mimo-v2.5-pro",
+	model = "mimo-v2.6-pro",
 ): Context {
 	const assistant: AssistantMessage = {
 		role: "assistant",
@@ -97,14 +97,19 @@ describe("Anthropic empty thinking signature compat", () => {
 		expect(assistant?.content).toEqual([{ type: "thinking", thinking: "internal reasoning", signature: "" }]);
 	});
 
+	// Regression for #9676: Vercel AI Gateway emits unsigned thinking for translated models.
+	it("allows empty thinking signatures for every Vercel AI Gateway model", () => {
+		const models = getModels("vercel-ai-gateway");
+		expect(models.length).toBeGreaterThan(0);
+		expect(models.every((model) => model.compat?.allowEmptySignature === true)).toBe(true);
+	});
+
 	// Regression for #9323: Fireworks emits unsigned thinking that must survive replay.
 	it.each([
-		"accounts/fireworks/models/deepseek-v4-flash-0731",
-		"accounts/fireworks/models/deepseek-v4-flash-vision-exp",
-		"accounts/fireworks/models/deepseek-v4-pro-0813",
+		"accounts/fireworks/models/deepseek-v4p1-flash",
 		"accounts/fireworks/models/qwen3p8-max",
 		"accounts/fireworks/models/qwen3p8-2p4t-a95b",
-		"accounts/fireworks/models/kimi-k2p6",
+		"accounts/fireworks/models/nemotron-3-ultra-nvfp4",
 	] as const)("preserves unsigned thinking for Fireworks %s", async (modelId) => {
 		const model = getModel("fireworks", modelId);
 		expect(model.compat?.allowEmptySignature).toBe(true);
@@ -116,26 +121,5 @@ describe("Anthropic empty thinking signature compat", () => {
 			{ type: "thinking", thinking: "internal reasoning", signature: "" },
 			{ type: "text", text: "answer" },
 		]);
-	});
-
-	// Regression for #9323: opting into unsigned replay must not change cross-model conversion.
-	it("still converts cross-model Fireworks thinking to text", async () => {
-		const model = getModel("fireworks", "accounts/fireworks/models/deepseek-v4-flash-0731");
-		const payload = await capturePayload(
-			model,
-			makeContext("", "internal reasoning", "fireworks", "accounts/fireworks/models/kimi-k2p6"),
-		);
-		expect(payload.messages?.find((message) => message.role === "assistant")?.content).toEqual([
-			{ type: "text", text: "internal reasoning" },
-		]);
-	});
-
-	it.each(["k3"] as const)("allows empty signatures for Kimi Coding %s", async (modelId) => {
-		const model = getModel("kimi-coding", modelId);
-		expect(model.compat?.allowEmptySignature).toBe(true);
-
-		const payload = await capturePayload(model, makeContext(" ", "internal reasoning", "kimi-coding", modelId));
-		const assistant = payload.messages?.find((message) => message.role === "assistant");
-		expect(assistant?.content).toEqual([{ type: "thinking", thinking: "internal reasoning", signature: "" }]);
 	});
 });

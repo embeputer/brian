@@ -7,7 +7,7 @@
 
 import type { AgentMessage, ThinkingLevel } from "@punch-bot/agent";
 import type { ImageContent, Model } from "@punch-bot/ai";
-import type { SessionStats } from "../../core/agent-session.ts";
+import type { PromptDisposition, QueuedInputDisposition, SessionStats } from "../../core/agent-session.ts";
 import type { BashResult } from "../../core/bash-executor.ts";
 import type { CompactionResult } from "../../core/compaction/index.ts";
 import type { Delivery } from "../../core/delivery.ts";
@@ -32,6 +32,7 @@ export type RpcCommand =
 
 	// Model
 	| { id?: string; type: "set_model"; provider: string; modelId: string }
+	| { id?: string; type: "resolve_model"; provider: string; modelId: string }
 	| { id?: string; type: "cycle_model" }
 	| { id?: string; type: "get_available_models" }
 
@@ -118,10 +119,16 @@ export interface RpcSessionState {
 
 // Success responses with data
 export type RpcResponse =
-	// Prompting (async - events follow)
-	| { id?: string; type: "response"; command: "prompt"; success: true }
-	| { id?: string; type: "response"; command: "steer"; success: true }
-	| { id?: string; type: "response"; command: "follow_up"; success: true }
+	// Prompting
+	| { id?: string; type: "response"; command: "prompt"; success: true; data: { disposition: PromptDisposition } }
+	| { id?: string; type: "response"; command: "steer"; success: true; data: { disposition: QueuedInputDisposition } }
+	| {
+			id?: string;
+			type: "response";
+			command: "follow_up";
+			success: true;
+			data: { disposition: QueuedInputDisposition };
+	  }
 	| { id?: string; type: "response"; command: "abort"; success: true }
 	| {
 			id?: string;
@@ -140,6 +147,13 @@ export type RpcResponse =
 			id?: string;
 			type: "response";
 			command: "set_model";
+			success: true;
+			data: Model<any>;
+	  }
+	| {
+			id?: string;
+			type: "response";
+			command: "resolve_model";
 			success: true;
 			data: Model<any>;
 	  }

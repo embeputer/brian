@@ -10,6 +10,7 @@ import { getAuthHeader, isAuthConfigured } from "./auth.ts";
 import { validateCollabWorkspace } from "./collabs.ts";
 import { installPlanGate } from "./plan-gate.ts";
 import { startPunchServer } from "./server.ts";
+import { getTodoStore } from "./todo-store.ts";
 import { installTodos } from "./todos.ts";
 
 const PORT = Number(process.env.PI_BOT_PORT) || 4098;
@@ -78,7 +79,7 @@ export default function punchExtension(pi: ExtensionAPI): void {
 		}
 		startPunchServer();
 	}
-	installTodos(pi);
+	installTodos(pi, getTodoStore());
 	installPlanGate(pi);
 	installA2a(pi);
 	if (isPunchA2aEnabled()) {

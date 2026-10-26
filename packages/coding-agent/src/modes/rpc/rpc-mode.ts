@@ -17,6 +17,7 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { Api, Model } from "@punch-bot/ai";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.ts";
 import { deliveryFromMessage } from "../../core/delivery.ts";
 import type {
@@ -25,6 +26,7 @@ import type {
 	ExtensionWidgetOptions,
 	WorkingIndicatorOptions,
 } from "../../core/extensions/index.ts";
+import { findModelOrSuffixVariant } from "../../core/model-suffix-variants.ts";
 import {
 	flushRawStdout,
 	takeOverStdout,
@@ -359,6 +361,12 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 	await rebindSession();
 	registerSignalHandlers();
 
+	// set_model and resolve_model pick an authenticated model by exact ID, or a suffix variant of one (`:nitro`).
+	const findAvailableModel = (provider: string, modelId: string): Model<Api> | undefined => {
+		const models = session.modelRuntime.getAvailableSnapshot();
+		return findModelOrSuffixVariant(modelId, (id) => models.find((m) => m.provider === provider && m.id === id));
+	};
+
 	// Handle a single command
 	const handleCommand = async (command: RpcCommand): Promise<RpcResponse | undefined> => {
 		const id = command.id;
@@ -377,11 +385,9 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 						images: command.images,
 						streamingBehavior: command.streamingBehavior,
 						source: "rpc",
-						preflightResult: (didSucceed) => {
-							if (didSucceed) {
-								preflightSucceeded = true;
-								output(success(id, "prompt"));
-							}
+						preflightResult: (disposition) => {
+							preflightSucceeded = true;
+							output(success(id, "prompt", { disposition }));
 						},
 					})
 					.catch((e) => {
@@ -393,13 +399,13 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 			}
 
 			case "steer": {
-				await session.steer(command.message, command.images, { source: "rpc" });
-				return success(id, "steer");
+				const disposition = await session.steer(command.message, command.images, { source: "rpc" });
+				return success(id, "steer", { disposition });
 			}
 
 			case "follow_up": {
-				await session.followUp(command.message, command.images, { source: "rpc" });
-				return success(id, "follow_up");
+				const disposition = await session.followUp(command.message, command.images, { source: "rpc" });
+				return success(id, "follow_up", { disposition });
 			}
 
 			case "abort": {
@@ -447,13 +453,20 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 			// =================================================================
 
 			case "set_model": {
-				const models = session.modelRuntime.getAvailableSnapshot();
-				const model = models.find((m) => m.provider === command.provider && m.id === command.modelId);
+				const model = findAvailableModel(command.provider, command.modelId);
 				if (!model) {
 					return error(id, "set_model", `Model not found: ${command.provider}/${command.modelId}`);
 				}
 				await session.setModel(model);
 				return success(id, "set_model", model);
+			}
+
+			case "resolve_model": {
+				const model = findAvailableModel(command.provider, command.modelId);
+				if (!model) {
+					return error(id, "resolve_model", `Model not found: ${command.provider}/${command.modelId}`);
+				}
+				return success(id, "resolve_model", model);
 			}
 
 			case "cycle_model": {
