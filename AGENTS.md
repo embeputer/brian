@@ -187,9 +187,19 @@ Attribution:
 
    The release script bumps all package versions, updates changelogs, regenerates release artifacts, runs `npm run check`, commits `Release vX.Y.Z`, tags `vX.Y.Z`, adds fresh `## [Unreleased]` changelog sections, commits `Add [Unreleased] section for next cycle`, then pushes `main` and the tag. Do not rerun the release script after a tag was pushed.
 
-4. **CI verifies and announces the npm release**: pushing the `vX.Y.Z` tag triggers `.github/workflows/build-binaries.yml`. The `publish-npm` job uses npm trusted publishing through GitHub Actions OIDC with environment `npm-publish`; no local `npm publish`, `npm whoami`, OTP, or WebAuthn flow is required. After publishing, `announce-brian-dev-release` verifies every public workspace package resolves at the exact release version and that its npm tarball is available, then writes the verified release marker to R2. `pi.dev/api/latest-version` reads that marker; it must never announce a release from npm before this job succeeds.
+4. **CI publishes**: pushing the `vX.Y.Z` tag triggers `.github/workflows/build-binaries.yml`. It builds and smoke-tests the standalone binaries, builds the `brian-env` daemons (`.github/workflows/env-daemons.yml`), runs checks and tests, publishes every public package with `scripts/publish.mjs` from environment `npm-publish`, then publishes the GitHub Release. npm auth is trusted publishing (GitHub Actions OIDC, with provenance) when configured, else the `NPM_TOKEN` repository secret.
 
-5. **If CI publish or announcement fails**: inspect the failed job. The publish helper is idempotent and skips package versions already present on npm; the announcement job rechecks availability before updating the R2 marker. Rerun the failed job or workflow after fixing CI or transient npm issues. Do not rerun `npm run release:patch` or `npm run release:minor` for the same version.
+5. **If CI publish fails**: inspect the failed job. The publish helper is idempotent and skips package versions already present on npm. Rerun the failed job or workflow after fixing CI or transient npm issues. Do not rerun `npm run release:patch` or `npm run release:minor` for the same version.
+
+### First release (0.1.0)
+
+`release.mjs` refuses to run until every package exists on npm, and trusted publishing can only be configured on an existing package, so the first release is tagged by hand:
+
+1. On GitHub, create environment `npm-publish` and add an npm granular access token (publish rights for `@brian-agent`) as repository secret `NPM_TOKEN`.
+2. `git tag v0.1.0 && git push origin v0.1.0` on `main`. CI builds and publishes everything, including the `brian-env` daemons that `@brian-agent/env` ships.
+3. On npmjs.com, for each `@brian-agent/*` package: Settings -> Trusted publishing -> GitHub Actions, repository `embeputer/brian`, workflow `build-binaries.yml`, environment `npm-publish`. Then delete the `NPM_TOKEN` secret and revoke the token.
+
+`npm run publish` from a machine also works (`npm login` first; no provenance outside CI), but `@brian-agent/env` then ships without the `brian-env` daemons unless they were built into `packages/env/bin`.
 
 ## User Override
 
