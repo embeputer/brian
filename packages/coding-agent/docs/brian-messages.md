@@ -36,6 +36,22 @@ brian messages policy --default ignore
 
 You can also ask Brian to change policies; it has a `messages` tool for that.
 
+## Marked as Brian
+
+Outside your `brian` chat, everything Brian sends (auto replies, approved drafts, `brian messages send`) ends with `- sent by brian`. The first time Brian sends anything in a chat, it sends an intro first:
+
+> hi, i'm brian, Sam's agent. i can read Sam's messages and send them with their approval. i may reply for Sam when i'm sure about the answer, since i'm basically their digital twin. anything i send ends with "sent by brian".
+
+The name comes from your People note tagged `me` (written by `brian hatch`). Change either part:
+
+```bash
+brian messages intro --name "Sam"
+brian messages intro --text "hey, this is {name}'s agent brian. ..."
+brian messages intro --reset
+```
+
+`brian messages send <chat> <text> --as-me` sends without the intro or the mark.
+
 ## Watch
 
 ```bash

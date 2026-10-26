@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, statSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -16,8 +16,11 @@ import {
 	type Decider,
 	findChat,
 	MessagingStore,
+	ownerName,
 	parseDecision,
 	pollMessages,
+	SENT_BY_BRIAN,
+	sendAsBrian,
 } from "../src/core/messaging/gateway.ts";
 
 let root: string;
@@ -116,6 +119,7 @@ describe("pollMessages", () => {
 	function setup() {
 		const store = new MessagingStore(join(root, "messaging.json"));
 		store.setLastPoll(since);
+		store.setIntro({ ownerName: "Sam" });
 		return store;
 	}
 
@@ -141,10 +145,13 @@ describe("pollMessages", () => {
 		expect(decide.mock.calls[0][0].history.map((m) => m.id)).toEqual(["m0"]);
 		expect(decide.mock.calls[1][0].note).toBe("only about the project");
 		expect(result.drafts.map((d) => [d.chatID, d.text])).toEqual([["c1", "can't tonight"]]);
-		expect(sent).toEqual([{ chatID: "c2", body: { text: "yes, all green", replyToMessageID: "m2" } }]);
+		expect(sent).toEqual([
+			{ chatID: "c2", body: { text: expect.stringMatching(/^hi, i'm brian, Sam's agent/) } },
+			{ chatID: "c2", body: { text: `yes, all green${SENT_BY_BRIAN}`, replyToMessageID: "m2" } },
+		]);
 		expect(requests.every((r) => r.auth === "Bearer tok")).toBe(true);
 		expect(store.read().lastPollAt).toBe(now.toISOString());
-		expect(store.read().sent.map((s) => s.by)).toEqual(["auto"]);
+		expect(store.read().sent.map((s) => s.by)).toEqual(["auto", "auto"]);
 	});
 
 	it("drafts instead of sending when an auto reply isn't confident, and skips chats the user already answered", async () => {
@@ -213,9 +220,43 @@ describe("drafts", () => {
 		const second = store.addDraft({ ...base, text: "can't tonight" });
 		expect(store.getDraft(first.id)?.status).toBe("dismissed");
 		await approveDraft(client, store, second.id, "can't tonight, tomorrow?");
-		expect(sent).toEqual([{ chatID: "c1", body: { text: "can't tonight, tomorrow?", replyToMessageID: "m1" } }]);
+		expect(sent.at(-1)).toEqual({
+			chatID: "c1",
+			body: { text: `can't tonight, tomorrow?${SENT_BY_BRIAN}`, replyToMessageID: "m1" },
+		});
 		await expect(approveDraft(client, store, second.id)).rejects.toThrow(/already sent/);
-		expect(store.read().sent.map((s) => s.by)).toEqual(["approved"]);
+		expect(store.read().sent.map((s) => s.by)).toEqual(["approved", "approved"]);
+	});
+});
+
+describe("marked as brian", () => {
+	it("introduces itself once per chat, marks every message, and takes the name from the vault", async () => {
+		const vault = join(root, "vault");
+		mkdirSync(join(vault, "People"), { recursive: true });
+		writeFileSync(join(vault, "People", "Samantha Lee.md"), "---\ntags: [me]\naliases: [Sam]\n---\nMy user.\n");
+		const store = new MessagingStore(join(root, "messaging.json"));
+		expect(ownerName(store, vault)).toBe("Sam");
+		expect(ownerName(store, join(root, "missing"))).toBe("my user");
+		const { client, sent } = fakeBeeper([chat("c1", "Alex")], {});
+		await sendAsBrian(client, store, chat("c1", "Alex"), "on my way", { by: "manual", vaultDir: vault });
+		await sendAsBrian(client, store, chat("c1", "Alex"), "5 min", { by: "manual", vaultDir: vault });
+		expect(sent.map((s) => (s.body as { text: string }).text)).toEqual([
+			expect.stringContaining("i'm brian, Sam's agent"),
+			`on my way${SENT_BY_BRIAN}`,
+			`5 min${SENT_BY_BRIAN}`,
+		]);
+		store.setIntro({ intro: "this is {name}'s brian" });
+		await sendAsBrian(client, store, chat("c2", "Mom"), "hi", { by: "manual", vaultDir: vault });
+		expect((sent.at(-2)?.body as { text: string }).text).toBe("this is Sam's brian");
+	});
+
+	it("send --as-me skips the intro and the mark", async () => {
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		const store = new MessagingStore(join(root, "messaging.json"));
+		const { client, sent } = fakeBeeper([chat("c1", "Alex")], {});
+		expect(await runMessagesCommand(["send", "Alex", "brb", "--as-me"], { store, client })).toBe(0);
+		expect(sent).toEqual([{ chatID: "c1", body: { text: "brb" } }]);
+		expect(store.read().introduced).toEqual([]);
 	});
 });
 

@@ -14,10 +14,12 @@ import {
 	CHAT_MODES,
 	type Decider,
 	findChat,
+	introText,
 	isChatMode,
 	MessagingStore,
 	parseDecision,
 	pollMessages,
+	sendAsBrian,
 } from "../core/messaging/gateway.ts";
 import { createProcessExecutor } from "../extensions/brian/routine-runner.ts";
 import { question, secret } from "./connect-model.ts";
@@ -36,13 +38,16 @@ Brian reads and answers your chats through Beeper Desktop (Discord, WhatsApp, iM
   approve <id> [--text <edited reply>]     Send a draft (optionally edited)
   open <id>                                Open the chat in Beeper with the draft in the composer
   dismiss <id>                             Drop a draft
-  send <chat> <text>                       Send a message yourself
+  send <chat> <text> [--as-me]             Send a message through Brian (--as-me: no intro or "sent by brian")
+  intro [--name <n>] [--text <t>] [--reset]  Show or change the intro Brian sends before its first message in a chat
   log [--json]                             Everything Brian has sent
   watch [--interval <seconds>] [--once]    Watch for new messages (also: ${APP_NAME} gateway)
 
 Modes: ignore (never look), draft (write replies for approval, default), auto (send confident
 replies, draft the rest), brian (your own chat with Brian: your messages there are requests to Brian).
-Muted, archived, and low-priority chats are ignored unless they have a policy.`;
+Muted, archived, and low-priority chats are ignored unless they have a policy.
+Outside your brian chat, everything Brian sends ends with "- sent by brian", and the first message
+in a chat is preceded by a one-time intro.`;
 
 interface Parsed {
 	sub: string | undefined;
@@ -56,7 +61,7 @@ function parse(args: string[]): Parsed {
 	const parsed: Parsed = { sub, positional: [], values: new Map(), switches: new Set() };
 	for (let i = 0; i < rest.length; i++) {
 		const arg = rest[i];
-		if (["--token", "--url", "--note", "--default", "--text", "--interval", "-n"].includes(arg)) {
+		if (["--token", "--url", "--note", "--default", "--text", "--interval", "--name", "-n"].includes(arg)) {
 			const value = rest[++i];
 			if (value === undefined) throw new Error(`${arg} requires a value`);
 			parsed.values.set(arg, value);
@@ -67,6 +72,7 @@ function parse(args: string[]): Parsed {
 }
 
 export interface MessagesDeps {
+	vaultDir?: string;
 	store?: MessagingStore;
 	client?: BeeperClient;
 	decide?: Decider;
@@ -230,9 +236,20 @@ export async function runMessagesCommand(args: string[], deps: MessagesDeps = {}
 				const client = requireClient(deps);
 				const chat = findChat(await client.chats(100), positional[0]);
 				const text = positional.slice(1).join(" ");
-				await client.send(chat.id, text);
-				store.logSent({ chatID: chat.id, chatTitle: chat.title, text, by: "manual" });
+				if (switches.has("--as-me")) {
+					await client.send(chat.id, text);
+					store.logSent({ chatID: chat.id, chatTitle: chat.title, text, by: "manual" });
+				} else await sendAsBrian(client, store, chat, text, { by: "manual", vaultDir: deps.vaultDir });
 				console.log(`Sent to ${chat.title}`);
+				return 0;
+			}
+			case "intro": {
+				if (switches.has("--reset")) store.setIntro({ ownerName: null, intro: null });
+				const name = values.get("--name");
+				const text = values.get("--text");
+				if (name !== undefined || text !== undefined) store.setIntro({ ownerName: name, intro: text });
+				console.log(introText(store, deps.vaultDir));
+				console.log(chalk.dim(`Sent before Brian's first message in a chat. {name} is replaced with your name.`));
 				return 0;
 			}
 			case "log": {

@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { getAgentDir } from "../../config.ts";
+import { getAgentDir, getMemoryDir } from "../../config.ts";
+import { listMemoryNotes } from "../memory/vault.ts";
 import type { BeeperChat, BeeperClient, BeeperMessage } from "./beeper.ts";
 
 /**
@@ -16,6 +17,13 @@ export type ChatMode = (typeof CHAT_MODES)[number];
 
 /** Prefix on Brian's own replies in a `brian` chat, so it never answers itself. */
 export const BRIAN_REPLY_PREFIX = "Brian: ";
+
+/** Appended to everything Brian sends as the user, outside the user's own `brian` chat. */
+export const SENT_BY_BRIAN = "\n\n- sent by brian";
+
+/** Sent once before Brian's first message in a chat. `{name}` is the user's name. */
+export const DEFAULT_INTRO =
+	"hi, i'm brian, {name}'s agent. i can read {name}'s messages and send them with their approval. i may reply for {name} when i'm sure about the answer, since i'm basically their digital twin. anything i send ends with \"sent by brian\".";
 
 export interface ChatPolicy {
 	chatID: string;
@@ -53,6 +61,11 @@ interface MessagingData {
 	policies: Record<string, ChatPolicy>;
 	drafts: Draft[];
 	sent: SentEntry[];
+	/** Chats where Brian has already introduced itself. */
+	introduced: string[];
+	/** Overrides for the intro: the name Brian calls the user and the intro template. */
+	ownerName?: string;
+	intro?: string;
 }
 
 const MAX_DRAFTS = 200;
@@ -71,7 +84,14 @@ export class MessagingStore {
 	}
 
 	read(): MessagingData {
-		const empty: MessagingData = { defaultMode: "draft", lastPollAt: null, policies: {}, drafts: [], sent: [] };
+		const empty: MessagingData = {
+			defaultMode: "draft",
+			lastPollAt: null,
+			policies: {},
+			drafts: [],
+			sent: [],
+			introduced: [],
+		};
 		if (!existsSync(this.file)) return empty;
 		return { ...empty, ...(JSON.parse(readFileSync(this.file, "utf8")) as Partial<MessagingData>) };
 	}
@@ -148,6 +168,19 @@ export class MessagingStore {
 		});
 	}
 
+	markIntroduced(chatID: string): void {
+		this.update((data) => {
+			if (!data.introduced.includes(chatID)) data.introduced.push(chatID);
+		});
+	}
+
+	setIntro(change: { ownerName?: string | null; intro?: string | null }): void {
+		this.update((data) => {
+			if (change.ownerName !== undefined) data.ownerName = change.ownerName ?? undefined;
+			if (change.intro !== undefined) data.intro = change.intro ?? undefined;
+		});
+	}
+
 	logSent(entry: Omit<SentEntry, "at">): void {
 		this.update((data) => {
 			data.sent.push({ ...entry, at: Date.now() });
@@ -199,6 +232,7 @@ Rules:
 - Search your memory (memory_search) for the people and topics involved before writing. Save anything durable you learn about them with memory_write.
 - Skip when the messages don't need a reply from your user, aren't meant for them, or your user already answered.
 - Never invent facts, plans, availability, or promises. If a good reply needs something you don't know, still draft your best reply but set confident to false and say what's missing in reason.
+- Don't sign the reply or mention that you are Brian; "sent by brian" is added automatically, and new chats get a one-time intro.
 - confident is true only when every fact in the reply is in your memory or this conversation, and your user would plainly be fine with it being sent.
 
 Finish with exactly one line of JSON and nothing after it:
@@ -277,10 +311,15 @@ export async function pollMessages(
 				incoming,
 			});
 			if (decision.action === "skip" || !decision.text) continue;
-			if (mode === "brian" || (mode === "auto" && decision.confident)) {
-				const text = mode === "brian" ? `${BRIAN_REPLY_PREFIX}${decision.text}` : decision.text;
-				await client.send(chat.id, text, mode === "brian" ? undefined : last.id);
-				store.logSent({ chatID: chat.id, chatTitle: chat.title, text, by: mode === "brian" ? "brian" : "auto" });
+			if (mode === "brian") {
+				const text = `${BRIAN_REPLY_PREFIX}${decision.text}`;
+				await client.send(chat.id, text);
+				store.logSent({ chatID: chat.id, chatTitle: chat.title, text, by: "brian" });
+				result.sent++;
+				continue;
+			}
+			if (mode === "auto" && decision.confident) {
+				await sendAsBrian(client, store, chat, decision.text, { replyTo: last.id, by: "auto" });
 				result.sent++;
 				continue;
 			}
@@ -314,10 +353,51 @@ export async function approveDraft(
 	if (!draft) throw new Error(`no draft ${id}`);
 	if (draft.status !== "pending") throw new Error(`draft ${id} is already ${draft.status}`);
 	const body = text?.trim() || draft.text;
-	await client.send(draft.chatID, body, draft.replyTo);
-	const sent = store.resolveDraft(id, "sent", body);
-	store.logSent({ chatID: draft.chatID, chatTitle: draft.chatTitle, text: body, by: "approved" });
-	return sent;
+	await sendAsBrian(client, store, { id: draft.chatID, title: draft.chatTitle }, body, {
+		replyTo: draft.replyTo || undefined,
+		by: "approved",
+	});
+	return store.resolveDraft(id, "sent", body);
+}
+
+/** The name Brian uses for its user in intros: the saved override, else the People note tagged `me`. */
+export function ownerName(store: MessagingStore, vaultDir: string = getMemoryDir()): string {
+	const saved = store.read().ownerName;
+	if (saved) return saved;
+	try {
+		const me = listMemoryNotes(vaultDir, "People").find((n) => n.tags.includes("me"));
+		if (me) return me.aliases[0] ?? me.name.split(" ")[0];
+	} catch {
+		// no vault yet
+	}
+	return "my user";
+}
+
+export function introText(store: MessagingStore, vaultDir?: string): string {
+	return (store.read().intro ?? DEFAULT_INTRO).replaceAll("{name}", ownerName(store, vaultDir));
+}
+
+/**
+ * Sends a message as the user, marked as Brian's: a one-time intro the first time Brian speaks in a chat,
+ * then the text with SENT_BY_BRIAN appended. Logs both.
+ */
+export async function sendAsBrian(
+	client: BeeperClient,
+	store: MessagingStore,
+	chat: Pick<BeeperChat, "id" | "title">,
+	text: string,
+	options: { replyTo?: string; by: Exclude<SentEntry["by"], "brian">; vaultDir?: string },
+): Promise<string> {
+	if (!store.read().introduced.includes(chat.id)) {
+		const intro = introText(store, options.vaultDir);
+		await client.send(chat.id, intro);
+		store.markIntroduced(chat.id);
+		store.logSent({ chatID: chat.id, chatTitle: chat.title, text: intro, by: options.by });
+	}
+	const body = `${text}${SENT_BY_BRIAN}`;
+	await client.send(chat.id, body, options.replyTo);
+	store.logSent({ chatID: chat.id, chatTitle: chat.title, text: body, by: options.by });
+	return body;
 }
 
 /** Finds a chat by exact id, then by case-insensitive title match. */

@@ -3,7 +3,7 @@ import { Type } from "typebox";
 import { APP_NAME } from "../../config.ts";
 import type { ExtensionAPI } from "../../core/extensions/types.ts";
 import { BeeperClient, loadBeeperConfig } from "../../core/messaging/beeper.ts";
-import { CHAT_MODES, findChat, MessagingStore } from "../../core/messaging/gateway.ts";
+import { CHAT_MODES, findChat, MessagingStore, sendAsBrian } from "../../core/messaging/gateway.ts";
 
 /** Lets Brian read and answer the user's chats through Beeper Desktop, and set per-chat policies. */
 export default function messagesExtension(brian: ExtensionAPI): void {
@@ -11,7 +11,7 @@ export default function messagesExtension(brian: ExtensionAPI): void {
 		name: "messages",
 		label: "Messages",
 		description:
-			"Your user's chats through Beeper Desktop (Discord, WhatsApp, iMessage, Telegram, Signal, ...). List chats, read a chat, search messages, draft a reply for the user to approve, send a message as the user, or set how the gateway treats a chat (ignore, draft, auto, brian).",
+			'Your user\'s chats through Beeper Desktop (Discord, WhatsApp, iMessage, Telegram, Signal, ...). List chats, read a chat, search messages, draft a reply for the user to approve, send a message for the user (marked "sent by brian", with a one-time intro in new chats), or set how the gateway treats a chat (ignore, draft, auto, brian).',
 		promptSnippet: "Read, search, draft, and send your user's chat messages; set per-chat policies",
 		promptGuidelines: [
 			"Send as your user only when they asked for that specific message or the chat's policy is auto. Otherwise draft.",
@@ -104,8 +104,7 @@ export default function messagesExtension(brian: ExtensionAPI): void {
 				case "send": {
 					if (!args.text) throw new Error("text is required");
 					const target = await chat();
-					await client.send(target.id, args.text);
-					store.logSent({ chatID: target.id, chatTitle: target.title, text: args.text, by: "manual" });
+					await sendAsBrian(client, store, target, args.text, { by: "manual" });
 					return out(`Sent to ${target.title}.`);
 				}
 				case "policy": {
