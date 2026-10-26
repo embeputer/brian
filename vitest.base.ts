@@ -2,10 +2,6 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export const workspaceSourcePaths = {
-	chordIndex: fileURLToPath(new URL("./packages/chord/src/index.ts", import.meta.url)),
-	chordContext: fileURLToPath(new URL("./packages/chord/src/context/index.ts", import.meta.url)),
-	chordDelta: fileURLToPath(new URL("./packages/chord/src/delta/index.ts", import.meta.url)),
-	chordNode: fileURLToPath(new URL("./packages/chord/src/node.ts", import.meta.url)),
 	telemetryIndex: fileURLToPath(new URL("./packages/telemetry/src/index.ts", import.meta.url)),
 	telemetryTesting: fileURLToPath(new URL("./packages/telemetry/src/testing/index.ts", import.meta.url)),
 	mcpIndex: fileURLToPath(new URL("./packages/mcp/src/index.ts", import.meta.url)),
@@ -31,10 +27,6 @@ export default defineConfig({
 		alias: [
 			{ find: /^@brian-agent\/cli$/, replacement: workspaceSourcePaths.codingAgentIndex },
 			{ find: /^@brian-agent\/a2a$/, replacement: workspaceSourcePaths.a2aIndex },
-			{ find: /^@brian-agent\/chord$/, replacement: workspaceSourcePaths.chordIndex },
-			{ find: /^@brian-agent\/chord\/context$/, replacement: workspaceSourcePaths.chordContext },
-			{ find: /^@brian-agent\/chord\/delta$/, replacement: workspaceSourcePaths.chordDelta },
-			{ find: /^@brian-agent\/chord\/node$/, replacement: workspaceSourcePaths.chordNode },
 			{ find: /^@brian-agent\/telemetry$/, replacement: workspaceSourcePaths.telemetryIndex },
 			{ find: /^@brian-agent\/telemetry\/testing$/, replacement: workspaceSourcePaths.telemetryTesting },
 			{ find: /^@brian-agent\/mcp$/, replacement: workspaceSourcePaths.mcpIndex },

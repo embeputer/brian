@@ -19,9 +19,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Workspace package name -> its source root, so cross-package imports are followed. */
 const WORKSPACE = {
-	"@brian-agent/chord": "packages/chord/src",
 	"@brian-agent/ai": "packages/ai/src",
-	"@brian-agent/durable": "packages/durable/src",
 	"@brian-agent/agent": "packages/agent/src",
 	"@brian-agent/codemode": "packages/codemode/src",
 	"@brian-agent/telemetry": "packages/telemetry/src",
@@ -53,22 +51,6 @@ const BUDGETS = {
 			maxFiles: 9,
 			forbid: ["codemode/src/index.ts", "runtime/host.ts", "runtime/worker.ts", "codemode/src/wasm.ts"],
 		},
-	},
-	"packages/durable": {
-		".": {
-			// Tool argument validation reaches TypeBox; provider-session creation reaches brian-ai's lean UUID utility; the
-			// memory and SQLite storages share scan order and cursor handling. Values from Chord's root (copyJson,
-			// replicatedState) reach its host runtime through the root barrel.
-			maxFiles: 66,
-			forbid: [
-				"packages/ai/src/index.ts",
-				"packages/ai/src/utils/typebox-helpers.ts",
-				// Photon (WebAssembly) loads only through `./images`.
-				"packages/durable/src/images/",
-			],
-		},
-		// The file tools reach their environment helpers and the Harness definitions they need, not the Harness itself.
-		"./tools": { maxFiles: 17, forbid: ["packages/durable/src/images/"] },
 	},
 };
 
