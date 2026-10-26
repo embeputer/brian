@@ -22,6 +22,7 @@ import { SettingsManager } from "../core/settings-manager.ts";
 import { loadSkills } from "../core/skills.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
 import { runRoutinesCommand } from "./routines-command.ts";
+import { connectModel, saveDefaultModel } from "./connect-model.ts";
 
 export const BRIAN_COMMANDS = [
 	"setup",
@@ -29,6 +30,8 @@ export const BRIAN_COMMANDS = [
 	"doctor",
 	"status",
 	"model",
+	"connect",
+	"login",
 	"skill",
 	"skills",
 	"uninstall",
@@ -134,12 +137,23 @@ export function onboard(answers: OnboardAnswers, memoryDir: string = getMemoryDi
 }
 
 async function runOnboard(command: string, args: string[]): Promise<number> {
-	const flags = parseFlags(args, ["--name", "--nickname", "--email", "--occupation", "--about", "--voice"]);
+	const flags = parseFlags(args, [
+		"--name",
+		"--nickname",
+		"--email",
+		"--occupation",
+		"--about",
+		"--voice",
+		"--provider",
+		"--model",
+	]);
 	if (isHelp(flags)) {
-		console.log(`Usage: ${APP_NAME} ${command} [--name <full name>] [--nickname <n>] [--email <e>] [--occupation <o>] [--about <text>] [--voice <text>] [--yes]
+		console.log(`Usage: ${APP_NAME} ${command} [--name <full name>] [--nickname <n>] [--email <e>] [--occupation <o>] [--about <text>] [--voice <text>] [--provider <id>] [--model <provider/id>] [--yes]
 
-Creates ${join(homedir(), CONFIG_DIR_NAME)}, the memory vault, a People/ note for you, and Agent/ notes for how Brian should sound.
-Prompts for missing answers when run in a terminal; --yes skips the prompts.`);
+Creates ${join(homedir(), CONFIG_DIR_NAME)}, the memory vault, a People/ note for you, and Agent/ notes for how Brian should sound,
+then connects a model provider (API key or subscription login) and sets the default model.
+Prompts for missing answers when run in a terminal; --yes skips the prompts.
+Messaging and other connections are set up later by asking Brian or with the CLI.`);
 		return 0;
 	}
 	const interactive = !flags.switches.has("--yes") && !flags.switches.has("-y");
@@ -154,12 +168,30 @@ Prompts for missing answers when run in a terminal; --yes skips the prompts.`);
 		voice: await get("--voice", "How should Brian sound when it talks or writes for you"),
 	};
 	const written = onboard(answers);
-	console.log(`${chalk.green("Brian is set up.")} Memory: ${getMemoryDir()}`);
+	console.log(`${chalk.green("Memory ready.")} ${getMemoryDir()}`);
 	for (const path of written) console.log(`  wrote ${path}`);
-	console.log(`\nNext:
+	const modelFlag = flags.values.get("--model");
+	let model: string | undefined;
+	if (modelFlag) {
+		await saveDefaultModel(modelFlag);
+		model = modelFlag;
+	} else if (interactive && process.stdin.isTTY) {
+		try {
+			model = await connectModel(flags.values.get("--provider"));
+		} catch (error) {
+			console.error(chalk.yellow(`Model not connected: ${error instanceof Error ? error.message : String(error)}`));
+			console.error(`Run ${APP_NAME} connect to try again.`);
+		}
+	}
+	console.log(
+		model
+			? `${chalk.green("Default model:")} ${model}`
+			: chalk.yellow(`No model connected yet: run ${APP_NAME} connect`),
+	);
+	console.log(`\n${chalk.green("Brian is set up.")} Next:
+  ${APP_NAME} "plan my week"         talk to Brian
   ${APP_NAME} doctor                 check providers, paths, and memory
-  ${APP_NAME} model <provider/id>    pick a default model
-  ${APP_NAME} "plan my week"         talk to Brian`);
+Ask Brian to set up messaging and other connections when you need them.`);
 	return 0;
 }
 
@@ -269,7 +301,27 @@ function runStatus(args: string[]): number {
 	return 0;
 }
 
-// model
+// connect / model
+
+async function runConnect(args: string[]): Promise<number> {
+	const flags = parseFlags(args, ["--provider"]);
+	if (isHelp(flags)) {
+		console.log(`Usage: ${APP_NAME} connect [--provider <id>]
+
+Connect a model provider (API key or subscription login) and pick the default model.`);
+		return 0;
+	}
+	if (!process.stdin.isTTY)
+		return fail(
+			`${APP_NAME} connect needs a terminal; use ${APP_NAME} model <provider/id> with an API key env var instead`,
+		);
+	try {
+		console.log(`Default model: ${await connectModel(flags.values.get("--provider") ?? flags.positional[0])}`);
+		return 0;
+	} catch (error) {
+		return fail(error instanceof Error ? error.message : String(error));
+	}
+}
 
 async function runModel(args: string[]): Promise<number> {
 	const flags = parseFlags(args, []);
@@ -485,6 +537,9 @@ export async function runBrianCommand(args: string[]): Promise<number | undefine
 		case "routine":
 		case "cron":
 			return runRoutinesCommand(rest);
+		case "connect":
+		case "login":
+			return runConnect(rest);
 		case "uninstall":
 			return isSelfUninstall(args) ? runUninstall(rest) : undefined;
 		default:
