@@ -284,6 +284,7 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} setup | onboard           Create ~/.brian and the memory vault, tell Brian who you are
   ${APP_NAME} doctor                    Check node, config, memory, providers, and skills
   ${APP_NAME} status [--json]           Show paths, counts, and the default model
+  ${APP_NAME} connect [--provider id]   Connect a model provider and pick the default model
   ${APP_NAME} model [provider/id]       Show or set the default model
   ${APP_NAME} memory <command>          Search and write the markdown memory vault
   ${APP_NAME} skill <command>           List, show, add, create, or remove skills
