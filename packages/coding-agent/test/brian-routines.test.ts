@@ -3,7 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runRoutinesCommand } from "../src/cli/routines-command.ts";
-import { type RoutineExecutor, runDueRoutines } from "../src/extensions/brian/routine-runner.ts";
+import {
+	MAX_RESUMES,
+	RESUME_PROMPT,
+	type RoutineExecutor,
+	runDueRoutines,
+} from "../src/extensions/brian/routine-runner.ts";
 import { RoutineStore } from "../src/extensions/brian/routines.ts";
 
 let dir: string;
@@ -73,6 +78,62 @@ describe("RoutineStore", () => {
 		expect(() => store.add({ payload: " ", when: "1h" })).toThrow(/text is required/);
 		expect(store.remove(routine.id)).toBe(true);
 		expect(store.list()).toEqual([]);
+	});
+});
+
+describe("routine runs cut off by a restart", () => {
+	it("saves each task run to its own session and resumes that session after a restart", async () => {
+		const now = Date.now();
+		const routine = store.add(
+			{ type: "task", payload: "book the dentist", when: "now", recurrence: "every 1h" },
+			now,
+		);
+		const runsDir = join(dir, "runs");
+		const calls: Array<{ prompt: string; sessionFile?: string }> = [];
+		// The first run dies with the process: it never returns, so nothing is recorded.
+		const dying: RoutineExecutor = {
+			runTask: (prompt, options) => {
+				calls.push({ prompt, sessionFile: options?.sessionFile });
+				return new Promise(() => {});
+			},
+			notify: async () => {},
+		};
+		void runDueRoutines(store, dying, now + 3_600_001, runsDir);
+		await vi.waitFor(() => expect(calls).toHaveLength(1));
+		const run = store.get(routine.id)?.run;
+		expect(run).toMatchObject({ resumes: 0, sessionFile: calls[0].sessionFile });
+		expect(calls[0]).toEqual({ prompt: "book the dentist", sessionFile: expect.stringContaining(runsDir) });
+
+		// After the restart the routine is still due and continues the same session.
+		const exec = executor();
+		const resumed: Array<string | undefined> = [];
+		const restarted: RoutineExecutor = {
+			runTask: async (prompt, options) => {
+				resumed.push(options?.sessionFile);
+				return exec.runTask(prompt);
+			},
+			notify: exec.notify,
+		};
+		expect(await runDueRoutines(store, restarted, now + 3_600_002, runsDir)).toEqual({ ran: 1, failed: 0 });
+		expect(exec.tasks).toEqual([RESUME_PROMPT]);
+		expect(resumed).toEqual([calls[0].sessionFile]);
+		expect(store.get(routine.id)?.run).toBeUndefined();
+		expect(store.history()[0]).toMatchObject({ status: "succeeded", startedAt: run?.startedAt });
+	});
+
+	it(`records a run cut off more than ${MAX_RESUMES} times as failed`, async () => {
+		const now = Date.now();
+		const routine = store.add({ type: "task", payload: "summarize inbox", when: "now", recurrence: "every 1h" }, now);
+		const start = { startedAt: now, sessionFile: join(dir, "run.jsonl") };
+		for (let i = 0; i <= MAX_RESUMES; i++) store.startRun(routine.id, start);
+		const exec = executor();
+		expect(await runDueRoutines(store, exec, now + 3_600_001, join(dir, "runs"))).toEqual({ ran: 1, failed: 1 });
+		expect(exec.tasks).toEqual([]);
+		expect(store.get(routine.id)).toMatchObject({
+			lastStatus: "failed",
+			lastError: expect.stringMatching(/restart/),
+		});
+		expect(store.get(routine.id)?.run).toBeUndefined();
 	});
 });
 

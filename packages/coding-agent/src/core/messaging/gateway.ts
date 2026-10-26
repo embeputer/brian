@@ -55,9 +55,23 @@ export interface SentEntry {
 	by: "auto" | "approved" | "brian" | "manual";
 }
 
+/** A send Brian started. It stays here until the send finishes, so a restart mid-send is noticed. */
+export interface OutboxEntry {
+	id: string;
+	chatID: string;
+	chatTitle: string;
+	text: string;
+	replyTo?: string;
+	by: SentEntry["by"];
+	at: number;
+}
+
 interface MessagingData {
 	defaultMode: ChatMode;
 	lastPollAt: string | null;
+	/** Per chat, the timestamp of the newest message already handled. Saved after each chat. */
+	handled: Record<string, string>;
+	outbox: OutboxEntry[];
 	policies: Record<string, ChatPolicy>;
 	drafts: Draft[];
 	sent: SentEntry[];
@@ -87,6 +101,8 @@ export class MessagingStore {
 		const empty: MessagingData = {
 			defaultMode: "draft",
 			lastPollAt: null,
+			handled: {},
+			outbox: [],
 			policies: {},
 			drafts: [],
 			sent: [],
@@ -166,6 +182,31 @@ export class MessagingStore {
 			if (text !== undefined) draft.text = text;
 			return { ...draft };
 		});
+	}
+
+	markHandled(chatID: string, timestamp: string): void {
+		this.update((data) => {
+			data.handled[chatID] = timestamp;
+		});
+	}
+
+	addOutbox(entry: Omit<OutboxEntry, "id" | "at">): OutboxEntry {
+		return this.update((data) => {
+			const created: OutboxEntry = { ...entry, id: randomUUID().slice(0, 8), at: Date.now() };
+			data.outbox.push(created);
+			return created;
+		});
+	}
+
+	removeOutbox(id: string): void {
+		this.update((data) => {
+			data.outbox = data.outbox.filter((e) => e.id !== id);
+		});
+	}
+
+	/** Whether this exact text was sent to the chat within `windowMs`. */
+	recentlySent(chatID: string, text: string, windowMs: number, now: number = Date.now()): SentEntry | undefined {
+		return this.read().sent.find((s) => s.chatID === chatID && s.text === text && now - s.at <= windowMs);
 	}
 
 	markIntroduced(chatID: string): void {
@@ -289,18 +330,25 @@ export async function pollMessages(
 ): Promise<PollResult> {
 	const since = store.read().lastPollAt ?? new Date(now.getTime() - 10 * 60_000).toISOString();
 	const result: PollResult = { chats: 0, drafts: [], sent: 0, errors: [] };
+	result.drafts.push(...recoverOutbox(store));
 	const chats = (await client.chats()).filter((c) => !c.lastActivity || c.lastActivity > since);
 	for (const chat of chats) {
 		const mode = store.modeFor(chat);
 		if (mode === "ignore") continue;
 		try {
+			const handled = store.read().handled[chat.id];
+			const after = handled && handled > since ? handled : since;
 			const history = await client.messages(chat.id);
-			const fresh = history.filter((m) => m.timestamp > since);
+			const fresh = history.filter((m) => m.timestamp > after);
 			const incoming = fresh.filter((m) => needsAttention(mode, m));
 			if (!incoming.length) continue;
 			// the user already answered after the last incoming message
 			const last = incoming[incoming.length - 1];
-			if (mode !== "brian" && fresh.some((m) => m.isSender && m.timestamp > last.timestamp)) continue;
+			const newest = fresh[fresh.length - 1].timestamp;
+			if (mode !== "brian" && fresh.some((m) => m.isSender && m.timestamp > last.timestamp)) {
+				store.markHandled(chat.id, newest);
+				continue;
+			}
 			result.chats++;
 			const policy = store.read().policies[chat.id];
 			const decision = await decide({
@@ -310,19 +358,26 @@ export async function pollMessages(
 				history: history.filter((m) => !fresh.includes(m)).slice(-20),
 				incoming,
 			});
-			if (decision.action === "skip" || !decision.text) continue;
+			if (decision.action === "skip" || !decision.text) {
+				store.markHandled(chat.id, newest);
+				continue;
+			}
 			if (mode === "brian") {
 				const text = `${BRIAN_REPLY_PREFIX}${decision.text}`;
+				// In the user's own chat a lost reply is better than a duplicate, so no outbox entry.
+				store.markHandled(chat.id, newest);
 				await client.send(chat.id, text);
 				store.logSent({ chatID: chat.id, chatTitle: chat.title, text, by: "brian" });
 				result.sent++;
 				continue;
 			}
 			if (mode === "auto" && decision.confident) {
+				store.markHandled(chat.id, newest);
 				await sendAsBrian(client, store, chat, decision.text, { replyTo: last.id, by: "auto" });
 				result.sent++;
 				continue;
 			}
+			store.markHandled(chat.id, newest);
 			result.drafts.push(
 				store.addDraft({
 					chatID: chat.id,
@@ -341,6 +396,34 @@ export async function pollMessages(
 	}
 	store.setLastPoll(now.toISOString());
 	return result;
+}
+
+/** Shown on drafts made from sends a restart cut off. */
+export const INTERRUPTED_SEND_REASON =
+	"Brian restarted while sending this, so it may or may not have been sent. Check the chat before approving.";
+
+/**
+ * Turns sends that never finished (Brian stopped mid-send) into drafts, so the user decides whether to
+ * send them instead of Brian sending a possible duplicate.
+ */
+export function recoverOutbox(store: MessagingStore): Draft[] {
+	const drafts: Draft[] = [];
+	for (const entry of store.read().outbox) {
+		drafts.push(
+			store.addDraft({
+				chatID: entry.chatID,
+				chatTitle: entry.chatTitle,
+				network: "",
+				replyTo: entry.replyTo ?? "",
+				from: "",
+				incoming: "",
+				text: entry.text,
+				reason: INTERRUPTED_SEND_REASON,
+			}),
+		);
+		store.removeOutbox(entry.id);
+	}
+	return drafts;
 }
 
 export async function approveDraft(
@@ -388,16 +471,28 @@ export async function sendAsBrian(
 	text: string,
 	options: { replyTo?: string; by: Exclude<SentEntry["by"], "brian">; vaultDir?: string },
 ): Promise<string> {
-	if (!store.read().introduced.includes(chat.id)) {
-		const intro = introText(store, options.vaultDir);
-		await client.send(chat.id, intro);
-		store.markIntroduced(chat.id);
-		store.logSent({ chatID: chat.id, chatTitle: chat.title, text: intro, by: options.by });
+	const pending = store.addOutbox({
+		chatID: chat.id,
+		chatTitle: chat.title,
+		text,
+		replyTo: options.replyTo,
+		by: options.by,
+	});
+	try {
+		if (!store.read().introduced.includes(chat.id)) {
+			const intro = introText(store, options.vaultDir);
+			await client.send(chat.id, intro);
+			store.markIntroduced(chat.id);
+			store.logSent({ chatID: chat.id, chatTitle: chat.title, text: intro, by: options.by });
+		}
+		const body = `${text}${SENT_BY_BRIAN}`;
+		await client.send(chat.id, body, options.replyTo);
+		store.logSent({ chatID: chat.id, chatTitle: chat.title, text: body, by: options.by });
+		return body;
+	} finally {
+		// A send that fails with an error is reported to the caller; only a process that dies mid-send leaves an entry.
+		store.removeOutbox(pending.id);
 	}
-	const body = `${text}${SENT_BY_BRIAN}`;
-	await client.send(chat.id, body, options.replyTo);
-	store.logSent({ chatID: chat.id, chatTitle: chat.title, text: body, by: options.by });
-	return body;
 }
 
 /** Finds a chat by exact id, then by case-insensitive title match. */

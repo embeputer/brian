@@ -3,7 +3,10 @@ import { Type } from "typebox";
 import { APP_NAME } from "../../config.ts";
 import type { ExtensionAPI } from "../../core/extensions/types.ts";
 import { BeeperClient, loadBeeperConfig } from "../../core/messaging/beeper.ts";
-import { CHAT_MODES, findChat, MessagingStore, sendAsBrian } from "../../core/messaging/gateway.ts";
+import { CHAT_MODES, findChat, MessagingStore, SENT_BY_BRIAN, sendAsBrian } from "../../core/messaging/gateway.ts";
+
+/** The send action refuses to repeat an identical message to the same chat within this window. */
+const REPEAT_WINDOW_MS = 60 * 60_000;
 
 /** Lets Brian read and answer the user's chats through Beeper Desktop, and set per-chat policies. */
 export default function messagesExtension(brian: ExtensionAPI): void {
@@ -104,6 +107,12 @@ export default function messagesExtension(brian: ExtensionAPI): void {
 				case "send": {
 					if (!args.text) throw new Error("text is required");
 					const target = await chat();
+					const earlier = store.recentlySent(target.id, `${args.text}${SENT_BY_BRIAN}`, REPEAT_WINDOW_MS);
+					if (earlier) {
+						return out(
+							`Already sent this exact message to ${target.title} at ${new Date(earlier.at).toLocaleString()}; not sending it again.`,
+						);
+					}
 					await sendAsBrian(client, store, target, args.text, { by: "manual" });
 					return out(`Sent to ${target.title}.`);
 				}
