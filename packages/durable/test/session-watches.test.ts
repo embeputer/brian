@@ -1,13 +1,13 @@
-import type { Context } from "@punch-bot/chord";
+import type { Context } from "@brian-agent/chord";
 import {
 	BACKGROUND_CONTEXT,
 	createContextKey,
 	withAbortSignal,
 	withCancel,
 	withContextValue,
-} from "@punch-bot/chord/context";
-import { applyImmutable } from "@punch-bot/chord/delta";
-import { defineDoc } from "@punch-bot/durable";
+} from "@brian-agent/chord/context";
+import { applyImmutable } from "@brian-agent/chord/delta";
+import { defineDoc } from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { context, documentChanges, flush, openTestSession } from "./session-support.ts";
 

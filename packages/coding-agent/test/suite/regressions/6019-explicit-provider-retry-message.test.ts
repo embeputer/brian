@@ -1,4 +1,4 @@
-import { fauxAssistantMessage } from "@punch-bot/ai";
+import { fauxAssistantMessage } from "@brian-agent/ai";
 import { describe, expect, it } from "vitest";
 import { createHarness } from "../harness.ts";
 

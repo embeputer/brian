@@ -1,5 +1,5 @@
-import type { StreamFn } from "@punch-bot/agent";
-import { type AssistantMessage, createAssistantMessageEventStream, fauxAssistantMessage } from "@punch-bot/ai";
+import type { StreamFn } from "@brian-agent/agent";
+import { type AssistantMessage, createAssistantMessageEventStream, fauxAssistantMessage } from "@brian-agent/ai";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, type Harness } from "../harness.ts";
 

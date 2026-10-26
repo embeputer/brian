@@ -12,8 +12,8 @@
           "path": "quickstart.md"
         },
         {
-          "title": "How Pi Works",
-          "path": "how-pi-works.md"
+          "title": "How Brian Works",
+          "path": "how-brian-works.md"
         }
       ]
     },
@@ -21,10 +21,10 @@
       "title": "Guides",
       "items": [
         {
-          "title": "Run Pi",
+          "title": "Run Brian",
           "items": [
             {
-              "title": "Use Pi in the Terminal",
+              "title": "Use Brian in the Terminal",
               "path": "usage.md"
             },
             {
@@ -36,15 +36,35 @@
               "path": "sessions.md"
             },
             {
-              "title": "Punch Todos",
-              "path": "punch-todos.md"
+              "title": "Memory Vault",
+              "path": "memory.md"
             },
             {
-              "title": "Run Pi Safely",
+              "title": "Brian Todos",
+              "path": "brian-todos.md"
+            },
+            {
+              "title": "Routines and Inter-Brian",
+              "path": "brian-routines.md"
+            },
+            {
+              "title": "Weekly Audit",
+              "path": "brian-audit.md"
+            },
+            {
+              "title": "Waking Brian",
+              "path": "brian-serve.md"
+            },
+            {
+              "title": "Messages and the Gateway",
+              "path": "brian-messages.md"
+            },
+            {
+              "title": "Run Brian Safely",
               "path": "security.md"
             },
             {
-              "title": "Isolate Pi",
+              "title": "Isolate Brian",
               "path": "containerization.md"
             },
             {
@@ -64,24 +84,24 @@
               "path": "shell-aliases.md"
             },
             {
-              "title": "Run Pi in tmux",
+              "title": "Run Brian in tmux",
               "path": "tmux.md"
             },
             {
-              "title": "Run Pi on Windows",
+              "title": "Run Brian on Windows",
               "path": "windows.md"
             },
             {
-              "title": "Run Pi on Android",
+              "title": "Run Brian on Android",
               "path": "termux.md"
             }
           ]
         },
         {
-          "title": "Customize Pi",
+          "title": "Customize Brian",
           "items": [
             {
-              "title": "Configure Pi",
+              "title": "Configure Brian",
               "path": "configuration.md"
             },
             {
@@ -97,7 +117,7 @@
               "path": "themes.md"
             },
             {
-              "title": "Use Pi Packages",
+              "title": "Use Brian Packages",
               "path": "packages.md"
             },
             {
@@ -107,7 +127,7 @@
           ]
         },
         {
-          "title": "Build on Pi",
+          "title": "Build on Brian",
           "items": [
             {
               "title": "Build Extensions",

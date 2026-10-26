@@ -1,4 +1,4 @@
-import { piMessagesApi } from "../api/pi-messages.lazy.ts";
+import { brianMessagesApi } from "../api/brian-messages.lazy.ts";
 import { envApiKeyAuth, lazyOAuth } from "../auth/helpers.ts";
 import { loadRadiusOAuth } from "../auth/oauth/load.ts";
 import type { Provider } from "../models.ts";
@@ -30,7 +30,7 @@ export function radiusProvider(options: RadiusProviderOptions = {}): Provider<"p
 	// Gateway catalog for this account. Radius org owners can disable models, so once known it replaces
 	// the shipped baseline instead of overlaying it. The baseline only covers the time before any catalog exists.
 	let dynamicModels: Model<"pi-messages">[] | undefined;
-	const streams = piMessagesApi();
+	const streams = brianMessagesApi();
 
 	return {
 		id,

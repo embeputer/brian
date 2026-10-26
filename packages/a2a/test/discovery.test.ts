@@ -9,7 +9,7 @@ import { createA2aServer } from "../src/server.ts";
 const dirs: string[] = [];
 
 function tempDir(): string {
-	const dir = mkdtempSync(path.join(tmpdir(), "punch-a2a-"));
+	const dir = mkdtempSync(path.join(tmpdir(), "brian-a2a-"));
 	dirs.push(dir);
 	return dir;
 }
@@ -21,15 +21,15 @@ afterEach(() => {
 });
 
 describe("defaultA2aDiscoveryDir", () => {
-	test("prefers PUNCH_A2A_DISCOVERY_DIR", () => {
-		expect(defaultA2aDiscoveryDir({ PUNCH_A2A_DISCOVERY_DIR: "/var/punch/a2a" })).toBe(
-			path.resolve("/var/punch/a2a"),
+	test("prefers BRIAN_A2A_DISCOVERY_DIR", () => {
+		expect(defaultA2aDiscoveryDir({ BRIAN_A2A_DISCOVERY_DIR: "/var/brian/a2a" })).toBe(
+			path.resolve("/var/brian/a2a"),
 		);
 	});
 
 	test("uses XDG_RUNTIME_DIR when unset", () => {
 		expect(defaultA2aDiscoveryDir({ XDG_RUNTIME_DIR: "/run/user/1000" })).toBe(
-			path.join("/run/user/1000", "punch", "a2a"),
+			path.join("/run/user/1000", "brian", "a2a"),
 		);
 	});
 });

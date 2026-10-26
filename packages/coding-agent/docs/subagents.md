@@ -1,6 +1,6 @@
 # Subagents
 
-Punch includes a `subagent` tool that delegates work to a specialized agent in an isolated process or through an A2A endpoint. It supports one task, up to eight parallel tasks with four running concurrently, and sequential chains that substitute the previous result into `{previous}`.
+Brian includes a `subagent` tool that delegates work to a specialized agent in an isolated process or through an A2A endpoint. It supports one task, up to eight parallel tasks with four running concurrently, and sequential chains that substitute the previous result into `{previous}`.
 
 ## Bundled agents
 
@@ -13,7 +13,7 @@ Fresh installations include four definitions:
 | `reviewer` | Read-only code review |
 | `worker` | General implementation work |
 
-Add or override agents with Markdown files in `~/.pi/agent/agents`. Each file needs YAML frontmatter:
+Add or override agents with Markdown files in `~/.brian/agent/agents`. Each file needs YAML frontmatter:
 
 ```markdown
 ---
@@ -26,13 +26,13 @@ model: anthropic/claude-sonnet-4-5
 System instructions for the agent.
 ```
 
-Omit `model` to inherit the parent session's model and thinking level. Set `a2aUrl` to delegate through A2A instead of starting a local `pi` process.
+Omit `model` to inherit the parent session's model and thinking level. Set `a2aUrl` to delegate through A2A instead of starting a local `brian` process.
 
-Punch sandboxes on the same machine also advertise an A2A listener when `SANDBOX_NAME` is set (or `PUNCH_A2A=1`). Use the `a2a` tool (`list` / `send`) to talk to those peers by sandbox name without configuring `a2aUrl`.
+Brians on the same machine also advertise an A2A listener when `BRIAN_NAME` is set (or `BRIAN_A2A=1`). Use the `brians` tool (`list` / `send` / `review`) to talk to those peers by name without configuring `a2aUrl`. See [Brian routines and inter-Brian](brian-routines.md).
 
 ## Project agents and trust
 
-The default `agentScope` is `user`, which loads bundled and user agents but not repository-controlled definitions. Set it to `project` or `both` to discover the nearest `.pi/agents` directory. In an untrusted interactive project, Punch asks for confirmation before executing any requested project agent. Project definitions override user and bundled definitions with the same name.
+The default `agentScope` is `user`, which loads bundled and user agents but not repository-controlled definitions. Set it to `project` or `both` to discover the nearest `.brian/agents` directory. In an untrusted interactive project, Brian asks for confirmation before executing any requested project agent. Project definitions override user and bundled definitions with the same name.
 
 ## Modes
 

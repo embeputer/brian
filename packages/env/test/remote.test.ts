@@ -1,8 +1,8 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { BACKGROUND_CONTEXT, withAbortSignal } from "@punch-bot/chord/context";
-import { getOrThrow, type ShellOutputInfo } from "@punch-bot/durable/env";
+import { BACKGROUND_CONTEXT, withAbortSignal } from "@brian-agent/chord/context";
+import { getOrThrow, type ShellOutputInfo } from "@brian-agent/durable/env";
 import { afterAll, describe, expect, it } from "vitest";
 import { Connection, nodePlatform } from "../src/connection.ts";
 import { RemoteExecutionEnv } from "../src/remote-env.ts";
@@ -17,11 +17,11 @@ afterAll(() => {
 });
 
 function environment(): { env: RemoteExecutionEnv; connection: Connection } {
-	const cwd = mkdtempSync(join(tmpdir(), "pi-env-remote-"));
+	const cwd = mkdtempSync(join(tmpdir(), "brian-env-remote-"));
 	dirs.push(cwd);
 	const connection = new Connection({ command: [daemon] });
 	connections.push(connection);
-	return { env: new RemoteExecutionEnv({ connection, id: "pi-env:test", cwd }), connection };
+	return { env: new RemoteExecutionEnv({ connection, id: "brian-env:test", cwd }), connection };
 }
 
 describe("RemoteExecutionEnv", () => {
@@ -86,7 +86,7 @@ describe("RemoteExecutionEnv", () => {
 		expect((await env.connection.info()).features).toContain("listFiles");
 		const connection = new Connection({ command: [process.execPath, join(import.meta.dirname, "old-daemon.ts")] });
 		connections.push(connection);
-		const old = new RemoteExecutionEnv({ connection, id: "pi-env:old", cwd: env.cwd });
+		const old = new RemoteExecutionEnv({ connection, id: "brian-env:old", cwd: env.cwd });
 		const listed = await old.listFiles(".", undefined, context);
 		expect(listed.ok ? "ok" : listed.error.code).toBe("not_supported");
 	});
@@ -136,7 +136,7 @@ describe("RemoteExecutionEnv", () => {
 	});
 
 	it("computes the command at each start and retries a start that failed", async () => {
-		const cwd = mkdtempSync(join(tmpdir(), "pi-env-remote-"));
+		const cwd = mkdtempSync(join(tmpdir(), "brian-env-remote-"));
 		dirs.push(cwd);
 		let starts = 0;
 		const connection = new Connection({
@@ -147,7 +147,7 @@ describe("RemoteExecutionEnv", () => {
 			},
 		});
 		connections.push(connection);
-		const env = new RemoteExecutionEnv({ connection, id: "pi-env:test", cwd });
+		const env = new RemoteExecutionEnv({ connection, id: "brian-env:test", cwd });
 		const offline = await env.readTextFile("missing.txt", context);
 		expect(offline.ok ? "ok" : [offline.error.code, offline.error.message]).toEqual([
 			"unknown",

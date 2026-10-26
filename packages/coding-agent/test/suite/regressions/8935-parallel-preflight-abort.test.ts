@@ -1,5 +1,5 @@
-import type { AgentTool } from "@punch-bot/agent";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
+import type { AgentTool } from "@brian-agent/agent";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, getMessageText, type Harness } from "../harness.ts";
@@ -32,13 +32,13 @@ describe("#8935 parallel preflight abort", () => {
 		const harness = await createHarness({
 			tools: [externalWrite],
 			extensionFactories: [
-				(pi) => {
-					pi.on("tool_call", async (event, ctx) => {
+				(brian) => {
+					brian.on("tool_call", async (event, ctx) => {
 						const value = "value" in event.input ? String(event.input.value) : "";
 						preflights.push(value);
 						if (value === "second") ctx.abort();
 					});
-					pi.on("tool_result", async (event) => {
+					brian.on("tool_result", async (event) => {
 						resultHooks.push(event.toolCallId);
 					});
 				},

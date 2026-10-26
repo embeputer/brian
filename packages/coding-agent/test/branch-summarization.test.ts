@@ -1,11 +1,11 @@
-import type { StreamFn } from "@punch-bot/agent";
+import type { StreamFn } from "@brian-agent/agent";
 import {
 	type AssistantMessage,
 	createAssistantMessageEventStream,
 	fauxAssistantMessage,
 	type Model,
 	type SimpleStreamOptions,
-} from "@punch-bot/ai";
+} from "@brian-agent/ai";
 import { describe, expect, it } from "vitest";
 import { generateBranchSummary } from "../src/core/compaction/index.ts";
 import type { SessionEntry } from "../src/core/session-manager.ts";

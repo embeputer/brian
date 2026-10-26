@@ -1,6 +1,6 @@
-import { createModels, Type } from "@punch-bot/ai";
-import type { Context } from "@punch-bot/chord";
-import { withCancel } from "@punch-bot/chord/context";
+import { createModels, Type } from "@brian-agent/ai";
+import type { Context } from "@brian-agent/chord";
+import { withCancel } from "@brian-agent/chord/context";
 import {
 	type Conversation,
 	createRegistry,
@@ -15,7 +15,7 @@ import {
 	type RegistrySnapshot,
 	type TaskId,
 	type TaskRuntime,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { addHooks, addTask, addTool, user } from "./harness-support.ts";
 import { ControlledStorage, context, flush } from "./session-support.ts";

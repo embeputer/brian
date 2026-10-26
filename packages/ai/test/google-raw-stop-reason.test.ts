@@ -98,7 +98,7 @@ beforeEach(() => {
 	googleGenAiMock.streamChunks = undefined;
 });
 
-const PI_USER_AGENT = "punch-agent";
+const BRIAN_USER_AGENT = "brian-agent";
 
 const context = normalizeContext({
 	messages: [{ role: "user", content: "hello", timestamp: Date.now() }],
@@ -249,8 +249,8 @@ describe("Google provider stream events", () => {
 });
 
 describe("Google Generative AI user agent", () => {
-	it("uses Punch Bot's User-Agent by default", async () => {
-		expect((await captureGoogleHeaders())["User-Agent"]).toBe(PI_USER_AGENT);
+	it("uses Brian Bot's User-Agent by default", async () => {
+		expect((await captureGoogleHeaders())["User-Agent"]).toBe(BRIAN_USER_AGENT);
 	});
 
 	it("lets explicit headers override the default User-Agent", async () => {

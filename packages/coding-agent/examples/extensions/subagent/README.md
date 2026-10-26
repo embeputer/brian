@@ -2,11 +2,11 @@
 
 Delegate tasks to specialized subagents with isolated context windows.
 
-The `subagent` tool is built into Punch. The files in this directory provide the bundled agent definitions and optional workflow prompt templates.
+The `subagent` tool is built into Brian. The files in this directory provide the bundled agent definitions and optional workflow prompt templates.
 
 ## Features
 
-- **Isolated context**: Each subagent runs in a separate `pi` process, or over A2A when `a2aUrl` is configured
+- **Isolated context**: Each subagent runs in a separate `brian` process, or over A2A when `a2aUrl` is configured
 - **Streaming output**: See tool calls and progress as they happen
 - **Parallel streaming**: All parallel tasks stream updates simultaneously
 - **Markdown rendering**: Final output rendered with proper formatting (expanded view)
@@ -34,17 +34,17 @@ subagent/
 The tool and the `scout`, `planner`, `reviewer`, and `worker` agents require no installation. To add the optional workflow prompts to your user configuration, copy them from the installed package:
 
 ```bash
-mkdir -p ~/.pi/agent/prompts
-cp node_modules/@punch-bot/cli/examples/extensions/subagent/prompts/*.md ~/.pi/agent/prompts/
+mkdir -p ~/.brian/agent/prompts
+cp node_modules/@brian-agent/cli/examples/extensions/subagent/prompts/*.md ~/.brian/agent/prompts/
 ```
 
 ## Security Model
 
-This tool executes a separate `pi` subprocess with a delegated system prompt and tool/model configuration.
+This tool executes a separate `brian` subprocess with a delegated system prompt and tool/model configuration.
 
-**Project-local agents** (`.pi/agents/*.md`) are repo-controlled prompts that can instruct the model to read files, run bash commands, etc.
+**Project-local agents** (`.brian/agents/*.md`) are repo-controlled prompts that can instruct the model to read files, run bash commands, etc.
 
-**Default behavior:** Loads bundled agents and **user-level agents** from `~/.pi/agent/agents`. User definitions override bundled definitions with the same name.
+**Default behavior:** Loads bundled agents and **user-level agents** from `~/.brian/agent/agents`. User definitions override bundled definitions with the same name.
 
 To enable project-local agents, pass `agentScope: "both"` (or `"project"`). Only do this for repositories you trust.
 
@@ -124,14 +124,14 @@ a2aUrl: http://127.0.0.1:41241
 System prompt for the agent goes here.
 ```
 
-When `a2aUrl` is set, the subagent delegates to an external A2A agent (for example Hermes) instead of spawning a local `pi` subprocess.
+When `a2aUrl` is set, the subagent delegates to an external A2A agent (for example Hermes) instead of spawning a local `brian` subprocess.
 
 When `model` is omitted, the subagent inherits the dispatching session's active model and thinking level.
 
 **Locations:**
 - Bundled `scout`, `planner`, `reviewer`, and `worker` definitions
-- `~/.pi/agent/agents/*.md` - User-level (always loaded)
-- `.pi/agents/*.md` - Project-level (only with `agentScope: "project"` or `"both"`)
+- `~/.brian/agent/agents/*.md` - User-level (always loaded)
+- `.brian/agents/*.md` - Project-level (only with `agentScope: "project"` or `"both"`)
 
 User agents override bundled agents. Project agents override both with the same name when their scope is enabled.
 

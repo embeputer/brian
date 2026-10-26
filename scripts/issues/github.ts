@@ -2,7 +2,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 
-export const REPO = "punch-bot/core";
+export const REPO = "embeputer/brian";
 const MAX_BODY = 16_000;
 
 export interface Issue {
@@ -136,7 +136,7 @@ export function issueStatus(issue: Issue): string {
 }
 
 const STOPWORDS = new Set(
-	"the and for with that this from when not are was but can does doesn have into after before about pi's pi issue bug feature request support add allow should".split(
+	"the and for with that this from when not are was but can does doesn have into after before about brian's brian issue bug feature request support add allow should".split(
 		" ",
 	),
 );

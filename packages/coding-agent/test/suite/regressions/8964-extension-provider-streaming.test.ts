@@ -1,9 +1,9 @@
-import { type AssistantMessage, fauxAssistantMessage, fauxProvider } from "@punch-bot/ai";
-import { getApiProvider } from "@punch-bot/ai/compat";
+import { type AssistantMessage, fauxAssistantMessage, fauxProvider } from "@brian-agent/ai";
+import { getApiProvider } from "@brian-agent/ai/compat";
 import { expect, it } from "vitest";
 import { createHarness } from "../harness.ts";
 
-// Regression for #8964: extensions can stream responses from providers registered with pi.registerProvider().
+// Regression for #8964: extensions can stream responses from providers registered with brian.registerProvider().
 it.each(["stream", "streamSimple"] as const)(
 	"allows an extension command to use ctx.modelRegistry.%s",
 	async (method) => {
@@ -19,8 +19,8 @@ it.each(["stream", "streamSimple"] as const)(
 		let result: AssistantMessage | undefined;
 		const harness = await createHarness({
 			extensionFactories: [
-				(pi) => {
-					pi.registerProvider(faux.provider.id, {
+				(brian) => {
+					brian.registerProvider(faux.provider.id, {
 						api: faux.api,
 						baseUrl: faux.getModel().baseUrl,
 						apiKey: "extension-key",
@@ -28,8 +28,8 @@ it.each(["stream", "streamSimple"] as const)(
 						streamSimple: faux.provider.streamSimple,
 					});
 				},
-				(pi) => {
-					pi.registerCommand("stream-custom", {
+				(brian) => {
+					brian.registerCommand("stream-custom", {
 						description: "Stream a response from the custom provider",
 						handler: async (_args, ctx) => {
 							const model = ctx.modelRegistry.find(faux.provider.id, faux.getModel().id)!;

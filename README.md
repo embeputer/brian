@@ -1,12 +1,14 @@
-# Punch
+# Brian
 
-Punch is a fork of the [pi agent harness](https://github.com/earendil-works/pi). Workspace packages publish as `@punch-bot/*`. The CLI binary is still `pi`.
+Brian is your agent: one agent for work, school, and life. It remembers people and context in a portable markdown memory vault, and it can act for you.
 
-This repo is [`punch-bot/core`](https://github.com/punch-bot/core).
+Brian is built on the [pi agent harness](https://github.com/earendil-works/pi). Workspace packages publish as `@brian-agent/*`. The CLI binary is `brian`, its config lives in `~/.brian`, and its env vars use the `BRIAN_` prefix.
 
-* **[@punch-bot/cli](packages/coding-agent)**: Headless coding agent SDK, RPC, and print modes (`pi`)
-* **[@punch-bot/agent](packages/agent)**: Agent runtime with tool calling and state management
-* **[@punch-bot/ai](packages/ai)**: Unified multi-provider LLM API
+This repo is [`embeputer/brian`](https://github.com/embeputer/brian).
+
+* **[@brian-agent/cli](packages/coding-agent)**: Headless coding agent SDK, RPC, and print modes (`brian`)
+* **[@brian-agent/agent](packages/agent)**: Agent runtime with tool calling and state management
+* **[@brian-agent/ai](packages/ai)**: Unified multi-provider LLM API
 
 CLI docs: [packages/coding-agent/README.md](packages/coding-agent/README.md).
 
@@ -14,17 +16,17 @@ CLI docs: [packages/coding-agent/README.md](packages/coding-agent/README.md).
 
 | Package | Directory | Description |
 |---------|-----------|-------------|
-| **[@punch-bot/cli](packages/coding-agent)** | `packages/coding-agent` | Headless coding agent SDK, RPC, and print modes |
-| **[@punch-bot/agent](packages/agent)** | `packages/agent` | Agent runtime with tool calling and state management |
-| **[@punch-bot/ai](packages/ai)** | `packages/ai` | Unified multi-provider LLM API |
-| **[@punch-bot/telemetry](packages/telemetry)** | `packages/telemetry` | Vendor-neutral telemetry contracts and reference adapter |
-| **[@punch-bot/env](packages/env)** | `packages/env` | SSH remote execution environments and daemon |
-| **[@punch-bot/sqlite-node](packages/session-backends/sqlite-node)** | `packages/session-backends/sqlite-node` | Node SQLite session backend for `@punch-bot/agent` |
+| **[@brian-agent/cli](packages/coding-agent)** | `packages/coding-agent` | Headless coding agent SDK, RPC, and print modes |
+| **[@brian-agent/agent](packages/agent)** | `packages/agent` | Agent runtime with tool calling and state management |
+| **[@brian-agent/ai](packages/ai)** | `packages/ai` | Unified multi-provider LLM API |
+| **[@brian-agent/telemetry](packages/telemetry)** | `packages/telemetry` | Vendor-neutral telemetry contracts and reference adapter |
+| **[@brian-agent/env](packages/env)** | `packages/env` | SSH remote execution environments and daemon |
+| **[@brian-agent/sqlite-node](packages/session-backends/sqlite-node)** | `packages/session-backends/sqlite-node` | Node SQLite session backend for `@brian-agent/agent` |
 
 ## Install
 
 ```bash
-npm install -g --ignore-scripts @punch-bot/cli
+npm install -g --ignore-scripts @brian-agent/cli
 ```
 
 `--ignore-scripts` disables dependency lifecycle scripts. The CLI does not require install scripts for a normal npm install.
@@ -32,18 +34,18 @@ npm install -g --ignore-scripts @punch-bot/cli
 From this repo:
 
 ```bash
-./pi-test.sh
+./brian-test.sh
 ```
 
 ## Permissions and containerization
 
-Punch does not include a built-in permission system for filesystem, process, network, or credential access. By default it runs with the permissions of the user and process that launched it.
+Brian does not include a built-in permission system for filesystem, process, network, or credential access. By default it runs with the permissions of the user and process that launched it.
 
 If you need stronger boundaries, containerize or sandbox it. See [packages/coding-agent/docs/containerization.md](packages/coding-agent/docs/containerization.md):
 
-- **Gondolin extension**: keep `pi` and provider auth on the host while routing built-in tools and `!` commands into a local Linux micro-VM.
-- **Plain Docker**: run the whole `pi` process in a local container.
-- **OpenShell**: run the whole `pi` process in a policy-controlled sandbox.
+- **Gondolin extension**: keep `brian` and provider auth on the host while routing built-in tools and `!` commands into a local Linux micro-VM.
+- **Plain Docker**: run the whole `brian` process in a local container.
+- **OpenShell**: run the whole `brian` process in a policy-controlled sandbox.
 
 ## Development
 
@@ -53,7 +55,7 @@ npm run build                 # Refresh model data, then build all packages
 npm run build:offline         # Rebuild using existing model data (no network)
 npm run check                 # Lint, format, and type check
 ./test.sh                     # Tests (skips LLM-dependent tests without API keys)
-./pi-test.sh                  # Run the CLI from sources (any directory)
+./brian-test.sh                  # Run the CLI from sources (any directory)
 ```
 
 See [AGENTS.md](AGENTS.md) for agent and maintainer rules, and [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor gate.
@@ -63,21 +65,21 @@ See [AGENTS.md](AGENTS.md) for agent and maintainer rules, and [CONTRIBUTING.md]
 Build every public package into one coherent local artifact set:
 
 ```bash
-npm run pack:packages -- --out .artifacts/pi-packages
+npm run pack:packages -- --out .artifacts/brian-packages
 ```
 
-This refreshes model data before building `pi-ai`. To avoid network access when
+This refreshes model data before building `brian-ai`. To avoid network access when
 model data is already hydrated, pass `--offline-model-data`.
 
 Then configure an external project to consume one package and resolve all of
-its Pi dependencies from the same artifact set. npm is the default:
+its Brian dependencies from the same artifact set. npm is the default:
 
 ```bash
 node scripts/use-local-packages.mjs \
-  --manifest .artifacts/pi-packages/manifest.json \
+  --manifest .artifacts/brian-packages/manifest.json \
   --consumer ../my-project \
-  --package @punch-bot/durable \
-  --package @punch-bot/agent
+  --package @brian-agent/durable \
+  --package @brian-agent/agent
 cd ../my-project
 npm install --ignore-scripts
 ```
@@ -86,9 +88,9 @@ For a pnpm project, point `--consumer` at the workspace root:
 
 ```bash
 node scripts/use-local-packages.mjs \
-  --manifest .artifacts/pi-packages/manifest.json \
+  --manifest .artifacts/brian-packages/manifest.json \
   --consumer ../my-project \
-  --package @punch-bot/agent \
+  --package @brian-agent/agent \
   --package-manager pnpm
 cd ../my-project
 pnpm install --ignore-scripts
@@ -98,7 +100,7 @@ Repeat `--package` for each direct dependency. The command updates the
 consumer's `package.json` with content-addressed local `file:` references. It
 writes transitive overrides to `package.json` for npm or `pnpm-workspace.yaml`
 for pnpm. Keep the artifact directory available while installing or updating
-the consumer. Re-run both commands after changing Pi source.
+the consumer. Re-run both commands after changing Brian source.
 
 ## Building standalone binaries from release source
 
@@ -106,8 +108,8 @@ GitHub releases include a versioned source archive covered by the release `SHA25
 
 ```bash
 VERSION="<release-version>"
-tar -xzf "pi-${VERSION}-source.tar.gz"
-cd "pi-${VERSION}"
+tar -xzf "brian-${VERSION}-source.tar.gz"
+cd "brian-${VERSION}"
 ./scripts/build-binaries.sh --offline-model-data --platform linux-x64 --out "$PWD/out"
 ```
 
@@ -119,11 +121,11 @@ Treat npm dependency changes as reviewed code.
 
 - Direct registry dependencies, including internal workspace packages, are pinned to exact versions.
 - `.npmrc` sets `save-exact=true` and `min-release-age=2` to avoid same-day dependency releases during npm resolution.
-- `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1` is set.
+- `package-lock.json` is the dependency ground truth. Pre-commit blocks accidental lockfile commits unless `BRIAN_ALLOW_LOCKFILE_CHANGE=1` is set.
 - `npm run check` verifies pinned direct deps, native TypeScript import compatibility, and the generated coding-agent shrinkwrap and install lock.
 - The pi.dev installer installs from `packages/coding-agent/install-lock/`, generated from the root lockfile, to pin transitive deps. The npm package also keeps a generated shrinkwrap to pin transitive deps.
 - Local release smoke tests and npm publication use the same tarball packer; npm publishes the validated tarballs rather than repacking workspace directories.
-- Local release installs, documented npm installs, and `pi update --self` use `--ignore-scripts` where supported.
+- Local release installs, documented npm installs, and `brian update --self` use `--ignore-scripts` where supported.
 - CI installs with `npm ci --ignore-scripts`, and a scheduled GitHub workflow runs `npm audit --omit=dev` plus `npm audit signatures --omit=dev`.
 - Shrinkwrap and install lock generation have explicit allowlists for dependency lifecycle scripts; new lifecycle-script deps fail checks until reviewed.
 

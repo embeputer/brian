@@ -1,13 +1,13 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
 import { describe, expect, it, vi } from "vitest";
 import type { ExtensionUIContext } from "../../../src/core/extensions/index.ts";
 import subagentExtension from "../../../src/extensions/subagent/index.ts";
 import { createHarness, getMessageText } from "../harness.ts";
 
-vi.mock("@punch-bot/cli", () => ({
-	CONFIG_DIR_NAME: ".pi",
+vi.mock("@brian-agent/cli", () => ({
+	CONFIG_DIR_NAME: ".brian",
 	getAgentDir: () => "/missing-user-agent-dir",
 	getMarkdownTheme: () => ({}),
 	parseFrontmatter: (content: string) => ({
@@ -27,7 +27,7 @@ async function runProjectAgent(options: RunOptions): Promise<{ confirmCalls: num
 	const confirm = vi.fn(async () => options.confirmResult ?? false);
 
 	try {
-		const agentsDir = join(harness.tempDir, ".pi", "agents");
+		const agentsDir = join(harness.tempDir, ".brian", "agents");
 		mkdirSync(agentsDir, { recursive: true });
 		writeFileSync(
 			join(agentsDir, "project-agent.md"),

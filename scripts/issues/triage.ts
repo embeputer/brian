@@ -1,12 +1,12 @@
-// Triage agent on pi-durable: one durable conversation per issue. Results and decisions live in a durable document,
+// Triage agent on brian-durable: one durable conversation per issue. Results and decisions live in a durable document,
 // so a restart resumes unfinished triage runs and keeps every decision.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
-import { type ModelThinkingLevel, StringEnum, Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { anthropicProvider } from "@punch-bot/ai/providers/anthropic";
-import { openaiCodexProvider } from "@punch-bot/ai/providers/openai-codex";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
+import { type ModelThinkingLevel, StringEnum, Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { anthropicProvider } from "@brian-agent/ai/providers/anthropic";
+import { openaiCodexProvider } from "@brian-agent/ai/providers/openai-codex";
 import { AuthStorage } from "../../packages/coding-agent/src/core/auth-storage.ts";
 import {
 	type ConversationId,

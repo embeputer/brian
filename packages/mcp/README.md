@@ -1,13 +1,13 @@
-# @punch-bot/mcp
+# @brian-agent/mcp
 
-A small, standalone Model Context Protocol client. It does not depend on the official MCP SDK or other pi packages.
+A small, standalone Model Context Protocol client. It does not depend on the official MCP SDK or other brian packages.
 
 The package provides a transport-neutral client core, stdio and Streamable HTTP transports, and an in-memory testing transport.
 
 ## Usage
 
 ```typescript
-import { McpClient, StdioTransport } from "@punch-bot/mcp";
+import { McpClient, StdioTransport } from "@brian-agent/mcp";
 
 const transport = new StdioTransport({
 	command: "npx",
@@ -29,13 +29,13 @@ For a remote server, use `new StreamableHttpTransport({ url, headers })`. Fetch 
 
 ### Tools for an LLM
 
-`toLlmContent(result)` converts a `CallToolResult` to text and image content for a model, in the shape of `@punch-bot/ai`'s `TextContent` and `ImageContent`. Text and images pass through, embedded text and image resources are unwrapped, and audio, resource links, and binary resources become short text placeholders. A result without content blocks but with `structuredContent` becomes its JSON.
+`toLlmContent(result)` converts a `CallToolResult` to text and image content for a model, in the shape of `@brian-agent/ai`'s `TextContent` and `ImageContent`. Text and images pass through, embedded text and image resources are unwrapped, and audio, resource links, and binary resources become short text placeholders. A result without content blocks but with `structuredContent` becomes its JSON.
 
-Wrapping an MCP tool as a `pi-agent-core` `AgentTool`:
+Wrapping an MCP tool as a `brian-agent-core` `AgentTool`:
 
 ```typescript
-import type { AgentTool } from "@punch-bot/agent";
-import { toLlmContent } from "@punch-bot/mcp";
+import type { AgentTool } from "@brian-agent/agent";
+import { toLlmContent } from "@brian-agent/mcp";
 import { Type } from "typebox";
 
 const tools: AgentTool[] = (await client.listTools()).map((tool) => ({
@@ -53,21 +53,21 @@ const tools: AgentTool[] = (await client.listTools()).map((tool) => ({
 }));
 ```
 
-The [mcp-codemode example](https://github.com/earendil-works/pi/tree/main/packages/agent/examples/mcp-codemode) also forwards progress, passes `structuredContent` through, and lets `@punch-bot/codemode` scripts call the tools.
+The [mcp-codemode example](https://github.com/earendil-works/pi/tree/main/packages/agent/examples/mcp-codemode) also forwards progress, passes `structuredContent` through, and lets `@brian-agent/codemode` scripts call the tools.
 
 ### OAuth
 
-`@punch-bot/mcp/oauth` provides the MCP OAuth client subset without depending on the official SDK:
+`@brian-agent/mcp/oauth` provides the MCP OAuth client subset without depending on the official SDK:
 
 ```typescript
-import { McpClient, StreamableHttpTransport } from "@punch-bot/mcp";
+import { McpClient, StreamableHttpTransport } from "@brian-agent/mcp";
 import {
 	adaptOAuthProvider,
 	authorizeMcp,
 	McpOAuthAuthorizationRequiredError,
 	McpOAuthProvider,
 	OAuthCallbackServer,
-} from "@punch-bot/mcp/oauth";
+} from "@brian-agent/mcp/oauth";
 
 const serverUrl = "https://mcp.example.com/mcp";
 const callback = await OAuthCallbackServer.listen();
@@ -133,4 +133,4 @@ Batch JSON-RPC messages, legacy HTTP+SSE, servers, sampling, and tasks are outsi
 
 ## Testing
 
-`@punch-bot/mcp/testing` exports `createInMemoryTransportPair()` for client and adapter tests.
+`@brian-agent/mcp/testing` exports `createInMemoryTransportPair()` for client and adapter tests.

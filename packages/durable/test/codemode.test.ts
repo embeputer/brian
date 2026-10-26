@@ -1,9 +1,9 @@
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@punch-bot/ai";
-import type { Context } from "@punch-bot/chord";
-import { type CodemodeRun, CodemodeSandbox } from "@punch-bot/codemode";
+import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@brian-agent/ai";
+import type { Context } from "@brian-agent/chord";
+import { type CodemodeRun, CodemodeSandbox } from "@brian-agent/codemode";
 import {
 	defineTool,
 	type Harness,
@@ -12,7 +12,7 @@ import {
 	ToolResultEntry,
 	ToolTask,
 	type ToolTaskInput,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	type CodemodeGlobal,
@@ -52,7 +52,7 @@ afterEach(async () => {
 });
 
 async function sqlitePath(): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pi-durable-codemode-"));
+	const directory = await mkdtemp(join(tmpdir(), "brian-durable-codemode-"));
 	directories.add(directory);
 	return join(directory, "session.sqlite");
 }
@@ -865,7 +865,7 @@ describe("durable code mode", () => {
 		]);
 		const { harness, root } = await openChat(await openNodeSqliteStorage(await sqlitePath()), chat.setup);
 		await (await root.submit({ type: "input", content: "first" }, context)).wait(context);
-		const firstUser = (await allEntries(root)).find((entry) => entry.kind === "pi.user")!;
+		const firstUser = (await allEntries(root)).find((entry) => entry.kind === "brian.user")!;
 		await (await root.submit({ type: "input", content: "second" }, context)).wait(context);
 		const results = (await allEntries(root)).filter((entry) => ToolResultEntry.is(entry));
 		const texts = results.map((entry) => (entry.model![0] as { content: { text: string }[] }).content[1]!.text);
@@ -901,7 +901,7 @@ describe("durable code mode", () => {
 		let journalCommits = 0;
 		harness.subscribeCommits((publication) => {
 			for (const change of publication.changes) {
-				if (change.type === "document" && change.record.kind === "pi.codemode.journal") journalCommits++;
+				if (change.type === "document" && change.record.kind === "brian.codemode.journal") journalCommits++;
 			}
 		});
 		await (await root.submit({ type: "input", content: "go" }, context)).wait(context);
@@ -916,7 +916,7 @@ describe("durable code mode output and tool search", () => {
 	/** Run `code` once in a chat with a Node environment; the result's content and details. */
 	async function runScript(code: string, chat = codemodeChat()) {
 		chat.holds.block = false;
-		const cwd = await mkdtemp(join(tmpdir(), "pi-codemode-env-"));
+		const cwd = await mkdtemp(join(tmpdir(), "brian-codemode-env-"));
 		directories.add(cwd);
 		chat.setup.faux.setResponses([script(code), DONE]);
 		const { harness, root } = await openChat(await openNodeSqliteStorage(await sqlitePath()), chat.setup, {
@@ -975,7 +975,7 @@ describe("durable code mode output and tool search", () => {
 	it("writes the result's files to the same paths when it reruns after a crash", async () => {
 		const chat = codemodeChat();
 		chat.holds.block = false;
-		const cwd = await mkdtemp(join(tmpdir(), "pi-codemode-env-"));
+		const cwd = await mkdtemp(join(tmpdir(), "brian-codemode-env-"));
 		directories.add(cwd);
 		const written = deferred<string>();
 		// The process dies after the full output was written and before the result was committed.

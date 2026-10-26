@@ -14,10 +14,10 @@ import { randomBytes } from "node:crypto";
 import { mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ImageContent } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT as context } from "@punch-bot/chord/context";
+import type { ImageContent } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT as context } from "@brian-agent/chord/context";
 import { Type } from "typebox";
 import {
 	createRegistry,
@@ -167,7 +167,7 @@ function registryFor(scenario: Scenario, probe: Probe) {
 }
 
 async function runScenario(scenario: Scenario): Promise<Result> {
-	const directory = await mkdtemp(join(tmpdir(), "pi-durable-images-bench-"));
+	const directory = await mkdtemp(join(tmpdir(), "brian-durable-images-bench-"));
 	try {
 		const faux = fauxProvider();
 		const models = createModels();
@@ -235,7 +235,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
 		let largestTask = 0;
 		let cursor: Parameters<Storage["scanTasks"]>[2];
 		do {
-			const page = await reopenedStorage.scanTasks({ kind: "pi.tool" }, 50, cursor, context);
+			const page = await reopenedStorage.scanTasks({ kind: "brian.tool" }, 50, cursor, context);
 			for (const record of page.items) {
 				if ((record.input as ToolTaskInput).kind === "nested") nestedTasks++;
 				largestTask = Math.max(largestTask, JSON.stringify(record).length);

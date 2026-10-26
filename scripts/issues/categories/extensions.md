@@ -6,7 +6,7 @@ owner: christianklotz
 The extension API and runtime.
 
 In:
-- pi.* and ctx.* API surface, events and hooks.
+- brian.* and ctx.* API surface, events and hooks.
 - registerTool, registerCommand, registerProvider, renderers.
 - ctx.ui dialogs and custom components.
 - Extension loading (jiti, module resolution, virtual modules), /reload.

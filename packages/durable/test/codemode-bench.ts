@@ -8,10 +8,10 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT as context } from "@punch-bot/chord/context";
-import { CodemodeSandbox } from "@punch-bot/codemode";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT as context } from "@brian-agent/chord/context";
+import { CodemodeSandbox } from "@brian-agent/codemode";
 import { Type } from "typebox";
 import { createCodemodeTool } from "../src/codemode/codemode.ts";
 import { createRegistry, defineExtension, defineTool, Harness } from "../src/index.ts";
@@ -42,7 +42,7 @@ const plain = defineTool({
 });
 
 async function run(mode: "codemode" | "plain", shape: Shape, n: number): Promise<{ ms: number; commits: number }> {
-	const directory = await mkdtemp(join(tmpdir(), "pi-codemode-bench-"));
+	const directory = await mkdtemp(join(tmpdir(), "brian-codemode-bench-"));
 	try {
 		const faux = fauxProvider();
 		const models = createModels();

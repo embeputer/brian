@@ -3,7 +3,7 @@ owner: davidbrai
 ---
 # providers
 
-How pi-ai talks to model APIs.
+How brian-ai talks to model APIs.
 
 In:
 - Request building and message conversion or replay: thinking blocks, signatures, tool call IDs, roles.

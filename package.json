@@ -1,5 +1,5 @@
 {
-	"name": "punch-monorepo",
+	"name": "brian-monorepo",
 	"private": true,
 	"type": "module",
 	"workspaces": [

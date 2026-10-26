@@ -1,4 +1,4 @@
-import type { ModelsRefreshResult } from "@punch-bot/ai";
+import type { ModelsRefreshResult } from "@brian-agent/ai";
 import { raceWithAbortSignal } from "../utils/abort.ts";
 import type { ModelRuntime } from "./model-runtime.ts";
 

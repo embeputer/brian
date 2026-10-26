@@ -7,8 +7,8 @@
  * (issues #6259, #6276).
  */
 
-import type { AgentMessage, AgentToolResult } from "@punch-bot/agent";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
+import type { AgentMessage, AgentToolResult } from "@brian-agent/agent";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 import { type SessionEntry, sessionEntryToContextMessages } from "../../src/core/session-manager.ts";
@@ -28,8 +28,8 @@ function messageEntry(message: Record<string, unknown>): SessionEntry {
 describe("lax message content handling", () => {
 	it("normalizes tool results from untyped tools that omit content", async () => {
 		const extensionFactories: ExtensionFactory[] = [
-			(pi) => {
-				pi.registerTool({
+			(brian) => {
+				brian.registerTool({
 					name: "web_search",
 					label: "Web Search",
 					description: "Custom tool that returns a result without content",
@@ -61,8 +61,8 @@ describe("lax message content handling", () => {
 
 	it("normalizes null content in message_end extension replacements", async () => {
 		const extensionFactories: ExtensionFactory[] = [
-			(pi) => {
-				pi.on("message_end", async (event) => {
+			(brian) => {
+				brian.on("message_end", async (event) => {
 					if (event.message.role !== "assistant") return undefined;
 					// Simulate an untyped JS extension replacing a message without content.
 					return { message: { ...event.message, content: null } as unknown as AgentMessage };

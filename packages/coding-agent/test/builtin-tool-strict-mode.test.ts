@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getModel } from "@punch-bot/ai/compat";
+import { getModel } from "@brian-agent/ai/compat";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DefaultResourceLoader } from "../src/core/resource-loader.ts";
 import { createAgentSession } from "../src/core/sdk.ts";
@@ -15,8 +15,8 @@ const strictToolNames = ["read", "bash", "powershell", "edit", "write"] as const
 describe("strict built-in tools", () => {
 	afterEach(() => vi.unstubAllEnvs());
 
-	it.each([undefined, "0", "1"])("prefers strict sampling with PI_EXPERIMENTAL=%s", (experimental) => {
-		vi.stubEnv("PI_EXPERIMENTAL", experimental);
+	it.each([undefined, "0", "1"])("prefers strict sampling with BRIAN_EXPERIMENTAL=%s", (experimental) => {
+		vi.stubEnv("BRIAN_EXPERIMENTAL", experimental);
 		const definitions = createAllToolDefinitions(process.cwd());
 		const tools = createAllTools(process.cwd());
 		for (const name of strictToolNames) {
@@ -47,7 +47,7 @@ describe("strict built-in tools", () => {
 	it.each([{ activeTools: [] }, { activeTools: ["read"] }, { activeTools: [...strictToolNames] }])(
 		"allows extensions to re-register tools without strict sampling: $activeTools",
 		async ({ activeTools }) => {
-			const cwd = mkdtempSync(join(tmpdir(), "pi-non-strict-tools-"));
+			const cwd = mkdtempSync(join(tmpdir(), "brian-non-strict-tools-"));
 			const agentDir = join(cwd, "agent");
 			const settingsManager = SettingsManager.inMemory({ defaultTools: activeTools });
 			const resourceLoader = new DefaultResourceLoader({
@@ -59,13 +59,13 @@ describe("strict built-in tools", () => {
 				noPromptTemplates: true,
 				noThemes: true,
 				extensionFactories: [
-					(pi) => {
-						pi.on("session_start", () => {
+					(brian) => {
+						brian.on("session_start", () => {
 							const definitions = createAllToolDefinitions(cwd);
 							for (const name of strictToolNames) {
-								pi.registerTool({ ...definitions[name], constrainedSampling: false });
+								brian.registerTool({ ...definitions[name], constrainedSampling: false });
 							}
-							pi.setActiveTools(activeTools);
+							brian.setActiveTools(activeTools);
 						});
 					},
 				],

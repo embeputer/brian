@@ -1,4 +1,4 @@
-import type { Usage } from "@punch-bot/ai/compat";
+import type { Usage } from "@brian-agent/ai/compat";
 import type { SessionEntry } from "./session-manager.ts";
 
 export interface UsageTotals {

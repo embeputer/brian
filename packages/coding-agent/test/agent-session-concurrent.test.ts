@@ -6,14 +6,14 @@ import { createModelRegistry, getModelRuntime } from "./model-runtime-test-utils
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@punch-bot/agent";
+import { Agent } from "@brian-agent/agent";
 import {
 	type AssistantMessage,
 	createAssistantMessageEventStream,
 	getModel,
 	type ImageContent,
 	type TextContent,
-} from "@punch-bot/ai/compat";
+} from "@brian-agent/ai/compat";
 import { Type } from "typebox";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
@@ -52,7 +52,7 @@ describe("AgentSession concurrent prompt guard", () => {
 	let tempDir: string;
 
 	beforeEach(async () => {
-		tempDir = join(tmpdir(), `pi-concurrent-test-${Date.now()}`);
+		tempDir = join(tmpdir(), `brian-concurrent-test-${Date.now()}`);
 		mkdirSync(tempDir, { recursive: true });
 	});
 
@@ -237,11 +237,11 @@ describe("AgentSession concurrent prompt guard", () => {
 		await authStorage.modify("anthropic", async () => ({ type: "api_key", key: "test-key" }));
 
 		const extensionsResult = await createTestExtensionsResult([
-			(pi) => {
-				(globalThis as typeof globalThis & { testExtensionApi?: unknown }).testExtensionApi = pi;
+			(brian) => {
+				(globalThis as typeof globalThis & { testExtensionApi?: unknown }).testExtensionApi = brian;
 			},
-			(pi) => {
-				pi.on("input", async (event) => {
+			(brian) => {
+				brian.on("input", async (event) => {
 					lastInputSource = event.source;
 				});
 			},
@@ -265,16 +265,16 @@ describe("AgentSession concurrent prompt guard", () => {
 		await waitForStreaming();
 		expect(session.isStreaming).toBe(true);
 
-		const pi = (
+		const brian = (
 			globalThis as typeof globalThis & {
 				testExtensionApi?: {
 					sendUserMessage: (content: string, options?: { deliverAs?: "steer" | "followUp" }) => void;
 				};
 			}
 		).testExtensionApi;
-		expect(pi).toBeDefined();
+		expect(brian).toBeDefined();
 
-		pi!.sendUserMessage("Steer from extension", { deliverAs: "steer" });
+		brian!.sendUserMessage("Steer from extension", { deliverAs: "steer" });
 		await new Promise((resolve) => setTimeout(resolve, 25));
 
 		expect(session.pendingMessageCount).toBe(1);

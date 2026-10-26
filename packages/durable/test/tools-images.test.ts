@@ -3,11 +3,11 @@ import { appendFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Model } from "@punch-bot/ai";
-import { BACKGROUND_CONTEXT as context } from "@punch-bot/chord/context";
-import type { ToolDiagnostic, ToolExecutionApi, ToolExecutionResult } from "@punch-bot/durable";
-import { createNodePhotonImages } from "@punch-bot/durable/images/node";
-import { createCodingTools } from "@punch-bot/durable/tools";
+import type { Model } from "@brian-agent/ai";
+import { BACKGROUND_CONTEXT as context } from "@brian-agent/chord/context";
+import type { ToolDiagnostic, ToolExecutionApi, ToolExecutionResult } from "@brian-agent/durable";
+import { createNodePhotonImages } from "@brian-agent/durable/images/node";
+import { createCodingTools } from "@brian-agent/durable/tools";
 import { initSync, PhotonImage } from "@silvia-odwyer/photon/photon_rs.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { getOrThrow } from "../src/env/index.ts";
@@ -17,7 +17,7 @@ import { imageDimensions } from "../src/tools/image.ts";
 import { DEFAULT_IMAGE_LIMITS, type ImageProcessor, toBase64 } from "../src/tools/image-processor.ts";
 import { createReadTool } from "../src/tools/read.ts";
 
-const directory = mkdtempSync(join(tmpdir(), "pi-durable-images-"));
+const directory = mkdtempSync(join(tmpdir(), "brian-durable-images-"));
 let processor: ImageProcessor;
 
 beforeAll(async () => {

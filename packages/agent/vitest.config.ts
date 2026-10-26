@@ -17,12 +17,12 @@ export default defineConfig({
 	resolve: {
 		conditions: ["source"],
 		alias: [
-			{ find: /^@punch-bot\/telemetry$/, replacement: telemetrySrcIndex },
-			{ find: /^@punch-bot\/agent$/, replacement: agentSrcIndex },
-			{ find: /^@punch-bot\/ai$/, replacement: aiSrcIndex },
-			{ find: /^@punch-bot\/ai\/compat$/, replacement: aiSrcCompat },
+			{ find: /^@brian-agent\/telemetry$/, replacement: telemetrySrcIndex },
+			{ find: /^@brian-agent\/agent$/, replacement: agentSrcIndex },
+			{ find: /^@brian-agent\/ai$/, replacement: aiSrcIndex },
+			{ find: /^@brian-agent\/ai\/compat$/, replacement: aiSrcCompat },
 			{
-				find: /^@punch-bot\/ai\/(.+)$/,
+				find: /^@brian-agent\/ai\/(.+)$/,
 				replacement: fileURLToPath(new URL("../ai/src/$1.ts", import.meta.url)),
 			},
 		],

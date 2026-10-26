@@ -1,4 +1,4 @@
-import type { Context, JsonValue } from "@punch-bot/chord";
+import type { Context, JsonValue } from "@brian-agent/chord";
 import type { FileError, FileSystem } from "../../env/index.ts";
 import { StorageRequestError } from "../../errors.ts";
 import { idFromNumber, seqFromNumber } from "../../ids.ts";

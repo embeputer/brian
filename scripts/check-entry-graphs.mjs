@@ -19,13 +19,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Workspace package name -> its source root, so cross-package imports are followed. */
 const WORKSPACE = {
-	"@punch-bot/chord": "packages/chord/src",
-	"@punch-bot/ai": "packages/ai/src",
-	"@punch-bot/durable": "packages/durable/src",
-	"@punch-bot/agent": "packages/agent/src",
-	"@punch-bot/codemode": "packages/codemode/src",
-	"@punch-bot/telemetry": "packages/telemetry/src",
-	"@punch-bot/mcp": "packages/mcp/src",
+	"@brian-agent/chord": "packages/chord/src",
+	"@brian-agent/ai": "packages/ai/src",
+	"@brian-agent/durable": "packages/durable/src",
+	"@brian-agent/agent": "packages/agent/src",
+	"@brian-agent/codemode": "packages/codemode/src",
+	"@brian-agent/telemetry": "packages/telemetry/src",
+	"@brian-agent/mcp": "packages/mcp/src",
 };
 
 /**
@@ -56,7 +56,7 @@ const BUDGETS = {
 	},
 	"packages/durable": {
 		".": {
-			// Tool argument validation reaches TypeBox; provider-session creation reaches pi-ai's lean UUID utility; the
+			// Tool argument validation reaches TypeBox; provider-session creation reaches brian-ai's lean UUID utility; the
 			// memory and SQLite storages share scan order and cursor handling. Values from Chord's root (copyJson,
 			// replicatedState) reach its host runtime through the root barrel.
 			maxFiles: 66,

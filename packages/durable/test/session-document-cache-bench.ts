@@ -8,8 +8,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createModels } from "@punch-bot/ai/models";
-import { BACKGROUND_CONTEXT as context } from "@punch-bot/chord/context";
+import { createModels } from "@brian-agent/ai/models";
+import { BACKGROUND_CONTEXT as context } from "@brian-agent/chord/context";
 import {
 	type ConversationId,
 	createRegistry,
@@ -23,7 +23,7 @@ import type { SessionImpl } from "../src/session/session.ts";
 import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
 import { retainedBytes } from "./heap-retained.ts";
 
-/** Writes `pi.usage` of its conversation once, then completes. */
+/** Writes `brian.usage` of its conversation once, then completes. */
 const Work = defineTask<null, { phase: "work" }, null>({
 	name: "bench.work",
 	version: 1,
@@ -40,7 +40,7 @@ const Work = defineTask<null, { phase: "work" }, null>({
 });
 
 async function run(conversations: number, documentRetentionMs: number) {
-	const directory = mkdtempSync(join(tmpdir(), "pi-durable-doc-cache-bench-"));
+	const directory = mkdtempSync(join(tmpdir(), "brian-durable-doc-cache-bench-"));
 	try {
 		const storage = await openNodeSqliteStorage(join(directory, "session.sqlite"));
 		const registry = createRegistry();

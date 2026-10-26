@@ -5,8 +5,8 @@
  * `searchTools()`. The section renders from the conversation's callable tools, so it changes with them; the tool's
  * description never does.
  */
-import type { CodemodeJsonSchema } from "@punch-bot/codemode";
-import { renderToolSample, toCodemodeIdentifier } from "@punch-bot/codemode/declarations";
+import type { CodemodeJsonSchema } from "@brian-agent/codemode";
+import { renderToolSample, toCodemodeIdentifier } from "@brian-agent/codemode/declarations";
 import type { ToolRegistration } from "../harness/types.ts";
 import { MODELS_DESCRIPTION } from "./models.ts";
 

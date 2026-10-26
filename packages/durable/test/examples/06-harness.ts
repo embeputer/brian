@@ -2,9 +2,9 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/06-harness.ts
 
-import { Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	AgentDoc,
 	createRegistry,
@@ -31,7 +31,7 @@ const Files = defineExtension({ name: "files", tools: [read] });
 const registry = createRegistry();
 registry.install(Files);
 
-// `models` is pi-ai's model access; generation calls models through it.
+// `models` is brian-ai's model access; generation calls models through it.
 const harness = await Harness.open(new MemoryStorage(), { models: createModels(), registry }, context);
 
 const Notes = defineDoc<{ text: string }>({

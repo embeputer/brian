@@ -24,7 +24,7 @@ import type {
 	ModelTypeMap,
 	Provider,
 	ProviderHeaders,
-} from "@punch-bot/ai";
+} from "@brian-agent/ai";
 import type { ModelRuntime } from "./model-runtime.ts";
 import type { AuthStatus, ProviderConfigInput } from "./provider-composer.ts";
 import type { VirtualModelDefinition } from "./virtual-models.ts";

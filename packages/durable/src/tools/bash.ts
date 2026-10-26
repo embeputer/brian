@@ -1,4 +1,4 @@
-import type { Context } from "@punch-bot/chord";
+import type { Context } from "@brian-agent/chord";
 import { type Static, Type } from "typebox";
 import { defineTool } from "../harness/define.ts";
 import type { ToolExecutionApi, ToolExecutionResult, ToolRegistration } from "../harness/types.ts";

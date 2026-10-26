@@ -20,7 +20,7 @@ function loadTheme(base: "dark" | "light", edit: (theme: ThemeFile) => void = ()
 		readFileSync(new URL(`../src/core/theme/${base}.json`, import.meta.url), "utf8"),
 	) as ThemeFile;
 	edit(themeJson);
-	const dir = mkdtempSync(join(tmpdir(), "pi-theme-style-"));
+	const dir = mkdtempSync(join(tmpdir(), "brian-theme-style-"));
 	tempDirs.push(dir);
 	const path = join(dir, `${themeJson.name}.json`);
 	writeFileSync(path, JSON.stringify(themeJson));

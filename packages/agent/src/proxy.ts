@@ -15,7 +15,7 @@ import {
 	type StopReason,
 	type ToolCall,
 	type TranscriptContext,
-} from "@punch-bot/ai";
+} from "@brian-agent/ai";
 
 /**
  * Proxy event types - server sends these with partial field stripped to reduce bandwidth.

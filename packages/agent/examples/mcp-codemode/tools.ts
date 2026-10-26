@@ -1,6 +1,6 @@
 /**
- * Adapters that give a pi-agent-core `Agent` MCP tools and a codemode tool, using
- * `@punch-bot/mcp` and `@punch-bot/codemode`. See main.ts for how they fit together.
+ * Adapters that give a brian-agent-core `Agent` MCP tools and a codemode tool, using
+ * `@brian-agent/mcp` and `@brian-agent/codemode`. See main.ts for how they fit together.
  */
 
 import {
@@ -9,10 +9,10 @@ import {
 	type AgentToolCallOutcome,
 	type AgentToolResult,
 	runToolCall,
-} from "@punch-bot/agent";
-import type { ImageContent, JsonObject, JsonValue, TextContent } from "@punch-bot/ai";
-import { type CodemodeJsonSchema, CodemodeSandbox, type CodemodeTool, renderDeclarations } from "@punch-bot/codemode";
-import { type McpClient, toLlmContent } from "@punch-bot/mcp";
+} from "@brian-agent/agent";
+import type { ImageContent, JsonObject, JsonValue, TextContent } from "@brian-agent/ai";
+import { type CodemodeJsonSchema, CodemodeSandbox, type CodemodeTool, renderDeclarations } from "@brian-agent/codemode";
+import { type McpClient, toLlmContent } from "@brian-agent/mcp";
 import { Type } from "typebox";
 
 /** Provider tool names are limited to 64 characters of `[A-Za-z0-9_-]`. */
@@ -149,7 +149,7 @@ export function createCodemodeTool(
 			const sandbox = new CodemodeSandbox({ tools: sandboxTools, timeoutMs: 120_000 });
 			try {
 				const result = await sandbox.execute(params.code, { signal });
-				// Items from text(), console.*, and image(), in order. They have pi-ai's content shapes.
+				// Items from text(), console.*, and image(), in order. They have brian-ai's content shapes.
 				const content: (TextContent | ImageContent)[] = [...result.output];
 				if (result.ok && result.value !== undefined) {
 					const value = typeof result.value === "string" ? result.value : JSON.stringify(result.value);

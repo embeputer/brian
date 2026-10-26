@@ -27,32 +27,32 @@ function runSyncVersions(root) {
 
 // #10865: caret ranges allowed older agents to install incompatible newer workspace dependencies.
 test("pins published and private dependencies without touching registry aliases, generated manifests, or published lockstep", async () => {
-	const root = await mkdtemp(join(tmpdir(), "pi-sync-versions-"));
+	const root = await mkdtemp(join(tmpdir(), "brian-sync-versions-"));
 	try {
 		await writeManifest(root, "packages/ai", {
-			name: "@punch-bot/ai",
+			name: "@brian-agent/ai",
 			version: "2.0.0",
 		});
 		await writeManifest(root, "packages/coding-agent", {
-			name: "@punch-bot/cli",
+			name: "@brian-agent/cli",
 			version: "2.0.0",
 			dependencies: {
-				"@punch-bot/ai": "^2.0.0",
+				"@brian-agent/ai": "^2.0.0",
 			},
 			devDependencies: {
-				"@punch-bot/ai": "~1.0.0",
+				"@brian-agent/ai": "~1.0.0",
 			},
 			optionalDependencies: {
-				"@punch-bot/ai": "1.0.0",
+				"@brian-agent/ai": "1.0.0",
 			},
 		});
 		await writeManifest(root, "packages/private-app", {
-			name: "@punch-bot/private-app",
+			name: "@brian-agent/private-app",
 			version: "9.9.9",
 			private: true,
 			dependencies: {
-				"@punch-bot/cli": "^1.0.0",
-				"@mariozechner/pi-ai": "npm:@punch-bot/ai@1.0.0",
+				"@brian-agent/cli": "^1.0.0",
+				"@mariozechner/pi-ai": "npm:@brian-agent/ai@1.0.0",
 			},
 		});
 		await writeManifest(root, "packages/coding-agent/install-lock", {
@@ -60,7 +60,7 @@ test("pins published and private dependencies without touching registry aliases,
 			version: "0.0.0",
 			private: true,
 			dependencies: {
-				"@punch-bot/cli": "^1.0.0",
+				"@brian-agent/cli": "^1.0.0",
 			},
 		});
 
@@ -69,20 +69,20 @@ test("pins published and private dependencies without touching registry aliases,
 
 		const agentManifest = await readManifest(root, "packages/coding-agent");
 		for (const section of ["dependencies", "devDependencies", "optionalDependencies"]) {
-			assert.equal(agentManifest[section]["@punch-bot/ai"], "2.0.0");
+			assert.equal(agentManifest[section]["@brian-agent/ai"], "2.0.0");
 		}
 		const privateManifest = await readManifest(root, "packages/private-app");
-		assert.equal(privateManifest.dependencies["@punch-bot/cli"], "2.0.0");
-		assert.equal(privateManifest.dependencies["@mariozechner/pi-ai"], "npm:@punch-bot/ai@1.0.0");
+		assert.equal(privateManifest.dependencies["@brian-agent/cli"], "2.0.0");
+		assert.equal(privateManifest.dependencies["@mariozechner/pi-ai"], "npm:@brian-agent/ai@1.0.0");
 		const generatedManifest = await readManifest(root, "packages/coding-agent/install-lock");
-		assert.equal(generatedManifest.dependencies["@punch-bot/cli"], "^1.0.0");
+		assert.equal(generatedManifest.dependencies["@brian-agent/cli"], "^1.0.0");
 
 		const alreadySynced = runSyncVersions(root);
 		assert.equal(alreadySynced.status, 0, alreadySynced.stderr);
 		assert.match(alreadySynced.stdout, /All inter-package dependencies are already in sync/);
 
 		await writeManifest(root, "packages/ai", {
-			name: "@punch-bot/ai",
+			name: "@brian-agent/ai",
 			version: "3.0.0",
 		});
 		const lockstepFailure = runSyncVersions(root);

@@ -5,7 +5,7 @@ import {
 	getModel,
 	toToolDeclaration,
 	type UserMessage,
-} from "@punch-bot/ai/compat";
+} from "@brian-agent/ai/compat";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 import {

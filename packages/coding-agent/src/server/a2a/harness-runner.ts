@@ -1,5 +1,5 @@
-import type { HarnessPromptRunner, HarnessPromptRunnerFactory } from "@punch-bot/a2a";
-import type { AssistantMessage } from "@punch-bot/ai";
+import type { HarnessPromptRunner, HarnessPromptRunnerFactory } from "@brian-agent/a2a";
+import type { AssistantMessage } from "@brian-agent/ai";
 import { getAgentDir } from "../../config.ts";
 import type { AgentSession } from "../../core/agent-session.ts";
 import { findInitialModel } from "../../core/model-resolver.ts";

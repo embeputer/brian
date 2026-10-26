@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fauxAssistantMessage } from "@punch-bot/ai";
+import { fauxAssistantMessage } from "@brian-agent/ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ENV_AGENT_DIR } from "../../../src/config.ts";
 import type { AgentSessionRuntime } from "../../../src/core/agent-session-runtime.ts";
@@ -71,7 +71,7 @@ describe("regression #3042: OpenRouter RPC startup and session selection", () =>
 			(["SIGTERM", "SIGHUP"] as const).map((signal) => [signal, new Set(process.listeners(signal))]),
 		);
 		vi.stubEnv(ENV_AGENT_DIR, agentDir);
-		vi.stubEnv("PI_OFFLINE", "1");
+		vi.stubEnv("BRIAN_OFFLINE", "1");
 		vi.spyOn(process, "cwd").mockReturnValue(harness.tempDir);
 		vi.spyOn(console, "error").mockImplementation((message: unknown) => {
 			diagnostics.push(String(message));

@@ -1,5 +1,5 @@
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
-import { registerStorageConformance } from "@punch-bot/durable/testing";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
+import { registerStorageConformance } from "@brian-agent/durable/testing";
 import { describe, expect, it } from "vitest";
 import { idFromNumber, seqFromNumber } from "../src/ids.ts";
 import { MemoryStorage } from "../src/storage/memory.ts";

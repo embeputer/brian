@@ -1,5 +1,5 @@
 export const STATE_VERSION = 1;
-export const STATE_TYPE = "punch-context-pruning";
+export const STATE_TYPE = "brian-context-pruning";
 export const MAX_SUMMARY_CHARS = 16_000;
 
 const MIN_SUMMARY_ABSOLUTE = 20;

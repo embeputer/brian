@@ -2,11 +2,11 @@
  * Print mode (single-shot): Send prompts, output result, exit.
  *
  * Used for:
- * - `pi -p "prompt"` - text output
- * - `pi --mode json "prompt"` - JSON event stream
+ * - `brian -p "prompt"` - text output
+ * - `brian --mode json "prompt"` - JSON event stream
  */
 
-import type { AssistantMessage, ImageContent } from "@punch-bot/ai";
+import type { AssistantMessage, ImageContent } from "@brian-agent/ai";
 import type { AgentSessionRuntime } from "../core/agent-session-runtime.ts";
 import { flushRawStdout, waitForRawStdoutBackpressure, writeRawStdout } from "../core/output-guard.ts";
 import { killTrackedDetachedChildren } from "../utils/shell.ts";

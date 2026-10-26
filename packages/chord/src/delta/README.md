@@ -1,13 +1,13 @@
 # Chord Delta
 
 Chord Delta produces immutable JSON revisions and exact operation batches for
-ordered replicas. Import it from `@punch-bot/chord/delta`.
+ordered replicas. Import it from `@brian-agent/chord/delta`.
 
 Immutability is an ownership contract. Nothing is frozen or defensively copied,
 so an illegal mutation is not detected. It silently corrupts state.
 
 ```ts
-import { applyImmutable, applyImmutableBatches, track } from "@punch-bot/chord/delta";
+import { applyImmutable, applyImmutableBatches, track } from "@brian-agent/chord/delta";
 
 const initial = { output: "", entries: [] as { id: number }[] };
 const tracker = track(initial); // `initial` is transferred: never mutate it again
@@ -68,7 +68,7 @@ Mutable replay needs a detached starting root and a detached copy of every batch
 for every replica. Never apply one in-memory batch to two mutable replicas:
 
 ```ts
-import { apply } from "@punch-bot/chord/delta";
+import { apply } from "@brian-agent/chord/delta";
 
 const detach = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 

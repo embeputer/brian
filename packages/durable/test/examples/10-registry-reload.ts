@@ -2,9 +2,9 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/10-registry-reload.ts
 
-import { Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import { createRegistry, defineExtension, defineTool, Harness, MemoryStorage, wrapTool } from "../../src/index.ts";
 
 const context = BACKGROUND_CONTEXT;

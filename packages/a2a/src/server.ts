@@ -4,7 +4,7 @@ import { DefaultRequestHandler, InMemoryTaskStore } from "@a2a-js/sdk/server";
 import { agentCardHandler, jsonRpcHandler, UserBuilder } from "@a2a-js/sdk/server/express";
 import type { Express } from "express";
 import express from "express";
-import { createPunchAgentCard } from "./agent-card.ts";
+import { createBrianAgentCard } from "./agent-card.ts";
 import { HarnessAgentExecutor, type HarnessPromptRunnerFactory } from "./executor.ts";
 import { formatA2aHttpUrl } from "./http-url.ts";
 
@@ -42,7 +42,7 @@ export async function createA2aServer(options: CreateA2aServerOptions): Promise<
 
 	function mount(baseUrl: string): void {
 		if (routesMounted) return;
-		const agentCard = createPunchAgentCard({
+		const agentCard = createBrianAgentCard({
 			baseUrl,
 			name: options.name,
 			description: options.description,

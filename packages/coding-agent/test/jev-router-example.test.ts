@@ -1,4 +1,4 @@
-import type { AgentTool } from "@punch-bot/agent";
+import type { AgentTool } from "@brian-agent/agent";
 import {
 	type AssistantMessage,
 	type ClassifierModel,
@@ -6,7 +6,7 @@ import {
 	fauxAssistantMessage,
 	fauxProvider,
 	fauxToolCall,
-} from "@punch-bot/ai";
+} from "@brian-agent/ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import jevRouter from "../examples/extensions/jev-router.ts";
@@ -78,9 +78,9 @@ describe("jev-router example", () => {
 		const harness = await createHarness({
 			tools,
 			extensionFactories: [
-				(pi) => {
-					pi.registerProvider(codex.provider);
-					pi.registerProvider(typesafe);
+				(brian) => {
+					brian.registerProvider(codex.provider);
+					brian.registerProvider(typesafe);
 				},
 				jevRouter,
 			],

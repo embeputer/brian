@@ -3,15 +3,15 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { renderToolOutputType } from "@punch-bot/codemode/declarations";
+import { renderToolOutputType } from "@brian-agent/codemode/declarations";
 import {
 	type JsonRpcMessage,
 	LATEST_PROTOCOL_VERSION,
 	McpAuthRequiredError,
 	McpHttpError,
 	McpSessionExpiredError,
-} from "@punch-bot/mcp";
-import { createInMemoryTransportPair, type InMemoryTransport } from "@punch-bot/mcp/testing";
+} from "@brian-agent/mcp";
+import { createInMemoryTransportPair, type InMemoryTransport } from "@brian-agent/mcp/testing";
 import { afterEach, describe, expect, it } from "vitest";
 import { InMemoryAuthStorageBackend } from "../src/core/auth-storage.ts";
 import { truncateMiddle } from "../src/core/tools/truncate.ts";
@@ -41,14 +41,14 @@ describe("MCP config", () => {
 	});
 
 	function setup(global: unknown, project: unknown) {
-		const root = mkdtempSync(join(tmpdir(), "pi-mcp-config-"));
+		const root = mkdtempSync(join(tmpdir(), "brian-mcp-config-"));
 		dirs.push(root);
 		const agentDir = join(root, "agent");
 		const cwd = join(root, "project");
 		mkdirSync(agentDir, { recursive: true });
-		mkdirSync(join(cwd, ".pi"), { recursive: true });
+		mkdirSync(join(cwd, ".brian"), { recursive: true });
 		writeFileSync(join(agentDir, "mcp.json"), JSON.stringify(global));
-		writeFileSync(join(cwd, ".pi", "mcp.json"), JSON.stringify(project));
+		writeFileSync(join(cwd, ".brian", "mcp.json"), JSON.stringify(project));
 		return { agentDir, cwd };
 	}
 
@@ -93,7 +93,7 @@ describe("MCP config", () => {
 			// An override cannot change the command, which would run with the global env.
 			{ mcpServers: { tools: { enabled: false, args: ["y"] }, missing: { enabled: false } } },
 		);
-		const project = join(paths.cwd, ".pi", "mcp.json");
+		const project = join(paths.cwd, ".brian", "mcp.json");
 		const { servers, errors } = loadMcpConfig({ ...paths, projectTrusted: true });
 		expect(servers.map((server) => [server.name, server.override, server.config])).toEqual([
 			["tools", undefined, { command: "x", env: { TOKEN: "secret" } }],
@@ -519,7 +519,7 @@ describe("MCP connections", () => {
 	it.skipIf(process.platform === "win32")(
 		"expands ~ in the command, arguments, and cwd of stdio servers",
 		async () => {
-			const home = mkdtempSync(join(tmpdir(), "pi-mcp-home-"));
+			const home = mkdtempSync(join(tmpdir(), "brian-mcp-home-"));
 			const previousHome = process.env.HOME;
 			process.env.HOME = home;
 			mkdirSync(join(home, "work"));
@@ -744,7 +744,7 @@ for await (const line of createInterface({ input: process.stdin })) {
 	});
 
 	it("appends server log messages to the log file", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "pi-mcp-log-"));
+		const dir = mkdtempSync(join(tmpdir(), "brian-mcp-log-"));
 		try {
 			const path = join(dir, "mcp.log");
 			const { connection } = connect(

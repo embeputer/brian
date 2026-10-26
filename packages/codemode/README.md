@@ -1,22 +1,22 @@
-# @punch-bot/codemode
+# @brian-agent/codemode
 
 Runs model-written JavaScript in a QuickJS VM (compiled to WebAssembly) where the only capability is calling injected tools. Nested tool calls never enter the LLM context; only the script's output and return value do.
 
-Scripts use `tools`, `ALL_TOOLS`, `text`, `image`, `exit`, `store`, and `load`, and may start with a `// @options:` line. The coding agent uses it for its built-in `codemode` tool. It has no pi dependencies and can be used on its own to expose any functions (remote APIs, MCP servers, application services) to model-written scripts.
+Scripts use `tools`, `ALL_TOOLS`, `text`, `image`, `exit`, `store`, and `load`, and may start with a `// @options:` line. The coding agent uses it for its built-in `codemode` tool. It has no brian dependencies and can be used on its own to expose any functions (remote APIs, MCP servers, application services) to model-written scripts.
 
 The package runs in two kinds of environments. Each has its own sandbox class, but they share one API, one script environment, and one result format:
 
 | Environment | Sandbox | Import from | Where scripts run |
 | --- | --- | --- | --- |
-| Node and Bun | `CodemodeSandbox` | `@punch-bot/codemode` | a worker thread per execution |
-| Cloudflare Workers and Durable Objects | `RemoteCodemodeSandbox` | `@punch-bot/codemode/portable` | a Durable Object in a separately deployed Worker |
+| Node and Bun | `CodemodeSandbox` | `@brian-agent/codemode` | a worker thread per execution |
+| Cloudflare Workers and Durable Objects | `RemoteCodemodeSandbox` | `@brian-agent/codemode/portable` | a Durable Object in a separately deployed Worker |
 
 See [Usage on Node and Bun](#usage-on-node-and-bun) and [Usage on Cloudflare Workers](#usage-on-cloudflare-workers). A third sandbox, `InlineCodemodeSandbox`, runs scripts on the calling thread for other runtimes, or on Cloudflare when blocking the caller is acceptable.
 
 ## Usage on Node and Bun
 
 ```ts
-import { CodemodeSandbox } from "@punch-bot/codemode";
+import { CodemodeSandbox } from "@brian-agent/codemode";
 
 const sandbox = new CodemodeSandbox({
 	timeoutMs: 60_000,
@@ -38,7 +38,7 @@ const result = await sandbox.execute(`
 `);
 
 console.log(result.output); // [{ type: "text", text: "bytes 1234" }]
-if (result.ok) console.log(result.value); // "@punch-bot/codemode"
+if (result.ok) console.log(result.value); // "@brian-agent/codemode"
 else console.error(result.error.kind, result.error.message);
 
 await sandbox.close();
@@ -49,7 +49,7 @@ await sandbox.close();
 - `tools.<name>(args)` returns a promise. Arguments and results make a JSON round trip. A tool that throws rejects with an `Error` carrying the same message. Tool names are also exposed as identifiers: characters that are not valid in identifiers become `_` (`toCodemodeIdentifier`), so `my-tool` is `tools.my_tool` as well as `tools["my-tool"]`.
 - `ALL_TOOLS` lists `{ name, description }` for every tool, with `name` as the identifier.
 - `text(value)` appends a text item to `result.output`; values other than strings are JSON-stringified. `console.log/info/warn/error/debug` append text items with `console: true`.
-- `image(urlOrItem)` appends an image item. It accepts a base64 `data:` URL, `{ image_url }`, or an image block (`{ type: "image", data, mimeType }`, as MCP tools and `@punch-bot/ai` produce). Remote URLs are rejected.
+- `image(urlOrItem)` appends an image item. It accepts a base64 `data:` URL, `{ image_url }`, or an image block (`{ type: "image", data, mimeType }`, as MCP tools and `@brian-agent/ai` produce). Remote URLs are rejected.
 - `exit()` ends the script successfully right away, keeping its output and store writes.
 - `globals` passed to the sandbox are called as top-level functions, for example a host helper `image(ref)`. They behave like tools but are not recorded in `result.calls`. A name like `models.classify` puts the function on a frozen `models` object. With `spread: true`, `execute` receives all call arguments as an array instead of the first one, and `signature` replaces the declaration generated from the schemas.
 - `store(key, value)` and `load(key)` read and write JSON values synchronously. See [Store](#store).
@@ -101,20 +101,20 @@ const source = await tools.read({ path: "package.json" });
 text(JSON.parse(source).name);
 ```
 
-Supported fields are `max_output_tokens`, a token budget for the output, and `timeout_ms`, a hard deadline. The sandbox does not act on them; the caller decides. The options line is replaced by an empty line, so line numbers in stack traces still match the input. Empty input, invalid JSON, unknown fields, an options line without code, or an options line on any line but the first throw `CodemodeSourceError`. `CODEMODE_SOURCE_GRAMMAR` is a Lark grammar for providers that support grammar-constrained tool input. Both are also available from the lightweight `@punch-bot/codemode/source` entry.
+Supported fields are `max_output_tokens`, a token budget for the output, and `timeout_ms`, a hard deadline. The sandbox does not act on them; the caller decides. The options line is replaced by an empty line, so line numbers in stack traces still match the input. Empty input, invalid JSON, unknown fields, an options line without code, or an options line on any line but the first throw `CodemodeSourceError`. `CODEMODE_SOURCE_GRAMMAR` is a Lark grammar for providers that support grammar-constrained tool input. Both are also available from the lightweight `@brian-agent/codemode/source` entry.
 
 ## Bundled Node and Bun hosts
 
 By default `CodemodeSandbox` loads `quickjs-wasi/quickjs.wasm` from the installed package and starts the worker file that sits next to this package's module. Neither exists on disk when the host is bundled, so pass both:
 
 ```ts
-import { CodemodeSandbox, loadQuickJSWasm } from "@punch-bot/codemode";
+import { CodemodeSandbox, loadQuickJSWasm } from "@brian-agent/codemode";
 
 const sandbox = new CodemodeSandbox({
 	tools,
 	// Compiled once per path and cached.
 	wasm: loadQuickJSWasm(pathToQuickJSWasm),
-	// A file of your build containing `import "@punch-bot/codemode/worker";`
+	// A file of your build containing `import "@brian-agent/codemode/worker";`
 	workerUrl: new URL("./codemode-worker.js", import.meta.url),
 });
 ```
@@ -133,7 +133,7 @@ additional build entrypoint and pass its relative source path as a string, for e
 | `RemoteCodemodeSandbox` | another isolate, usually a Durable Object in a separate Worker | a Durable Object that runs an agent session |
 | `InlineCodemodeSandbox` | the calling thread | anywhere else with WebAssembly, when blocking the caller is acceptable |
 
-Import the last two from `@punch-bot/codemode/portable`, which has no Node imports. On Cloudflare, `@punch-bot/codemode/cloudflare` adds the deployable Durable Object and the QuickJS module compiled by Wrangler.
+Import the last two from `@brian-agent/codemode/portable`, which has no Node imports. On Cloudflare, `@brian-agent/codemode/cloudflare` adds the deployable Durable Object and the QuickJS module compiled by Wrangler.
 
 ### Why a separate Worker
 
@@ -150,7 +150,7 @@ A complete setup is in [`examples/cloudflare`](https://github.com/earendil-works
 
 ```ts
 // sandbox/src/index.ts
-export { CodemodeSandboxDurableObject as CodemodeSandbox } from "@punch-bot/codemode/cloudflare";
+export { CodemodeSandboxDurableObject as CodemodeSandbox } from "@brian-agent/codemode/cloudflare";
 
 export default {
 	fetch: () => new Response("Not found", { status: 404 }),
@@ -160,7 +160,7 @@ export default {
 ```jsonc
 // sandbox/wrangler.jsonc
 {
-	"name": "pi-codemode-sandbox",
+	"name": "brian-codemode-sandbox",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-04-22",
 	"workers_dev": false,
@@ -170,7 +170,7 @@ export default {
 }
 ```
 
-Install `@punch-bot/codemode` in the sandbox Worker's project and run `npx wrangler deploy`. Wrangler bundles QuickJS (about 640 KB) as a compiled WebAssembly module. The object has no routes and keeps no state, and it never uses its storage.
+Install `@brian-agent/codemode` in the sandbox Worker's project and run `npx wrangler deploy`. Wrangler bundles QuickJS (about 640 KB) as a compiled WebAssembly module. The object has no routes and keeps no state, and it never uses its storage.
 
 ### Using it from the agent's Worker
 
@@ -180,7 +180,7 @@ Bind the class with `script_name`. Binding a class exported from the agent's own
 // agent/wrangler.jsonc
 "durable_objects": {
 	"bindings": [
-		{ "name": "CODEMODE_SANDBOX", "class_name": "CodemodeSandbox", "script_name": "pi-codemode-sandbox" }
+		{ "name": "CODEMODE_SANDBOX", "class_name": "CodemodeSandbox", "script_name": "brian-codemode-sandbox" }
 	]
 }
 ```
@@ -188,8 +188,8 @@ Bind the class with `script_name`. Binding a class exported from the agent's own
 Then replace the sandbox. Tools, options other than the worker-specific `wasm`, `workerUrl`, `acquireWorker`, and `onWorkerStarted`, and results stay the same:
 
 ```ts
-import type { CodemodeSandboxDurableObject } from "@punch-bot/codemode/cloudflare";
-import { RemoteCodemodeSandbox } from "@punch-bot/codemode/portable";
+import type { CodemodeSandboxDurableObject } from "@brian-agent/codemode/cloudflare";
+import { RemoteCodemodeSandbox } from "@brian-agent/codemode/portable";
 
 interface Env {
 	CODEMODE_SANDBOX: DurableObjectNamespace<CodemodeSandboxDurableObject>;
@@ -220,7 +220,7 @@ Run both Workers locally with `wrangler dev -c agent/wrangler.jsonc -c sandbox/w
 - **Changing the limits.** The Durable Object caps every request at its own limits, whatever the client asks for. To change them, subclass it in the sandbox Worker:
 
 ```ts
-import { CodemodeSandboxDurableObject } from "@punch-bot/codemode/cloudflare";
+import { CodemodeSandboxDurableObject } from "@brian-agent/codemode/cloudflare";
 
 export class CodemodeSandbox extends CodemodeSandboxDurableObject {
 	protected maxInterruptBudget = 200_000;
@@ -236,7 +236,7 @@ export class CodemodeSandbox extends CodemodeSandboxDurableObject {
 When blocking the caller is acceptable, for example in a stateless Worker that serves one request, run the VM on the caller's thread instead. Nothing extra needs to be deployed:
 
 ```ts
-import { createInlineCodemodeSandbox } from "@punch-bot/codemode/cloudflare";
+import { createInlineCodemodeSandbox } from "@brian-agent/codemode/cloudflare";
 
 const sandbox = createInlineCodemodeSandbox({ tools, timeoutMs: 60_000, interruptBudget: 50_000 });
 const result = await sandbox.execute(code);
@@ -263,18 +263,18 @@ renderDeclarations({ tools: sandbox.tools, globals: sandbox.globals });
 
 Property descriptions become `//` comments. Constraints the type cannot express follow as tags, such as `// @integer @minimum 1 @default 20`; they are dropped first when a type exceeds the size limit. Schemas only shape the declarations; values are not validated against them. Local references (`#/$defs/...`, `#/definitions/...`) are expanded; recursive and remote references render as `unknown`.
 
-## Using with pi-agent-core
+## Using with brian-agent-core
 
 To give an `Agent` a codemode tool, expose its other tools to the sandbox and wrap `execute()` as an `AgentTool`:
 
 ```ts
-import type { AgentTool } from "@punch-bot/agent";
+import type { AgentTool } from "@brian-agent/agent";
 import {
 	type CodemodeJsonSchema,
 	CodemodeSandbox,
 	type CodemodeTool,
 	renderDeclarations,
-} from "@punch-bot/codemode";
+} from "@brian-agent/codemode";
 import { Type } from "typebox";
 
 const sandboxTools: CodemodeTool[] = agentTools.map((tool) => ({
@@ -309,7 +309,7 @@ const codemodeTool: AgentTool = {
 };
 ```
 
-`result.output` items already have the shape of `@punch-bot/ai`'s `TextContent` and `ImageContent`. Calling `tool.execute()` directly skips the agent's `beforeToolCall` and `afterToolCall` hooks. To apply them to nested calls too, run each call through `runToolCall()` from `@punch-bot/agent`, as the [mcp-codemode example](https://github.com/earendil-works/pi/tree/main/packages/agent/examples/mcp-codemode) does. That example also rejects failed nested calls inside the script and combines codemode with MCP tools.
+`result.output` items already have the shape of `@brian-agent/ai`'s `TextContent` and `ImageContent`. Calling `tool.execute()` directly skips the agent's `beforeToolCall` and `afterToolCall` hooks. To apply them to nested calls too, run each call through `runToolCall()` from `@brian-agent/agent`, as the [mcp-codemode example](https://github.com/earendil-works/pi/tree/main/packages/agent/examples/mcp-codemode) does. That example also rejects failed nested calls inside the script and combines codemode with MCP tools.
 
 ## Deterministic runs
 

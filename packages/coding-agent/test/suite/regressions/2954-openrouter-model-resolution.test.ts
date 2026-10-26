@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { fauxAssistantMessage, fauxProvider } from "@punch-bot/ai";
+import { fauxAssistantMessage, fauxProvider } from "@brian-agent/ai";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	type CreateAgentSessionRuntimeFactory,

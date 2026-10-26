@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@punch-bot/agent";
-import { streamSimple } from "@punch-bot/ai/compat";
-import { getBuiltinModels } from "@punch-bot/ai/providers/all";
+import { Agent } from "@brian-agent/agent";
+import { streamSimple } from "@brian-agent/ai/compat";
+import { getBuiltinModels } from "@brian-agent/ai/providers/all";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
 import type { AgentSessionRuntime } from "../src/core/agent-session-runtime.ts";
@@ -46,7 +46,7 @@ async function startRpcMode(): Promise<{
 }> {
 	rpcIo.outputLines = [];
 	rpcIo.lineHandler = undefined;
-	const tempDir = join(tmpdir(), `pi-rpc-model-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const tempDir = join(tmpdir(), `brian-rpc-model-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 
 	const authStorage = AuthStorage.inMemory({ openrouter: { type: "api_key", key: "test-key" } });

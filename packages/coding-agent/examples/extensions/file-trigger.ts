@@ -9,17 +9,17 @@
  */
 
 import * as fs from "node:fs";
-import type { ExtensionAPI } from "@punch-bot/cli";
+import type { ExtensionAPI } from "@brian-agent/cli";
 
-export default function (pi: ExtensionAPI) {
-	pi.on("session_start", async (_event, ctx) => {
+export default function (brian: ExtensionAPI) {
+	brian.on("session_start", async (_event, ctx) => {
 		const triggerFile = "/tmp/agent-trigger.txt";
 
 		fs.watch(triggerFile, () => {
 			try {
 				const content = fs.readFileSync(triggerFile, "utf-8").trim();
 				if (content) {
-					pi.sendMessage(
+					brian.sendMessage(
 						{
 							customType: "file-trigger",
 							content: `External trigger: ${content}`,

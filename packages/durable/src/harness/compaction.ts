@@ -1,7 +1,7 @@
-import type { AssistantMessage, Message, ModelThinkingLevel, SimpleStreamOptions } from "@punch-bot/ai";
-import { calculateContextTokens, estimateMessageTokens } from "@punch-bot/ai/utils/estimate";
-import { isRetryableAssistantError, retryDelayMs } from "@punch-bot/ai/utils/retry";
-import type { Context, Draft } from "@punch-bot/chord";
+import type { AssistantMessage, Message, ModelThinkingLevel, SimpleStreamOptions } from "@brian-agent/ai";
+import { calculateContextTokens, estimateMessageTokens } from "@brian-agent/ai/utils/estimate";
+import { isRetryableAssistantError, retryDelayMs } from "@brian-agent/ai/utils/retry";
+import type { Context, Draft } from "@brian-agent/chord";
 import { CompactionEntry } from "../entries.ts";
 import { defineTask } from "../tasks.ts";
 import type {
@@ -108,7 +108,7 @@ Keep each section concise. Preserve exact file paths, function names, and error 
  * conversation-owned one places its summary through a write submission.
  */
 export const CompactionTask = defineTask<CompactionInput, CompactionCheckpoint, CompactionResult, CompactionHooks>({
-	name: "pi.compaction",
+	name: "brian.compaction",
 	version: 1,
 	initial: () => ({ phase: "select" }),
 	phases: {

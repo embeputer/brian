@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cloud Agent install for the punch (pi) monorepo.
+# Cloud Agent install for the brian (brian) monorepo.
 #
 # The repo requires Node >= 22.19.0 (see the root package.json "engines").
 # Its TypeScript build and model-data generator scripts are invoked with a
@@ -43,7 +43,7 @@ done
 # generators after a full (and wasted) npm install.
 if [ -z "${selected_node}" ]; then
 	active="$(node --version 2>/dev/null || echo "none")"
-	echo "error: the pi monorepo requires Node >= ${required_major}.${required_minor}.0, but no suitable Node was found (active: ${active})." >&2
+	echo "error: the brian monorepo requires Node >= ${required_major}.${required_minor}.0, but no suitable Node was found (active: ${active})." >&2
 	echo "       Its model-data generators run bare '.ts' via native type stripping (Node >= 22.18)." >&2
 	echo "       Install a suitable Node (e.g. 'nvm install 22') and re-run." >&2
 	exit 1

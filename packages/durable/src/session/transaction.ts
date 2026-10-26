@@ -1,5 +1,5 @@
-import { type Context, copyJson, type Draft, type JsonValue } from "@punch-bot/chord";
-import { type Change, type Op, type Prepared, type Tracker, track } from "@punch-bot/chord/delta";
+import { type Context, copyJson, type Draft, type JsonValue } from "@brian-agent/chord";
+import { type Change, type Op, type Prepared, type Tracker, track } from "@brian-agent/chord/delta";
 import {
 	type AnyDocDefinition,
 	type AnyDocToken,

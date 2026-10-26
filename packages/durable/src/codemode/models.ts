@@ -8,14 +8,22 @@
  * code mode tool turns a script's call of the global into a call of that tool.
  */
 
-import type { AnyModel, ClassifierContext, ImagesContext, Models, ModelType, ModelTypeMap, Usage } from "@punch-bot/ai";
-import type { Context, JsonValue } from "@punch-bot/chord";
+import type {
+	AnyModel,
+	ClassifierContext,
+	ImagesContext,
+	Models,
+	ModelType,
+	ModelTypeMap,
+	Usage,
+} from "@brian-agent/ai";
+import type { Context, JsonValue } from "@brian-agent/chord";
 import { Type } from "typebox";
 import { defineTool } from "../harness/define.ts";
 import type { ToolRegistration } from "../harness/types.ts";
 
 /** Reserved names of code mode's internal tools; they are never listed to scripts or the model. */
-export const CODEMODE_INTERNAL_PREFIX = "pi.codemode.";
+export const CODEMODE_INTERNAL_PREFIX = "brian.codemode.";
 export const CLASSIFY_TOOL = `${CODEMODE_INTERNAL_PREFIX}models.classify`;
 export const GENERATE_IMAGES_TOOL = `${CODEMODE_INTERNAL_PREFIX}models.generateImages`;
 

@@ -1,4 +1,4 @@
-import type { ToolResultMessage } from "@punch-bot/ai/compat";
+import type { ToolResultMessage } from "@brian-agent/ai/compat";
 import { describe, expect, it } from "vitest";
 import { computeFileLists, createFileOps, extractFileOpsFromMessage } from "../src/core/compaction/utils.ts";
 

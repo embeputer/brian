@@ -6,7 +6,7 @@
  * as custom entries.
  */
 
-import type { ExtensionAPI } from "@punch-bot/cli";
+import type { ExtensionAPI } from "@brian-agent/cli";
 
 const ENTRY_TYPE = "debug-provider-events";
 const STATUS_KEY = "debug-provider";
@@ -18,12 +18,12 @@ interface ProviderDebugEntry {
 	events: unknown[];
 }
 
-export default function (pi: ExtensionAPI) {
+export default function (brian: ExtensionAPI) {
 	let enabled = false;
 	let activeEvents: unknown[] | undefined;
 	let completedEntry: ProviderDebugEntry | undefined;
 
-	pi.registerCommand("debug-provider", {
+	brian.registerCommand("debug-provider", {
 		description: "Toggle capture of raw provider stream events",
 		handler: async (args, ctx) => {
 			const requestedState = args.trim().toLowerCase();
@@ -42,15 +42,15 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.on("turn_start", () => {
+	brian.on("turn_start", () => {
 		activeEvents = enabled ? [] : undefined;
 	});
 
-	pi.on("provider_stream_event", (event) => {
+	brian.on("provider_stream_event", (event) => {
 		activeEvents?.push(structuredClone(event.data));
 	});
 
-	pi.on("message_end", (event) => {
+	brian.on("message_end", (event) => {
 		if (event.message.role !== "assistant" || !activeEvents) return;
 		completedEntry = {
 			provider: event.message.provider,
@@ -61,9 +61,9 @@ export default function (pi: ExtensionAPI) {
 		activeEvents = undefined;
 	});
 
-	pi.on("turn_end", () => {
+	brian.on("turn_end", () => {
 		if (!completedEntry) return;
-		pi.appendEntry<ProviderDebugEntry>(ENTRY_TYPE, completedEntry);
+		brian.appendEntry<ProviderDebugEntry>(ENTRY_TYPE, completedEntry);
 		completedEntry = undefined;
 	});
 }

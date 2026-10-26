@@ -5,8 +5,8 @@
  * Responses and events are emitted as JSON lines on stdout.
  */
 
-import type { AgentMessage, ThinkingLevel } from "@punch-bot/agent";
-import type { ImageContent, Model } from "@punch-bot/ai";
+import type { AgentMessage, ThinkingLevel } from "@brian-agent/agent";
+import type { ImageContent, Model } from "@brian-agent/ai";
 import type { PromptDisposition, QueuedInputDisposition, SessionStats } from "../../core/agent-session.ts";
 import type { BashResult } from "../../core/bash-executor.ts";
 import type { CompactionResult } from "../../core/compaction/index.ts";

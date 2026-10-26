@@ -9,7 +9,7 @@ export default mergeConfig(
 			environment: "node",
 			testTimeout: 30000,
 			// Tests run offline by default; opt in with allowNetwork() from test/test-network-env.ts.
-			env: { PI_OFFLINE: "1" },
+			env: { BRIAN_OFFLINE: "1" },
 			unstubEnvs: true,
 			reporters: process.env.GITHUB_ACTIONS ? ["dot", "github-actions"] : ["dot"],
 			silent: "passed-only",
@@ -21,12 +21,12 @@ export default mergeConfig(
 		},
 		resolve: {
 			alias: [
-				{ find: /^@punch-bot\/ai$/, replacement: workspaceSourcePaths.aiIndex },
-				{ find: /^@punch-bot\/agent$/, replacement: workspaceSourcePaths.agentIndex },
-				{ find: /^@mariozechner\/pi-ai$/, replacement: workspaceSourcePaths.aiIndex },
-				{ find: /^@mariozechner\/pi-ai\/oauth$/, replacement: workspaceSourcePaths.aiOAuth },
-				{ find: /^@mariozechner\/pi-agent-core$/, replacement: workspaceSourcePaths.agentIndex },
-				{ find: /^@punch-bot\/a2a$/, replacement: workspaceSourcePaths.a2aIndex },
+				{ find: /^@brian-agent\/ai$/, replacement: workspaceSourcePaths.aiIndex },
+				{ find: /^@brian-agent\/agent$/, replacement: workspaceSourcePaths.agentIndex },
+				{ find: /^@mariozechner\/brian-ai$/, replacement: workspaceSourcePaths.aiIndex },
+				{ find: /^@mariozechner\/brian-ai\/oauth$/, replacement: workspaceSourcePaths.aiOAuth },
+				{ find: /^@mariozechner\/brian-agent-core$/, replacement: workspaceSourcePaths.agentIndex },
+				{ find: /^@brian-agent\/a2a$/, replacement: workspaceSourcePaths.a2aIndex },
 			],
 		},
 	}),

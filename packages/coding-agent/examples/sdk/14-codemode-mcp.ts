@@ -19,7 +19,7 @@ import {
 	getAgentDir,
 	SessionManager,
 	SettingsManager,
-} from "@punch-bot/cli";
+} from "@brian-agent/cli";
 
 const cwd = process.cwd();
 

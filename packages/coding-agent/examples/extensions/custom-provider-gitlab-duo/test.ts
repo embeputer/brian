@@ -8,8 +8,8 @@
  *   node test.ts claude-sonnet-4-5-20250929 --thinking
  */
 
-import { type Api, type Context, type Model, registerApiProvider, streamSimple } from "@punch-bot/ai/compat";
-import { getAgentDir } from "@punch-bot/cli";
+import { type Api, type Context, type Model, registerApiProvider, streamSimple } from "@brian-agent/ai/compat";
+import { getAgentDir } from "@brian-agent/cli";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { MODELS, streamGitLabDuo } from "./index.ts";

@@ -1,7 +1,7 @@
-import { createHost, memoryLinkPair, replicatedState } from "@punch-bot/chord";
-import { createAssistantMessageEventStream, Type } from "@punch-bot/ai";
-import { complete, getModel, getProviders, streamSimple } from "@punch-bot/ai/compat";
-import { Agent, streamProxy } from "@punch-bot/agent";
+import { createHost, memoryLinkPair, replicatedState } from "@brian-agent/chord";
+import { createAssistantMessageEventStream, Type } from "@brian-agent/ai";
+import { complete, getModel, getProviders, streamSimple } from "@brian-agent/ai/compat";
+import { Agent, streamProxy } from "@brian-agent/agent";
 
 // Keep this entry browser-safe. It is bundled by scripts/check-browser-smoke.mjs
 // to catch accidental Node-only runtime imports in browser-facing package exports.

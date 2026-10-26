@@ -8,12 +8,12 @@ import { isWSL } from "./wsl.ts";
 const MAX_OSC52_ENCODED_LENGTH = 100_000;
 
 /**
- * Remote sessions also emit OSC 52 so the client terminal receives the copy. PI_CLIPBOARD_OSC52=1
+ * Remote sessions also emit OSC 52 so the client terminal receives the copy. BRIAN_CLIPBOARD_OSC52=1
  * covers remote clients that leave no SSH markers, such as multiplexer attaches (#10114, #10835)
  * or IDE daemons (#10826).
  */
 function isRemoteSession(env: NodeJS.ProcessEnv): boolean {
-	return Boolean(env.SSH_CONNECTION || env.SSH_CLIENT || env.MOSH_CONNECTION || env.PI_CLIPBOARD_OSC52 === "1");
+	return Boolean(env.SSH_CONNECTION || env.SSH_CLIENT || env.MOSH_CONNECTION || env.BRIAN_CLIPBOARD_OSC52 === "1");
 }
 
 function emitOsc52(text: string): boolean {
@@ -31,7 +31,7 @@ function emitOsc52(text: string): boolean {
  * decode piped bytes with the console code page, which mangles non-ASCII UTF-8.
  */
 async function copyViaWindowsClipboard(text: string): Promise<boolean> {
-	const tmpFile = join(tmpdir(), `pi-wsl-clip-${randomUUID()}.txt`);
+	const tmpFile = join(tmpdir(), `brian-wsl-clip-${randomUUID()}.txt`);
 	try {
 		writeFileSync(tmpFile, text, { encoding: "utf8", mode: 0o600 });
 		const winPath = (await runClipboardCommand("wslpath", ["-w", tmpFile], { timeoutMs: 1000 }))

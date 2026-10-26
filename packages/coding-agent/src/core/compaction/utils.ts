@@ -2,8 +2,8 @@
  * Shared utilities for compaction and branch summarization.
  */
 
-import type { AgentMessage } from "@punch-bot/agent";
-import { contentText, type Message } from "@punch-bot/ai";
+import type { AgentMessage } from "@brian-agent/agent";
+import { contentText, type Message } from "@brian-agent/ai";
 
 // ============================================================================
 // File Operation Tracking

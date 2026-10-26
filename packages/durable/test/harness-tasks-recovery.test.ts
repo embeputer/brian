@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createModels, Type } from "@punch-bot/ai";
-import type { Context, JsonValue } from "@punch-bot/chord";
+import { createModels, Type } from "@brian-agent/ai";
+import type { Context, JsonValue } from "@brian-agent/chord";
 import {
 	createRegistry,
 	defineDoc,
@@ -14,7 +14,7 @@ import {
 	type Task,
 	type TaskId,
 	type TaskRuntime,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { afterEach, describe, expect, it } from "vitest";
 import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
 import { addTask, addTool } from "./harness-support.ts";
@@ -24,7 +24,7 @@ import { aborted, abortedWith, completed, countingReader, deferred, eventually, 
 const directories = new Set<string>();
 
 async function sqlitePath(): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pi-durable-tasks-"));
+	const directory = await mkdtemp(join(tmpdir(), "brian-durable-tasks-"));
 	directories.add(directory);
 	return join(directory, "session.sqlite");
 }

@@ -1,4 +1,4 @@
-import type { ModelsRefreshOptions, ModelsRefreshResult } from "@punch-bot/ai";
+import type { ModelsRefreshOptions, ModelsRefreshResult } from "@brian-agent/ai";
 import { describe, expect, it, vi } from "vitest";
 import { refreshModelCatalogs } from "../src/core/model-catalog-refresh.ts";
 

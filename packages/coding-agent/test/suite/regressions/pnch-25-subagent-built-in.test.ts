@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { discoverAgents } from "../../../src/extensions/subagent/agents.ts";
 
-const originalAgentDir = process.env.PI_CODING_AGENT_DIR;
+const originalAgentDir = process.env.BRIAN_AGENT_DIR;
 
 afterEach(() => {
-	if (originalAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
-	else process.env.PI_CODING_AGENT_DIR = originalAgentDir;
+	if (originalAgentDir === undefined) delete process.env.BRIAN_AGENT_DIR;
+	else process.env.BRIAN_AGENT_DIR = originalAgentDir;
 });
 
 describe("PNCH-25: built-in subagent", () => {
@@ -19,11 +19,11 @@ describe("PNCH-25: built-in subagent", () => {
 	});
 
 	it("ships sample agents and preserves scope override ordering", async () => {
-		const tempDir = mkdtempSync(join(tmpdir(), "pi-subagent-built-in-"));
+		const tempDir = mkdtempSync(join(tmpdir(), "brian-subagent-built-in-"));
 		try {
-			process.env.PI_CODING_AGENT_DIR = join(tempDir, "user");
+			process.env.BRIAN_AGENT_DIR = join(tempDir, "user");
 			const userAgentsDir = join(tempDir, "user", "agents");
-			const projectAgentsDir = join(tempDir, ".pi", "agents");
+			const projectAgentsDir = join(tempDir, ".brian", "agents");
 			mkdirSync(userAgentsDir, { recursive: true });
 			mkdirSync(projectAgentsDir, { recursive: true });
 			writeFileSync(

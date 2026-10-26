@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ThinkingLevel } from "@punch-bot/agent";
+import type { ThinkingLevel } from "@brian-agent/agent";
 import chalk from "chalk";
 import { getCustomThemesDir, getThemesDir } from "../../config.ts";
 import {
@@ -638,7 +638,7 @@ export function getTerminalTheme(): TerminalTheme {
 // ============================================================================
 
 // Use globalThis to share theme across module loaders (node + jiti in dev mode)
-const THEME_KEY = Symbol.for("@punch-bot/cli:theme");
+const THEME_KEY = Symbol.for("@brian-agent/cli:theme");
 const THEME_KEY_OLD = Symbol.for("@mariozechner/pi-coding-agent:theme");
 
 // Export theme as a getter that reads from globalThis
@@ -1026,7 +1026,7 @@ export interface TerminalColors {
 export function detectColorMode(trueColor?: boolean): TerminalColorMode {
 	if (trueColor === true) return "truecolor";
 	if (trueColor === false) return "256color";
-	const override = process.env.PI_TRUE_COLOR?.toLowerCase();
+	const override = process.env.BRIAN_TRUE_COLOR?.toLowerCase();
 	if (override === "1" || override === "true" || override === "yes") return "truecolor";
 	if (override === "0" || override === "false" || override === "no") return "256color";
 	const colorterm = process.env.COLORTERM?.toLowerCase();

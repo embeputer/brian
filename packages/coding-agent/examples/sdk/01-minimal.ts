@@ -2,10 +2,10 @@
  * Minimal SDK Usage
  *
  * Uses all defaults: discovers skills, extensions, tools, context files
- * from cwd and ~/.pi/agent. Model chosen from settings or first available.
+ * from cwd and ~/.brian/agent. Model chosen from settings or first available.
  */
 
-import { createAgentSession } from "@punch-bot/cli";
+import { createAgentSession } from "@brian-agent/cli";
 
 const { session } = await createAgentSession();
 

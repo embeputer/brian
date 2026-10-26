@@ -1,5 +1,5 @@
-import type { Context } from "@punch-bot/chord";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import type { Context } from "@brian-agent/chord";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	type CommitPublication,
 	type ConversationId,
@@ -12,7 +12,7 @@ import {
 	MemoryStorage,
 	type Seq,
 	type StorageWrite,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { SessionImpl } from "../src/session/session.ts";
 
 export const context: Context = BACKGROUND_CONTEXT;

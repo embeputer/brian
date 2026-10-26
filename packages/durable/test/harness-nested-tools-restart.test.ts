@@ -8,8 +8,8 @@ import {
 	fauxToolCall,
 	type ToolResultMessage,
 	Type,
-} from "@punch-bot/ai";
-import type { Context } from "@punch-bot/chord";
+} from "@brian-agent/ai";
+import type { Context } from "@brian-agent/chord";
 import {
 	type AgentEvent,
 	defineExtension,
@@ -24,7 +24,7 @@ import {
 	ToolTask,
 	type ToolTaskInput,
 	watchEvents,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { afterEach, describe, expect, it } from "vitest";
 import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
 import { allEntries, type ChatSetup, chatSetup, openChat } from "./chat-support.ts";
@@ -56,7 +56,7 @@ afterEach(async () => {
 });
 
 async function sqlitePath(): Promise<string> {
-	const directory = await mkdtemp(join(tmpdir(), "pi-durable-nested-restart-"));
+	const directory = await mkdtemp(join(tmpdir(), "brian-durable-nested-restart-"));
 	directories.add(directory);
 	return join(directory, "session.sqlite");
 }
@@ -502,7 +502,9 @@ describe("nested tool calls across a restart", () => {
 				if (change.type !== "task" || change.value.kind !== ToolTask.definition.name) continue;
 				if ((change.value.input as ToolTaskInput).kind !== "model" || change.value.state.status !== "terminal")
 					continue;
-				const live = publication.changes.find((each) => each.type === "document" && each.record.kind === "pi.live");
+				const live = publication.changes.find(
+					(each) => each.type === "document" && each.record.kind === "brian.live",
+				);
 				const value = live?.type === "document" ? (live.value as { nestedTools?: unknown[] } | null) : undefined;
 				slotsAfterCaller = value?.nestedTools?.length ?? 0;
 			}

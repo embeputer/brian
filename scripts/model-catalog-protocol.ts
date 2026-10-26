@@ -1,5 +1,5 @@
 /**
- * Model catalog protocol shared by pi and pi.dev.
+ * Model catalog protocol shared by brian and pi.dev.
  *
  * This file is copied verbatim into two repositories. Change both copies in
  * the same pair of pull requests and keep them byte for byte identical:
@@ -7,7 +7,7 @@
  *   earendil-works/pi      scripts/model-catalog-protocol.ts
  *   earendil-works/pi.dev  src/shared/models/protocol.ts
  *
- * pi uses it to publish catalog revisions and to test clients against the
+ * brian uses it to publish catalog revisions and to test clients against the
  * catalog selection pi.dev performs. pi.dev uses it to serve catalog requests.
  * Keep it free of imports and runtime specific APIs so it runs unchanged in
  * Node.js and Cloudflare Workers.
@@ -30,18 +30,18 @@ export const MODEL_CATALOG_PREFIX = `models/v${MODEL_CATALOG_SCHEMA_VERSION}`;
 export const MODEL_CATALOG_INDEX_KEY = `${MODEL_CATALOG_PREFIX}/index.json`;
 export const MODEL_CATALOG_REVISION_RE = /^sha256-[0-9a-f]{64}$/;
 
-const PI_VERSION_RE = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/;
-const PI_USER_AGENT_RE = /^pi\/([^\s()]+)(?: \([^;()]+(?:;\s*[^;()]+(?:;\s*[^()]+)?)?\))?$/i;
+const BRIAN_VERSION_RE = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/;
+const BRIAN_USER_AGENT_RE = /^brian\/([^\s()]+)(?: \([^;()]+(?:;\s*[^;()]+(?:;\s*[^()]+)?)?\))?$/i;
 const MODEL_TYPE_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
-type ParsedPiVersion = readonly [major: number, minor: number, patch: number, prerelease: string];
+type ParsedBrianVersion = readonly [major: number, minor: number, patch: number, prerelease: string];
 
 export type ModelCatalogArtifact = "models.json" | "models.all.json" | "providers.json";
 
 export type ModelCatalogRepresentation = "legacy" | "typed";
 
 export type ModelCatalogIndexEntry = {
-	minimumPiVersion: string;
+	minimumBrianVersion: string;
 	revision: string;
 };
 
@@ -52,7 +52,7 @@ export type ModelCatalogIndex = {
 };
 
 export type ModelCatalogRequest =
-	| { kind: "catalog"; piVersion: string | undefined; representation: ModelCatalogRepresentation }
+	| { kind: "catalog"; brianVersion: string | undefined; representation: ModelCatalogRepresentation }
 	| { kind: "redirect"; location: string }
 	| { kind: "invalid"; error: string };
 
@@ -69,13 +69,13 @@ export function getModelCatalogProviderKey(
 	return `${MODEL_CATALOG_PREFIX}/revisions/${revision}/providers/${provider}${suffix}`;
 }
 
-export function isValidModelCatalogPiVersion(version: string): boolean {
-	return parsePiVersion(version) !== undefined;
+export function isValidModelCatalogBrianVersion(version: string): boolean {
+	return parseBrianVersion(version) !== undefined;
 }
 
-/** Compare two Pi versions with semver precedence. Throws for invalid versions. */
-export function compareModelCatalogPiVersions(left: string, right: string): number {
-	return comparePiVersions(requirePiVersion(left), requirePiVersion(right));
+/** Compare two Brian versions with semver precedence. Throws for invalid versions. */
+export function compareModelCatalogBrianVersions(left: string, right: string): number {
+	return compareBrianVersions(requireBrianVersion(left), requireBrianVersion(right));
 }
 
 /**
@@ -97,10 +97,10 @@ export function parseModelCatalogRepresentation(
 /**
  * Decide how to answer a catalog request from its URL and User-Agent.
  *
- * Released clients do not send `pi-version`. Responses are cached by URL, so
+ * Released clients do not send `brian-version`. Responses are cached by URL, so
  * instead of varying the response on the User-Agent, clients that identify
- * as Pi are redirected to the equivalent URL with an explicit `pi-version`.
- * Requests without a Pi User-Agent receive the default catalog.
+ * as Brian are redirected to the equivalent URL with an explicit `brian-version`.
+ * Requests without a Brian User-Agent receive the default catalog.
  */
 export function parseModelCatalogRequest(url: string | URL, userAgent: string | null | undefined): ModelCatalogRequest {
 	const requestUrl = new URL(url);
@@ -109,46 +109,46 @@ export function parseModelCatalogRequest(url: string | URL, userAgent: string | 
 		return { kind: "invalid", error: "Invalid model types." };
 	}
 
-	const piVersion = requestUrl.searchParams.get("pi-version");
-	if (piVersion === null) {
-		const userAgentVersion = PI_USER_AGENT_RE.exec(userAgent ?? "")?.[1];
-		if (userAgentVersion !== undefined && isValidModelCatalogPiVersion(userAgentVersion)) {
-			requestUrl.searchParams.set("pi-version", userAgentVersion);
+	const brianVersion = requestUrl.searchParams.get("brian-version");
+	if (brianVersion === null) {
+		const userAgentVersion = BRIAN_USER_AGENT_RE.exec(userAgent ?? "")?.[1];
+		if (userAgentVersion !== undefined && isValidModelCatalogBrianVersion(userAgentVersion)) {
+			requestUrl.searchParams.set("brian-version", userAgentVersion);
 			return { kind: "redirect", location: requestUrl.toString() };
 		}
-		return { kind: "catalog", piVersion: undefined, representation };
+		return { kind: "catalog", brianVersion: undefined, representation };
 	}
-	if (!isValidModelCatalogPiVersion(piVersion)) {
-		return { kind: "invalid", error: "Invalid Pi version." };
+	if (!isValidModelCatalogBrianVersion(brianVersion)) {
+		return { kind: "invalid", error: "Invalid Brian version." };
 	}
-	return { kind: "catalog", piVersion, representation };
+	return { kind: "catalog", brianVersion, representation };
 }
 
 /**
- * Select the catalog revision for a Pi version: the entry with the highest
+ * Select the catalog revision for a Brian version: the entry with the highest
  * minimum version that does not exceed it. Requests without a version receive
  * the default revision. Returns undefined when no entry is compatible.
  */
 export function selectModelCatalog(
 	index: ModelCatalogIndex,
-	piVersion: string | undefined,
+	brianVersion: string | undefined,
 ): ModelCatalogIndexEntry | undefined {
-	if (piVersion === undefined) {
+	if (brianVersion === undefined) {
 		return index.catalogs.find((catalog) => catalog.revision === index.defaultRevision);
 	}
 
-	const requestedVersion = parsePiVersion(piVersion);
+	const requestedVersion = parseBrianVersion(brianVersion);
 	if (!requestedVersion) {
 		return undefined;
 	}
 
 	let selected: ModelCatalogIndexEntry | undefined;
-	let selectedVersion: ParsedPiVersion | undefined;
+	let selectedVersion: ParsedBrianVersion | undefined;
 	for (const catalog of index.catalogs) {
-		const minimumVersion = requirePiVersion(catalog.minimumPiVersion);
+		const minimumVersion = requireBrianVersion(catalog.minimumBrianVersion);
 		if (
-			comparePiVersions(minimumVersion, requestedVersion) <= 0 &&
-			(!selectedVersion || comparePiVersions(minimumVersion, selectedVersion) > 0)
+			compareBrianVersions(minimumVersion, requestedVersion) <= 0 &&
+			(!selectedVersion || compareBrianVersions(minimumVersion, selectedVersion) > 0)
 		) {
 			selected = catalog;
 			selectedVersion = minimumVersion;
@@ -178,8 +178,8 @@ export function parseModelCatalogIndex(value: unknown): ModelCatalogIndex {
 			(catalog) =>
 				typeof catalog !== "object" ||
 				catalog === null ||
-				typeof catalog.minimumPiVersion !== "string" ||
-				!parsePiVersion(catalog.minimumPiVersion) ||
+				typeof catalog.minimumBrianVersion !== "string" ||
+				!parseBrianVersion(catalog.minimumBrianVersion) ||
 				typeof catalog.revision !== "string" ||
 				!MODEL_CATALOG_REVISION_RE.test(catalog.revision),
 		) ||
@@ -191,23 +191,23 @@ export function parseModelCatalogIndex(value: unknown): ModelCatalogIndex {
 	return {
 		schemaVersion: value.schemaVersion,
 		defaultRevision: value.defaultRevision,
-		catalogs: value.catalogs.map(({ minimumPiVersion, revision }) => ({
-			minimumPiVersion,
+		catalogs: value.catalogs.map(({ minimumBrianVersion, revision }) => ({
+			minimumBrianVersion,
 			revision,
 		})),
 	};
 }
 
-function requirePiVersion(version: string): ParsedPiVersion {
-	const parsed = parsePiVersion(version);
+function requireBrianVersion(version: string): ParsedBrianVersion {
+	const parsed = parseBrianVersion(version);
 	if (!parsed) {
-		throw new Error(`Invalid Pi version: ${version}`);
+		throw new Error(`Invalid Brian version: ${version}`);
 	}
 	return parsed;
 }
 
-function parsePiVersion(version: string): ParsedPiVersion | undefined {
-	const match = PI_VERSION_RE.exec(version.trim());
+function parseBrianVersion(version: string): ParsedBrianVersion | undefined {
+	const match = BRIAN_VERSION_RE.exec(version.trim());
 	if (!match) {
 		return undefined;
 	}
@@ -218,7 +218,7 @@ function parsePiVersion(version: string): ParsedPiVersion | undefined {
 	return [parsed[0], parsed[1], parsed[2], match[4] ?? ""];
 }
 
-function comparePiVersions(left: ParsedPiVersion, right: ParsedPiVersion): number {
+function compareBrianVersions(left: ParsedBrianVersion, right: ParsedBrianVersion): number {
 	for (const index of [0, 1, 2] as const) {
 		const difference = left[index] - right[index];
 		if (difference !== 0) {

@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentMessage } from "@punch-bot/agent";
+import type { AgentMessage } from "@brian-agent/agent";
 import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext } from "../../core/extensions/types.ts";
 import type { PruningRecord, PruningState } from "./context-pruning-state.ts";
@@ -21,7 +21,7 @@ import {
 const MAX_MEMORY_CHARS = 12_000;
 
 function memoryFilePath(ctx: ExtensionContext): string {
-	return process.env.PI_MEMORY_FILE || path.join(ctx.cwd, ".punch-memory.md");
+	return process.env.BRIAN_MEMORY_FILE || path.join(ctx.cwd, ".brian-memory.md");
 }
 
 const textResult = (text: string) => ({ content: [{ type: "text" as const, text }], details: {} });
@@ -35,8 +35,8 @@ function loadState(ctx: ExtensionContext): PruningState {
 	return emptyState();
 }
 
-function saveState(pi: ExtensionAPI, _ctx: ExtensionContext, state: PruningState) {
-	pi.appendEntry(STATE_TYPE, state);
+function saveState(brian: ExtensionAPI, _ctx: ExtensionContext, state: PruningState) {
+	brian.appendEntry(STATE_TYPE, state);
 }
 
 function records(ctx: ExtensionContext): PruningRecord[] {
@@ -65,7 +65,7 @@ function matchEntryIds(ctx: ExtensionContext, messages: Array<{ role?: string; c
 
 function addMessageId(message: AgentMessage, id: string): AgentMessage {
 	if (message.role !== "user") return message;
-	const marker = `\n\n<punch-message-id>${id}</punch-message-id>`;
+	const marker = `\n\n<brian-message-id>${id}</brian-message-id>`;
 	if (!("content" in message)) return message;
 	if (typeof message.content === "string") return { ...message, content: `${message.content}${marker}` };
 	if (Array.isArray(message.content)) {
@@ -85,9 +85,9 @@ function compressedSummary(block: PruningState["blocks"][number]): AgentMessage 
 	};
 }
 
-export default function contextPruningExtension(pi: ExtensionAPI): void {
-	pi.on("before_agent_start", (event, ctx) => {
-		const threshold = Number(process.env.PI_CONTEXT_PRUNING_THRESHOLD || 0);
+export default function contextPruningExtension(brian: ExtensionAPI): void {
+	brian.on("before_agent_start", (event, ctx) => {
+		const threshold = Number(process.env.BRIAN_CONTEXT_PRUNING_THRESHOLD || 0);
 		const usage = ctx.getContextUsage();
 		const nudge =
 			threshold > 0 && usage?.percent != null && usage.percent >= threshold
@@ -97,7 +97,7 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		event.systemPromptOptions.sections.context_pruning = nudge.trim();
 	});
 
-	pi.on("context", (event, ctx) => {
+	brian.on("context", (event, ctx) => {
 		const state = loadState(ctx);
 		const blocks = activeBlocks(state);
 		const ids = matchEntryIds(ctx, event.messages);
@@ -122,11 +122,11 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		return { messages };
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "compress_context",
 		label: "Compress context range",
 		promptSnippet:
-			"Compress stale complete conversation ranges when context is crowded; use visible punch-message-id values.",
+			"Compress stale complete conversation ranges when context is crowded; use visible brian-message-id values.",
 		promptGuidelines: [
 			"Before compression, save durable project facts to the project memory file.",
 			"Only compress complete stale user-turn ranges. Keep active task discussion and recent turns visible.",
@@ -137,14 +137,14 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 			"Replace a stale range of complete conversation turns with your summary for future model calls. Boundaries must be visible user-message IDs. Original session entries remain intact and can be restored with decompress_context.",
 		executionMode: "sequential",
 		parameters: Type.Object({
-			startId: Type.String({ description: "Earlier visible user punch-message-id" }),
-			endId: Type.String({ description: "Later visible user punch-message-id" }),
+			startId: Type.String({ description: "Earlier visible user brian-message-id" }),
+			endId: Type.String({ description: "Later visible user brian-message-id" }),
 			summary: Type.String({ description: "Self-contained summary replacing the range" }),
 			topic: Type.Optional(Type.String({ description: "Short range label" })),
 		}),
 		async execute(_toolCallId, args, _signal, _onUpdate, ctx) {
 			const state = createBlock(loadState(ctx), records(ctx), args);
-			saveState(pi, ctx, state);
+			saveState(brian, ctx, state);
 			const block = state.blocks.at(-1)!;
 			return textResult(
 				`Compressed ${block.id}: ${block.messageIds.length} messages, ${block.sourceCharacters} source characters. Use decompress_context with ${block.id} to restore it.`,
@@ -152,7 +152,7 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "recompress_context",
 		label: "Recompress into denser summary",
 		promptSnippet:
@@ -173,7 +173,7 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		}),
 		async execute(_toolCallId, args, _signal, _onUpdate, ctx) {
 			const state = recompressBlock(loadState(ctx), args.blockIds, args);
-			saveState(pi, ctx, state);
+			saveState(brian, ctx, state);
 			const block = state.blocks.at(-1)!;
 			return textResult(
 				`Recompressed ${args.blockIds.join(", ")} into ${block.id} [T2]: ${block.messageIds.length} messages, ${block.sourceCharacters} source characters.`,
@@ -181,7 +181,7 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "decompress_context",
 		label: "Restore context range",
 		description:
@@ -193,12 +193,12 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 			const block = activeBlocks(state).find((candidate) => candidate.id === args.blockId);
 			if (!block) throw new Error(`active block ${args.blockId} not found`);
 			const next = deactivateBlock(state, args.blockId);
-			saveState(pi, ctx, next);
+			saveState(brian, ctx, next);
 			return textResult(`Restored ${args.blockId}. Preview:\n${blockPreview(records(ctx), block)}`);
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "context_status",
 		label: "Context pruning status",
 		description: "Show active compressed ranges and context usage.",
@@ -221,7 +221,7 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "search_context",
 		label: "Search compressed context",
 		description: "Search active compressed summaries before restoring a block.",
@@ -240,7 +240,7 @@ export default function contextPruningExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "update_memory",
 		label: "Update project memory",
 		description:

@@ -1,5 +1,5 @@
-import { fauxAssistantMessage, fauxToolCall, getCurrentTools, type TranscriptContext } from "@punch-bot/ai";
-import type { ToolResultMessage } from "@punch-bot/ai/compat";
+import { fauxAssistantMessage, fauxToolCall, getCurrentTools, type TranscriptContext } from "@brian-agent/ai";
+import type { ToolResultMessage } from "@brian-agent/ai/compat";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import type { ExtensionAPI } from "../../src/core/extensions/types.ts";
@@ -11,15 +11,15 @@ import { createHarness, type Harness } from "./harness.ts";
  * A tool that calls other tools, built only on the extension API: its own name, exposure, loadout
  * hook, and ctx.executeTool(). Codemode and tool search use the same mechanisms.
  */
-function orchestratorExtension(pi: ExtensionAPI): void {
-	pi.registerTool({
+function orchestratorExtension(brian: ExtensionAPI): void {
+	brian.registerTool({
 		name: "echo",
 		label: "echo",
 		description: "Echo text.",
 		parameters: Type.Object({ text: Type.String() }),
 		execute: async (_id, { text }) => ({ content: [{ type: "text", text: `echo: ${text}` }], details: {} }),
 	});
-	pi.registerTool({
+	brian.registerTool({
 		name: "helper",
 		label: "helper",
 		description: "Only reachable from other tools.",
@@ -27,7 +27,7 @@ function orchestratorExtension(pi: ExtensionAPI): void {
 		exposure: "codemode",
 		execute: async () => ({ content: [{ type: "text", text: "helped" }], details: {} }),
 	});
-	pi.registerTool({
+	brian.registerTool({
 		name: "run_tools",
 		label: "run_tools",
 		description: "Runs tools.",
@@ -65,8 +65,8 @@ describe("AgentSession tool orchestration", () => {
 			initialActiveToolNames: [],
 			extensionFactories: [
 				orchestratorExtension,
-				(pi) => {
-					pi.on("tool_call", (event) => {
+				(brian) => {
+					brian.on("tool_call", (event) => {
 						toolCalls.push(`${event.toolName}:${event.parentToolCallId ?? "top"}`);
 					});
 				},

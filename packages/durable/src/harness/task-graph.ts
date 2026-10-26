@@ -1,6 +1,6 @@
-import { type AttachedReplicatedState, type Context, type JsonValue, replicatedState } from "@punch-bot/chord";
-import { withoutAbortSignal } from "@punch-bot/chord/context";
-import { applyImmutable, type Op } from "@punch-bot/chord/delta";
+import { type AttachedReplicatedState, type Context, type JsonValue, replicatedState } from "@brian-agent/chord";
+import { withoutAbortSignal } from "@brian-agent/chord/context";
+import { applyImmutable, type Op } from "@brian-agent/chord/delta";
 import { CommittedStateSource, CommittedWatch } from "../session/observation.ts";
 import { contained, type SessionImpl } from "../session/session.ts";
 import type {

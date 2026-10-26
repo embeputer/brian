@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@punch-bot/agent";
-import { type AssistantMessage, createAssistantMessageEventStream, fauxAssistantMessage } from "@punch-bot/ai";
-import { getModel, streamSimple } from "@punch-bot/ai/compat";
+import { Agent } from "@brian-agent/agent";
+import { type AssistantMessage, createAssistantMessageEventStream, fauxAssistantMessage } from "@brian-agent/ai";
+import { getModel, streamSimple } from "@brian-agent/ai/compat";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
 import { AuthStorage } from "../src/core/auth-storage.ts";
@@ -19,7 +19,7 @@ describe("AgentSession auto-compaction queue resume", () => {
 	let tempDir: string;
 
 	beforeEach(async () => {
-		tempDir = join(tmpdir(), `pi-auto-compaction-queue-${Date.now()}`);
+		tempDir = join(tmpdir(), `brian-auto-compaction-queue-${Date.now()}`);
 		mkdirSync(tempDir, { recursive: true });
 
 		const model = getModel("anthropic", "claude-sonnet-4-5")!;

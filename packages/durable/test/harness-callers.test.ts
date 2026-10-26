@@ -1,4 +1,4 @@
-import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@punch-bot/ai";
+import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@brian-agent/ai";
 import {
 	AgentDoc,
 	type Conversation,
@@ -6,7 +6,7 @@ import {
 	MemoryStorage,
 	type NestedToolExecutionResult,
 	type ToolRegistration,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { type ChatSetup, chatSetup, openChat } from "./chat-support.ts";
 import { addTool } from "./harness-support.ts";
@@ -122,7 +122,7 @@ describe("who may call a tool", () => {
 		await root.configure({ modelTools: [read] }, context);
 		await (await root.submit({ type: "input", content: "go" }, context)).wait(context);
 		const entries = await root.entries({}, 100, undefined, context);
-		const result = entries.items.find((entry) => entry.kind === "pi.tool-result");
+		const result = entries.items.find((entry) => entry.kind === "brian.tool-result");
 		expect(JSON.stringify(result?.model)).toContain("Tool bash is not available");
 		await harness.close(context);
 	});

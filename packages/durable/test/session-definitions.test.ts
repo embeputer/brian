@@ -1,4 +1,4 @@
-import type { Draft } from "@punch-bot/chord";
+import type { Draft } from "@brian-agent/chord";
 import {
 	type ConversationId,
 	createSession,
@@ -15,7 +15,7 @@ import {
 	type TaskId,
 	type Tx,
 	type TypedEntry,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { idFromNumber } from "../src/ids.ts";
 import { context } from "./session-support.ts";

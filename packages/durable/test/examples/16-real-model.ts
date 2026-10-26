@@ -2,9 +2,9 @@
 // Run from packages/durable (needs OPENAI_API_KEY):
 //   node --conditions=source --experimental-strip-types test/examples/16-real-model.ts
 
-import { createModels } from "@punch-bot/ai/models";
-import { openaiProvider } from "@punch-bot/ai/providers/openai";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { createModels } from "@brian-agent/ai/models";
+import { openaiProvider } from "@brian-agent/ai/providers/openai";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	AssistantEntry,
 	createRegistry,
@@ -20,7 +20,7 @@ const context = BACKGROUND_CONTEXT;
 // Production code passes a Models collection with real providers; the Harness
 // never talks to a provider any other way. openaiProvider() reads
 // OPENAI_API_KEY from the environment. While the answer streams, generation
-// commits throttled partials to the conversation's pi.live document. Watching
+// commits throttled partials to the conversation's brian.live document. Watching
 // that document streams the answer; the watch sees only committed values.
 if (process.env.OPENAI_API_KEY === undefined) {
 	console.log("skipped: OPENAI_API_KEY is not set");

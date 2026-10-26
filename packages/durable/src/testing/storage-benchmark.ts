@@ -1,5 +1,5 @@
-import type { JsonValue } from "@punch-bot/chord";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import type { JsonValue } from "@brian-agent/chord";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import type {
 	ConversationId,
 	DocumentCreate,

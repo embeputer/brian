@@ -3,8 +3,8 @@ import type { ExtensionAPI } from "../../core/extensions/types.ts";
 
 const SEARXNG_URL = process.env.SEARXNG_URL || "http://localhost:8080";
 
-export default function websearchExtension(pi: ExtensionAPI): void {
-	pi.registerTool({
+export default function websearchExtension(brian: ExtensionAPI): void {
+	brian.registerTool({
 		name: "websearch",
 		label: "Web search",
 		description: "Search the web using a self-hosted SearXNG instance",

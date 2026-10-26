@@ -1,4 +1,4 @@
-import type { ThinkingLevel } from "@punch-bot/agent";
+import type { ThinkingLevel } from "@brian-agent/agent";
 
 export const DEFAULT_THINKING_LEVEL: ThinkingLevel = "medium";
 export const THINKING_LEVEL_OPTIONS: readonly ThinkingLevel[] = [

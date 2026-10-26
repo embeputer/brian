@@ -2,9 +2,9 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/09-context.ts
 
-import type { AssistantMessage, Message, StopReason, ToolResultMessage } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import type { AssistantMessage, Message, StopReason, ToolResultMessage } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import { createRegistry, Harness, MemoryStorage } from "../../src/index.ts";
 
 const context = BACKGROUND_CONTEXT;
@@ -79,7 +79,7 @@ const question = await say("message", { role: "user", content: "read a and b", t
 await say("message", assistantMessage("I crashed", [], "aborted")); // stored, never sent
 const calls = await say("message", assistantMessage("reading", ["a", "b"]));
 await say("message", toolResultMessage("b")); // results finish out of order
-await say("pi.system", { role: "system", content: "", sections: { cwd: "<cwd>/repo</cwd>" }, timestamp: 4 });
+await say("brian.system", { role: "system", content: "", sections: { cwd: "<cwd>/repo</cwd>" }, timestamp: 4 });
 await say("message", toolResultMessage("a"));
 await say("message", assistantMessage("a and b look fine"));
 await transcript.commit(

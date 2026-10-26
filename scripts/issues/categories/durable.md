@@ -3,7 +3,7 @@ owner: badlogic
 ---
 # durable
 
-pi-durable and the new harness packages.
+brian-durable and the new harness packages.
 
 In: durable, env and env daemons, storage, chord.
 

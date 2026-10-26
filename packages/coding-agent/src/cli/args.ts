@@ -2,7 +2,7 @@
  * CLI argument parsing and help display
  */
 
-import type { ThinkingLevel } from "@punch-bot/agent";
+import type { ThinkingLevel } from "@brian-agent/agent";
 import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME, ENV_AGENT_DIR, ENV_SESSION_DIR } from "../config.ts";
 import type { ExtensionFlag } from "../core/extensions/types.ts";
@@ -275,27 +275,42 @@ export function printHelp(extensionFlags?: ExtensionFlag[]): void {
 					})
 					.join("\n")}\n`
 			: "";
-	console.log(`${chalk.bold(APP_NAME)} - AI coding assistant with read, bash, edit, write tools
+	console.log(`${chalk.bold(APP_NAME)} - your agent for work, school, and life
 
 ${chalk.bold("Usage:")}
   ${APP_NAME} [options] [--] [@files...] [messages...]
 
 ${chalk.bold("Commands:")}
+  ${APP_NAME} hatch | onboard | setup   Create ~/.brian and the memory vault, tell Brian who you are
+  ${APP_NAME} wake | sleep              Run Brian in the background (starts at login), or stop it
+  ${APP_NAME} serve                     Run Brian's routines, gateway, and local API in the foreground
+  ${APP_NAME} doctor                    Check node, config, memory, providers, and skills
+  ${APP_NAME} status [--json]           Show paths, counts, and the default model
+  ${APP_NAME} connect [--provider id]   Connect a model provider and pick the default model
+  ${APP_NAME} model [provider/id]       Show or set the default model
+  ${APP_NAME} memory <command>          Search and write the markdown memory vault
+  ${APP_NAME} skill <command>           List, show, add, create, or remove skills
+  ${APP_NAME} routines <command>        Reminders and scheduled tasks (run by brian wake)
+  ${APP_NAME} audit [--report|--schedule] Review skills and memory, weekly with --schedule
+  ${APP_NAME} connect beeper            Connect Beeper Desktop (Discord, WhatsApp, iMessage, ...)
+  ${APP_NAME} messages <command>        Chats, drafts to approve, per-chat policies, message log
+  ${APP_NAME} gateway                   Watch your chats and draft or send replies as you
+  ${APP_NAME} uninstall --yes           Delete ~/.brian (--keep-memory keeps the vault)
   ${APP_NAME} install <source> [-l]     Install extension source and add to settings
   ${APP_NAME} remove <source> [-l]      Remove extension source from settings
-  ${APP_NAME} uninstall <source> [-l]   Alias for remove
-  ${APP_NAME} update [source|self|pi]   Update pi, extensions, or model catalogs
+  ${APP_NAME} uninstall <source> [-l]   Alias for remove when given a source
+  ${APP_NAME} update [source|self|brian]   Update brian, extensions, or model catalogs
   ${APP_NAME} list                      List installed extensions from settings
   ${APP_NAME} config [-l]               Print resolved package resource paths as JSON
   ${APP_NAME} auth <command>            Print credentials or check provider readiness
   ${APP_NAME} mcp <command>             Check MCP servers, sign in to or out of OAuth servers
-  ${APP_NAME} <command> --help          Show help for install/remove/uninstall/update/list/config/auth/mcp
+  ${APP_NAME} <command> --help          Show help for any command above
 
 ${chalk.bold("Options:")}
   --provider <name>              Provider to search for --model (requires --model)
   --model <pattern>              Model ID or partial match (supports "provider/id" and optional ":<thinking>")
   --api-key <key>                API key (defaults to env vars)
-  --system-prompt <text>         System prompt (default: coding assistant prompt)
+  --system-prompt <text>         System prompt (default: Brian prompt)
   --append-system-prompt <text>  Append text or file contents to the system prompt (can be used multiple times)
   --mode <mode>                  Output mode: text (default), json, or rpc
   --print, -p                    Process prompt and exit
@@ -333,7 +348,7 @@ ${chalk.bold("Options:")}
   --verbose                      Force verbose startup (overrides quietStartup setting)
   --approve, -a                  Trust project-local files for this run
   --no-approve, -na              Ignore project-local files for this run
-  --offline                      Disable startup network operations (same as PI_OFFLINE=1)
+  --offline                      Disable startup network operations (same as BRIAN_OFFLINE=1)
   --                             End option parsing; treat remaining arguments as messages/files
   --help, -h                     Show this help
   --version, -v                  Show version number
@@ -448,10 +463,10 @@ ${chalk.bold("Environment Variables:")}
   AWS_REGION                       - AWS region for Amazon Bedrock (e.g., us-east-1)
   ${ENV_AGENT_DIR.padEnd(32)} - Config directory (default: ~/${CONFIG_DIR_NAME}/agent)
   ${ENV_SESSION_DIR.padEnd(32)} - Session storage directory (overridden by --session-dir)
-  PI_PACKAGE_DIR                   - Override package directory (for Nix/Guix store paths)
-  PI_OFFLINE                       - Disable startup network operations when set to 1/true/yes
-  PI_TELEMETRY                     - Override install telemetry when set to 1/true/yes or 0/false/no
-  PI_SHARE_VIEWER_URL              - Base URL for /share command (default: https://pi.dev/session/)
+  BRIAN_PACKAGE_DIR                   - Override package directory (for Nix/Guix store paths)
+  BRIAN_OFFLINE                       - Disable startup network operations when set to 1/true/yes
+  BRIAN_TELEMETRY                     - Override install telemetry when set to 1/true/yes or 0/false/no
+  BRIAN_SHARE_VIEWER_URL              - Base URL for /share command (default: https://pi.dev/session/)
 
 ${chalk.bold("Built-in Tool Names:")}
   read       - Read file contents

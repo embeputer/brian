@@ -6,8 +6,8 @@ import type {
 	ToolCall,
 	ToolResultMessage,
 	UserMessage,
-} from "@punch-bot/ai";
-import { createModels, Type } from "@punch-bot/ai";
+} from "@brian-agent/ai";
+import { createModels, Type } from "@brian-agent/ai";
 import {
 	type AnyTask,
 	createRegistry,
@@ -22,7 +22,7 @@ import {
 	type Storage,
 	section,
 	type ToolRegistration,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { context } from "./session-support.ts";
 
 export function tool(name: string, description = `${name} tool`): ToolRegistration {

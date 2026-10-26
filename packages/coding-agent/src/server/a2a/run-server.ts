@@ -1,4 +1,4 @@
-import { createA2aServer } from "@punch-bot/a2a";
+import { createA2aServer } from "@brian-agent/a2a";
 import { createCodingAgentHarnessRunnerFactory } from "./harness-runner.ts";
 
 export interface RunA2aServerOptions {

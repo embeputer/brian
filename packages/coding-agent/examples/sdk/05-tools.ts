@@ -7,10 +7,10 @@
  * createAgentSession() applies that cwd when it builds the actual built-in tools.
  *
  * For custom tools, see 06-extensions.ts - custom tools are registered via the
- * extensions system using pi.registerTool().
+ * extensions system using brian.registerTool().
  */
 
-import { createAgentSession, SessionManager } from "@punch-bot/cli";
+import { createAgentSession, SessionManager } from "@brian-agent/cli";
 
 // Read-only mode (no edit/write)
 const { session: readOnlySession } = await createAgentSession({

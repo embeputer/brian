@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
-import { registerStorageConformance } from "@punch-bot/durable/testing";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
+import { registerStorageConformance } from "@brian-agent/durable/testing";
 import { describe, expect, it } from "vitest";
 import { idFromNumber } from "../src/ids.ts";
 import {
@@ -85,7 +85,7 @@ describe("Durable Object SQLite adapter", () => {
 		expect(sqlite.prepare("SELECT name FROM sqlite_master WHERE name = 'pi_durable_schema'").get()).toBeUndefined();
 	});
 
-	it("prefixes pi's tables and indexes without changing host tables", async () => {
+	it("prefixes brian's tables and indexes without changing host tables", async () => {
 		const sqlite = new DatabaseSync(":memory:");
 		const storage = durableObjectStorage(sqlite);
 		const database = new DurableObjectSqliteDatabase(storage);
@@ -99,11 +99,11 @@ describe("Durable Object SQLite adapter", () => {
 		expect(names).toContain("host_notes");
 		expect(names).toContain("tasks");
 		expect(names).not.toContain("pi_host_notes");
-		const piNames = names.filter((name) => !["host_notes", "tasks"].includes(name));
-		expect(piNames.length).toBeGreaterThan(10);
-		expect(piNames.every((name) => name.startsWith("pi_"))).toBe(true);
-		expect(piNames).toContain("pi_tasks");
-		expect(piNames).toContain("pi_durable_schema");
+		const brianNames = names.filter((name) => !["host_notes", "tasks"].includes(name));
+		expect(brianNames.length).toBeGreaterThan(10);
+		expect(brianNames.every((name) => name.startsWith("pi_"))).toBe(true);
+		expect(brianNames).toContain("pi_tasks");
+		expect(brianNames).toContain("pi_durable_schema");
 	});
 
 	it("isolates concurrently opened prefixes on one Durable Object", async () => {

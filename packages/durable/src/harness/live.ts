@@ -1,5 +1,5 @@
-import type { AssistantMessage, Usage } from "@punch-bot/ai";
-import type { Draft, JsonRepresentation, JsonValue } from "@punch-bot/chord";
+import type { AssistantMessage, Usage } from "@brian-agent/ai";
+import type { Draft, JsonRepresentation, JsonValue } from "@brian-agent/chord";
 import { defineDoc } from "../documents.ts";
 import type { Transaction } from "../session/transaction.ts";
 import type { EntryId, JsonObject, SubmissionId, SubmissionSettlement, TaskId, TaskRecord, Tx } from "../types.ts";
@@ -109,7 +109,7 @@ export type LiveState = {
 };
 
 export const LiveDoc = defineDoc<LiveState>({
-	kind: "pi.live",
+	kind: "brian.live",
 	version: 1,
 	scope: "conversation",
 	history: "latest",
@@ -126,10 +126,10 @@ export const LiveDoc = defineDoc<LiveState>({
 		!(value.nestedTools ?? []).some((slot) => slot.status === "running"),
 });
 
-/** Built-in task kinds that can own `pi.live.run`. */
-const RUN_TASK_KINDS: ReadonlySet<string> = new Set(["pi.generation"]);
-const TOOL_TASK_KIND = "pi.tool";
-const COMPACTION_TASK_KIND = "pi.compaction";
+/** Built-in task kinds that can own `brian.live.run`. */
+const RUN_TASK_KINDS: ReadonlySet<string> = new Set(["brian.generation"]);
+const TOOL_TASK_KIND = "brian.tool";
+const COMPACTION_TASK_KIND = "brian.compaction";
 
 /**
  * End the run owned by `taskId`: settle each of its inputs and remove `run`. Always removes `generation`, `tools`, and
@@ -173,7 +173,7 @@ export function failCompactionStatus(live: Draft<LiveState>, taskId: TaskId, err
 }
 
 /**
- * The slot of tool task `taskId`, model-issued or nested, if `pi.live` still lists it. Nested slots are found by binary
+ * The slot of tool task `taskId`, model-issued or nested, if `brian.live` still lists it. Nested slots are found by binary
  * search: a tool may make thousands of nested calls, each of which looks up its slot in several commits, and every
  * element a search reads costs a node in the draft's change tracker. Their task IDs ascend: each slot is appended in
  * the commit that creates its task, task IDs ascend in commit order, and removal keeps the order.
@@ -228,10 +228,10 @@ export function clearProgress(slot: Draft<SlotProgress>): void {
  * Harness cleanup for a terminal outcome the scheduler writes itself (`faulted` or `orphaned`). A run task ends its
  * run; a tool task's slot is marked done without an entry, and context derivation synthesizes the missing result; a
  * compaction task's status is removed and its failure recorded.
- * Ignores other kinds so it never creates `pi.live` elsewhere. The scheduler calls this without knowing task kinds;
+ * Ignores other kinds so it never creates `brian.live` elsewhere. The scheduler calls this without knowing task kinds;
  * the Harness passes it in (spec §5.4).
  * REMINDER: a committed generation partial becomes an aborted assistant entry here, exactly as in the generation abort
- * handler, so the transcript keeps what the model produced and `pi.usage` counts its spend. The scheduler's commit has
+ * handler, so the transcript keeps what the model produced and `brian.usage` counts its spend. The scheduler's commit has
  * no task scope, so that entry has no `byTaskId`. Faults come from task bugs
  * or malformed provider data (a non-JSON value in a response), or a commit the Storage rejected without effect; an
  * uncertain storage failure poisons the Session instead and writes no outcome.

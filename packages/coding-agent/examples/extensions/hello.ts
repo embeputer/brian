@@ -2,8 +2,8 @@
  * Hello Tool - Minimal custom tool example
  */
 
-import { Type } from "@punch-bot/ai";
-import { defineTool, type ExtensionAPI } from "@punch-bot/cli";
+import { Type } from "@brian-agent/ai";
+import { defineTool, type ExtensionAPI } from "@brian-agent/cli";
 
 const helloTool = defineTool({
 	name: "hello",
@@ -21,6 +21,6 @@ const helloTool = defineTool({
 	},
 });
 
-export default function (pi: ExtensionAPI) {
-	pi.registerTool(helloTool);
+export default function (brian: ExtensionAPI) {
+	brian.registerTool(helloTool);
 }

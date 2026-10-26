@@ -3,10 +3,10 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"paths": {
-			"@punch-bot/agent": ["../agent/dist/index.d.ts"],
-			"@punch-bot/agent/*": ["../agent/dist/*.d.ts"],
-			"@punch-bot/ai": ["../ai/dist/index.d.ts"],
-			"@punch-bot/ai/*": ["../ai/dist/*.d.ts", "../ai/dist/providers/*.d.ts"]
+			"@brian-agent/agent": ["../agent/dist/index.d.ts"],
+			"@brian-agent/agent/*": ["../agent/dist/*.d.ts"],
+			"@brian-agent/ai": ["../ai/dist/index.d.ts"],
+			"@brian-agent/ai/*": ["../ai/dist/*.d.ts", "../ai/dist/providers/*.d.ts"]
 		},
 		"rootDir": "./src"
 	},

@@ -1,5 +1,5 @@
-import type { AgentTool } from "@punch-bot/agent";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
+import type { AgentTool } from "@brian-agent/agent";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, type Harness } from "../harness.ts";
@@ -39,8 +39,8 @@ describe("issue #7253: manual compaction during an active response", () => {
 			settings: { compaction: { enabled: true, reserveTokens: 200, keepRecentTokens: 2 } },
 			tools: [createNoopTool()],
 			extensionFactories: [
-				(pi) => {
-					pi.on("session_before_compact", async (event) => ({
+				(brian) => {
+					brian.on("session_before_compact", async (event) => ({
 						compaction: {
 							summary: `${event.reason} summary`,
 							firstKeptEntryId: event.preparation.firstKeptEntryId,

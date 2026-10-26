@@ -1,4 +1,4 @@
-export { type CreatePunchAgentCardOptions, createPunchAgentCard } from "./agent-card.ts";
+export { type CreateBrianAgentCardOptions, createBrianAgentCard } from "./agent-card.ts";
 export {
 	type DelegateToA2aAgentOptions,
 	type DelegateToA2aAgentResult,

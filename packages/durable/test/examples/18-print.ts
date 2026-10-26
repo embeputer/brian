@@ -1,13 +1,13 @@
-// Print mode: submit one prompt and print its answer, like `pi -p`. The host awaits its own Submission, not global
+// Print mode: submit one prompt and print its answer, like `brian -p`. The host awaits its own Submission, not global
 // idle. Uses OpenAI when OPENAI_API_KEY is set, and a scripted faux model otherwise.
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/18-print.ts "What is in this directory?"
 
-import type { AssistantMessage } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { openaiProvider } from "@punch-bot/ai/providers/openai";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import type { AssistantMessage } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { openaiProvider } from "@brian-agent/ai/providers/openai";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import { NodeExecutionEnv } from "../../src/env/node.ts";
 import { AssistantEntry, createRegistry, defineExtension, Harness, MemoryStorage, section } from "../../src/index.ts";
 import { createBashTool, createReadTool } from "../../src/tools/index.ts";

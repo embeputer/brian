@@ -1,5 +1,5 @@
-import type { AgentTool, AgentToolCall } from "@punch-bot/agent";
-import type { Usage } from "@punch-bot/ai";
+import type { AgentTool, AgentToolCall } from "@brian-agent/agent";
+import type { Usage } from "@brian-agent/ai";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 import {

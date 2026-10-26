@@ -1,4 +1,4 @@
-import type { AgentTool } from "@punch-bot/agent";
+import type { AgentTool } from "@brian-agent/agent";
 import { mkdir as fsMkdir, writeFile as fsWriteFile } from "fs/promises";
 import { dirname } from "path";
 import { type Static, Type } from "typebox";

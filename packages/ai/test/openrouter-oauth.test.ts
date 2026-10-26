@@ -302,7 +302,7 @@ describe("OpenRouter OAuth", { concurrent: false }, () => {
 	});
 
 	it("uses the configured OAuth callback host", async () => {
-		vi.stubEnv("PI_OAUTH_CALLBACK_HOST", "localhost");
+		vi.stubEnv("BRIAN_OAUTH_CALLBACK_HOST", "localhost");
 		const controller = new AbortController();
 		let callbackUrl: URL | undefined;
 		const login = openRouterOAuth.login({

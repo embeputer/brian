@@ -13,7 +13,7 @@ import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { isDeepStrictEqual } from "node:util";
 import {
-	compareModelCatalogPiVersions,
+	compareModelCatalogBrianVersions,
 	getModelCatalogArtifactKey,
 	getModelCatalogProviderKey,
 	MODEL_CATALOG_INDEX_KEY,
@@ -24,7 +24,7 @@ import {
 
 // The storage layout, index format, and version ordering are defined in
 // model-catalog-protocol.ts, which pi.dev shares to serve these artifacts.
-// Bump this only when generated model metadata requires behavior unavailable in older pi clients.
+// Bump this only when generated model metadata requires behavior unavailable in older brian clients.
 // Clients older than this keep the last catalog published under the previous minimum.
 // 1.2.1: kimi-coding models use openai-completions at /coding/v1; older clients only
 // implement anthropic-messages for kimi-coding and ignore a model's api.
@@ -240,7 +240,7 @@ function validateIndex(index) {
 
 function buildIndex(existingIndex, publication) {
 	const entry = {
-		minimumPiVersion: MINIMUM_PI_VERSION,
+		minimumBrianVersion: MINIMUM_PI_VERSION,
 		revision: publication.revision,
 		sourceCommit: publication.sourceCommit,
 		publishedAt: new Date().toISOString(),
@@ -253,9 +253,9 @@ function buildIndex(existingIndex, publication) {
 		modelTypes: publication.modelTypes,
 	};
 	const catalogs = (existingIndex?.catalogs || [])
-		.filter((catalog) => catalog.minimumPiVersion !== MINIMUM_PI_VERSION)
+		.filter((catalog) => catalog.minimumBrianVersion !== MINIMUM_PI_VERSION)
 		.concat(entry)
-		.sort((left, right) => compareModelCatalogPiVersions(left.minimumPiVersion, right.minimumPiVersion));
+		.sort((left, right) => compareModelCatalogBrianVersions(left.minimumBrianVersion, right.minimumBrianVersion));
 	return validateIndex({
 		schemaVersion: MODEL_CATALOG_SCHEMA_VERSION,
 		defaultRevision: publication.revision,
@@ -269,7 +269,7 @@ async function main() {
 	const bundle = validateBundle(inputDir);
 	const publication = {
 		schemaVersion: MODEL_CATALOG_SCHEMA_VERSION,
-		minimumPiVersion: MINIMUM_PI_VERSION,
+		minimumBrianVersion: MINIMUM_PI_VERSION,
 		revision: bundle.revision,
 		sourceCommit: options.sourceCommit || gitSourceCommit(),
 		providerCount: bundle.providerCount,
@@ -290,13 +290,13 @@ async function main() {
 		return;
 	}
 
-	const temporaryDir = mkdtempSync(join(tmpdir(), "pi-model-catalog-"));
+	const temporaryDir = mkdtempSync(join(tmpdir(), "brian-model-catalog-"));
 	try {
 		const currentIndexPath = join(temporaryDir, "index-current.json");
 		const hasCurrentIndex = downloadIndex(options.bucket, options.endpoint, currentIndexPath);
 		const currentIndex = hasCurrentIndex ? validateIndex(readJson(currentIndexPath)) : undefined;
 		const currentEntry = currentIndex?.catalogs.find(
-			(catalog) => catalog.minimumPiVersion === MINIMUM_PI_VERSION,
+			(catalog) => catalog.minimumBrianVersion === MINIMUM_PI_VERSION,
 		);
 		if (currentIndex?.defaultRevision === bundle.revision && currentEntry?.revision === bundle.revision) {
 			console.log(`Model catalog ${bundle.revision} is already current; no objects uploaded.`);

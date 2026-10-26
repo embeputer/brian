@@ -1,4 +1,4 @@
-import type { Context } from "@punch-bot/chord";
+import type { Context } from "@brian-agent/chord";
 
 /** Result of a fallible operation. Expected failures are returned instead of thrown. */
 export type Result<TValue, TError> = { ok: true; value: TValue } | { ok: false; error: TError };
@@ -334,7 +334,7 @@ export interface ShellOutputWindow {
  * Output an environment omitted, measured on the decoded text `onOutput` would have received: every U+FFFD counts as
  * three bytes, and no sanitizing is applied.
  */
-/** The shape of `OutputSkip` from `@punch-bot/chord/output`, which `OutputBuffer.push()` accepts. */
+/** The shape of `OutputSkip` from `@brian-agent/chord/output`, which `OutputBuffer.push()` accepts. */
 export interface ShellOutputSkip {
 	/** UTF-8 byte length of the omitted text. */
 	bytes: number;

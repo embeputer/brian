@@ -48,12 +48,12 @@ describe("buildSystemPrompt", () => {
 				skills: [],
 			});
 
-			expect(defaultPrompt.startsWith("# Punch identity\n\nYou are Punch, a personal assistant")).toBe(true);
+			expect(defaultPrompt.startsWith("# Brian identity\n\nYou are Brian, your user's own agent")).toBe(true);
 			// A custom prompt replaces only the opening; the tool list follows it.
 			expect(customPrompt.startsWith("You are Exact.\n\n<tools>\n(none)\n")).toBe(true);
 		});
 
-		test("keeps the tool list and rules but drops pi docs under a custom prompt", () => {
+		test("keeps the tool list and rules but drops brian docs under a custom prompt", () => {
 			const prompt = buildSystemPrompt({
 				customPrompt: "You are Exact.",
 				selectedTools: ["todo"],
@@ -126,7 +126,7 @@ describe("buildSystemPrompt", () => {
 			expect(prompt).toContain(expected);
 		});
 
-		test("instructs models to resolve pi docs and examples under absolute base paths", () => {
+		test("instructs models to resolve brian docs and examples under absolute base paths", () => {
 			const prompt = buildSystemPrompt({
 				contextFiles: [],
 				skills: [],
@@ -134,7 +134,7 @@ describe("buildSystemPrompt", () => {
 			});
 
 			expect(prompt).toContain(
-				"- When reading pi docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
+				"- When reading brian docs or examples, resolve docs/... under Additional docs and examples/... under Examples, not the current working directory",
 			);
 			expect(prompt).toContain("environment variables (docs/environment-variables.md), MCP servers (docs/mcp.md)");
 		});

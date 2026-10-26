@@ -5,7 +5,7 @@
  * themselves.
  */
 
-import type { Api, Model } from "@punch-bot/ai";
+import type { Api, Model } from "@brian-agent/ai";
 import { isValidThinkingLevel } from "../cli/args.ts";
 
 /**

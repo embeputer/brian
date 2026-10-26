@@ -35,7 +35,7 @@ afterEach(() => {
 
 describe("install telemetry", () => {
 	it("does not advance the version marker while offline", () => {
-		vi.stubEnv("PI_OFFLINE", "1");
+		vi.stubEnv("BRIAN_OFFLINE", "1");
 		const settingsManager = SettingsManager.inMemory();
 
 		recordInstallTelemetry(settingsManager, "1.2.3");
@@ -45,8 +45,8 @@ describe("install telemetry", () => {
 	});
 
 	it("advances the marker without sending when telemetry is disabled", () => {
-		vi.stubEnv("PI_OFFLINE", undefined);
-		vi.stubEnv("PI_TELEMETRY", undefined);
+		vi.stubEnv("BRIAN_OFFLINE", undefined);
+		vi.stubEnv("BRIAN_TELEMETRY", undefined);
 		const settingsManager = SettingsManager.inMemory({ enableInstallTelemetry: false });
 
 		recordInstallTelemetry(settingsManager, "1.2.3");
@@ -55,9 +55,22 @@ describe("install telemetry", () => {
 		expect(mocks.request).not.toHaveBeenCalled();
 	});
 
+	it("does not send without a configured report url", () => {
+		vi.stubEnv("BRIAN_OFFLINE", undefined);
+		vi.stubEnv("BRIAN_TELEMETRY", undefined);
+		vi.stubEnv("BRIAN_TELEMETRY_URL", undefined);
+		const settingsManager = SettingsManager.inMemory();
+
+		recordInstallTelemetry(settingsManager, "1.2.3");
+
+		expect(settingsManager.getLastChangelogVersion()).toBe("1.2.3");
+		expect(mocks.request).not.toHaveBeenCalled();
+	});
+
 	it("sends only the version through the env-proxy dispatcher and tears it down", async () => {
-		vi.stubEnv("PI_OFFLINE", undefined);
-		vi.stubEnv("PI_TELEMETRY", undefined);
+		vi.stubEnv("BRIAN_OFFLINE", undefined);
+		vi.stubEnv("BRIAN_TELEMETRY", undefined);
+		vi.stubEnv("BRIAN_TELEMETRY_URL", "https://example.test/report-install");
 		const settingsManager = SettingsManager.inMemory();
 
 		recordInstallTelemetry(settingsManager, "1.2.3-beta+test");
@@ -74,7 +87,7 @@ describe("install telemetry", () => {
 		const dispatcher = mocks.instances[0];
 		expect(dispatcher.listenerCount("error")).toBeGreaterThan(0);
 		expect(mocks.request).toHaveBeenCalledWith(
-			"https://pi.dev/api/report-install?version=1.2.3-beta%2Btest",
+			"https://example.test/report-install?version=1.2.3-beta%2Btest",
 			expect.objectContaining({
 				dispatcher: expect.objectContaining({ destroy: mocks.destroy }),
 				signal: expect.any(AbortSignal),

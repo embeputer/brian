@@ -1,6 +1,6 @@
-import type { Models } from "@punch-bot/ai";
-import { type Context, copyJson, type JsonValue } from "@punch-bot/chord";
-import { awaitWithContext, withAbortSignal } from "@punch-bot/chord/context";
+import type { Models } from "@brian-agent/ai";
+import { type Context, copyJson, type JsonValue } from "@brian-agent/chord";
+import { awaitWithContext, withAbortSignal } from "@brian-agent/chord/context";
 import type { ExecutionEnv } from "../env/index.ts";
 import { errorMessage } from "../errors.ts";
 import type { SessionImpl } from "../session/session.ts";

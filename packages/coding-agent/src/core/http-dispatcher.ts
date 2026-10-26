@@ -53,7 +53,7 @@ const ignoreUndiciDispatcherError = (_error: unknown): void => {};
 
 // Undici can emit an internal Client "error" while terminating a mid-stream
 // fetch body. The body stream still rejects through reader.read(); this listener
-// only prevents EventEmitter's unhandled "error" special case from crashing pi.
+// only prevents EventEmitter's unhandled "error" special case from crashing brian.
 function withUndiciErrorListener<T extends undici.Dispatcher>(dispatcher: T): T {
 	if (dispatcher instanceof EventEmitter) {
 		EventEmitter.prototype.on.call(dispatcher, "error", ignoreUndiciDispatcherError);
@@ -79,14 +79,14 @@ function createUndiciOriginDispatcher(origin: string | URL, options: object): un
 }
 
 export interface CreateHttpDispatcherOptions {
-	/** Idle/body/header timeout in milliseconds. Defaults to the standard Pi idle timeout. */
+	/** Idle/body/header timeout in milliseconds. Defaults to the standard Brian idle timeout. */
 	timeoutMs?: number;
 	/** TCP connect timeout in milliseconds. Defaults to the undici/Node default. */
 	connectTimeoutMs?: number;
 }
 
 /**
- * Build an env-proxy dispatcher with Pi's error-listener plumbing attached to
+ * Build an env-proxy dispatcher with Brian's error-listener plumbing attached to
  * the dispatcher and its clients. Callers own the dispatcher and should destroy
  * it when they are done with a short-lived request.
  */
