@@ -106,3 +106,23 @@ describe("brian model", () => {
 		expect(await runBrianCommand(["model", "nope"])).toBe(1);
 	});
 });
+
+describe("brian onboard model", () => {
+	it("saves --model during non-interactive onboarding", async () => {
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		expect(await runBrianCommand(["onboard", "--yes", "--name", "Sam Lee", "--model", "openai/gpt-5"])).toBe(0);
+		const settings = JSON.parse(readFileSync(join(root, "agent", "settings.json"), "utf8"));
+		expect(settings).toMatchObject({ defaultProvider: "openai", defaultModel: "gpt-5" });
+	});
+
+	it("connect refuses to run without a terminal", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => {});
+		const tty = process.stdin.isTTY;
+		Object.defineProperty(process.stdin, "isTTY", { value: false, configurable: true });
+		try {
+			expect(await runBrianCommand(["connect"])).toBe(1);
+		} finally {
+			Object.defineProperty(process.stdin, "isTTY", { value: tty, configurable: true });
+		}
+	});
+});
