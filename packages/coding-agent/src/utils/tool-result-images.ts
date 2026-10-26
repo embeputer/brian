@@ -1,4 +1,4 @@
-import type { ImageContent, ModelImageResizeOptions, TextContent } from "@punch-bot/ai";
+import type { ImageContent, ModelImageResizeOptions, TextContent } from "@brian-agent/ai";
 import { processImage } from "./image-process.ts";
 
 export type ToolResultContent = TextContent | ImageContent;

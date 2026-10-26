@@ -1,4 +1,4 @@
-# Using Pi
+# Using Brian
 
 This page collects day-to-day usage details that do not fit on the quickstart page.
 
@@ -12,15 +12,15 @@ Send extension commands as prompts over RPC or in print mode. Skills are availab
 
 ## Sessions
 
-Sessions are saved automatically to `~/.pi/agent/sessions/`, organized by working directory.
+Sessions are saved automatically to `~/.brian/agent/sessions/`, organized by working directory.
 
 ```bash
-pi -c                  # Continue most recent session
-pi -r                  # Continue most recent session (alias for -c)
-pi --no-session        # Ephemeral mode; do not save
-pi --name "my task"    # Set session display name at startup
-pi --session <path|id> # Use a specific session file or session ID
-pi --fork <path|id>    # Fork a session into a new session file
+brian -c                  # Continue most recent session
+brian -r                  # Continue most recent session (alias for -c)
+brian --no-session        # Ephemeral mode; do not save
+brian --name "my task"    # Set session display name at startup
+brian --session <path|id> # Use a specific session file or session ID
+brian --fork <path|id>    # Fork a session into a new session file
 ```
 
 Useful RPC commands:
@@ -35,68 +35,68 @@ See [Sessions](sessions.md) and [Compaction](compaction.md) for details.
 
 ## Context Files
 
-Pi loads `AGENTS.md` or `CLAUDE.md` at startup from:
+Brian loads `AGENTS.md` or `CLAUDE.md` at startup from:
 
-- `~/.pi/agent/AGENTS.md` for global instructions
+- `~/.brian/agent/AGENTS.md` for global instructions
 - parent directories, walking up from the current working directory
 - the current directory
 
-If a directory contains `AGENTS.override.md`, Pi loads it instead of `AGENTS.md` or `CLAUDE.md` from that directory. Context files from other directories still layer normally.
+If a directory contains `AGENTS.override.md`, Brian loads it instead of `AGENTS.md` or `CLAUDE.md` from that directory. Context files from other directories still layer normally.
 
 Use context files for project conventions, commands, safety rules, and preferences. Disable loading with `--no-context-files` or `-nc`.
 
 ### System Prompt Files
 
-Replace the opening of the default system prompt (Pi's persona and role) with:
+Replace the opening of the default system prompt (Brian's persona and role) with:
 
-- `.pi/SYSTEM.md` for a project
-- `~/.pi/agent/SYSTEM.md` globally
+- `.brian/SYSTEM.md` for a project
+- `~/.brian/agent/SYSTEM.md` globally
 
-The tool list and rules, including tool and extension guidelines, still follow the custom opening. Pi's documentation pointers are left out.
+The tool list and rules, including tool and extension guidelines, still follow the custom opening. Brian's documentation pointers are left out.
 
-Run `pi` from the folder you want to work in. Pi uses that folder to discover files, instructions, and configuration, and to group saved sessions. If you have not installed Pi or chosen a model yet, follow the [Quickstart](quickstart.md).
+Run `brian` from the folder you want to work in. Brian uses that folder to discover files, instructions, and configuration, and to group saved sessions. If you have not installed Brian or chosen a model yet, follow the [Quickstart](quickstart.md).
 
-Pi may ask whether you trust the working folder before loading its project resources. See [Project trust](security.md#understand-project-trust).
+Brian may ask whether you trust the working folder before loading its project resources. See [Project trust](security.md#understand-project-trust).
 
-Trusting a project allows pi to load `.pi/settings.json` and `.pi` resources, install missing project packages, and execute project extensions.
+Trusting a project allows brian to load `.brian/settings.json` and `.brian` resources, install missing project packages, and execute project extensions.
 
-The transcript shows your prompts, Pi's responses, tool calls, results, and errors. You write prompts and commands in the editor. The footer shows the current folder, session, model, context usage, and accumulated usage and cost.
+The transcript shows your prompts, Brian's responses, tool calls, results, and errors. You write prompts and commands in the editor. The footer shows the current folder, session, model, context usage, and accumulated usage and cost.
 
 Headless modes (`-p`, `--mode json`, and `--mode rpc`) do not show a trust prompt. Without an applicable saved trust decision, they use `defaultProjectTrust` from global settings: `ask` (default) and `never` ignore those project resources, while `always` trusts them. Pass `--approve`/`-a` or `--no-approve`/`-na` to override project trust for one run.
 
-If no extension or saved decision applies, `defaultProjectTrust` controls the fallback behavior. Set it to `"ask"`, `"always"`, or `"never"` in `~/.pi/agent/settings.json`.
+If no extension or saved decision applies, `defaultProjectTrust` controls the fallback behavior. Set it to `"ask"`, `"always"`, or `"never"` in `~/.brian/agent/settings.json`.
 
 To include files or images:
 
 ## Exporting and Sharing Sessions
 
-Use `pi --export <session> [output.html]` or the RPC `export_html` command to write a session to HTML.
+Use `brian --export <session> [output.html]` or the RPC `export_html` command to write a session to HTML.
 
 ## Change direction
 
-You can send more input while Pi is working:
+You can send more input while Brian is working:
 
 ```bash
-pi [options] [--] [@files...] [messages...]
+brian [options] [--] [@files...] [messages...]
 ```
 
 ### Package Commands
 
 ```bash
-pi install <source> [-l]     # Install package, -l for project-local
-pi remove <source> [-l]      # Remove package
-pi uninstall <source> [-l]   # Alias for remove
-pi update [source|self|pi]   # Update pi only, or one package source
-pi update --all              # Update pi and packages; reconcile pinned git refs
-pi update --extensions       # Update packages only; reconcile pinned git refs
-pi update --models           # Refresh model catalogs only
-pi update --self             # Update pi only
-pi update --extension <src>  # Update one package
-pi list                      # List installed packages
-pi config                    # Print resolved package resource paths as JSON
+brian install <source> [-l]     # Install package, -l for project-local
+brian remove <source> [-l]      # Remove package
+brian uninstall <source> [-l]   # Alias for remove
+brian update [source|self|brian]   # Update brian only, or one package source
+brian update --all              # Update brian and packages; reconcile pinned git refs
+brian update --extensions       # Update packages only; reconcile pinned git refs
+brian update --models           # Refresh model catalogs only
+brian update --self             # Update brian only
+brian update --extension <src>  # Update one package
+brian list                      # List installed packages
+brian config                    # Print resolved package resource paths as JSON
 ```
 
-A message sent with `Enter` waits until the current response and its tool calls finish, then guides the next response. A follow-up sent with `Alt+Enter` waits until Pi finishes the current task. Aborting returns queued messages to the editor.
+A message sent with `Enter` waits until the current response and its tool calls finish, then guides the next response. A follow-up sent with `Alt+Enter` waits until Brian finishes the current task. Aborting returns queued messages to the editor.
 
 Windows Terminal reserves some Alt shortcuts. See [Terminal Setup](terminal-setup.md) for the Windows alternatives.
 
@@ -168,10 +168,10 @@ Built-in tools: `read`, `bash`, `powershell` (Windows), `edit`, `write`, `grep`,
 Combine `--no-*` with explicit flags to load exactly what you need, ignoring settings. Example:
 
 ```bash
-pi --no-extensions -e ./my-extension.ts
+brian --no-extensions -e ./my-extension.ts
 ```
 
-Pi saves sessions automatically unless session persistence is disabled.
+Brian saves sessions automatically unless session persistence is disabled.
 
 | Option | Description |
 |--------|-------------|
@@ -197,40 +197,40 @@ Prefix a command with `!` to run it and include its output in the conversation:
 
 ```bash
 # Print a response for a prompt
-pi "List all .ts files in src/"
+brian "List all .ts files in src/"
 
 # Explicit print mode
-pi -p "Summarize this codebase"
+brian -p "Summarize this codebase"
 
 Press `Ctrl+X` or run `/copy` to copy the last assistant response. Use `/export` to save the session as HTML or JSONL.
 
-Use `/share` to upload the session and get a viewer link. With Radius authentication, the artifact is visible to your Radius organization. Otherwise, Pi creates a private GitHub gist through the GitHub CLI. Review the session first because it can contain prompts, tool output, file contents, and credentials exposed during the conversation.
+Use `/share` to upload the session and get a viewer link. With Radius authentication, the artifact is visible to your Radius organization. Otherwise, Brian creates a private GitHub gist through the GitHub CLI. Review the session first because it can contain prompts, tool output, file contents, and credentials exposed during the conversation.
 
 ## Adjust the terminal
 
 # Different model
-pi --provider openai --model gpt-4o "Help me refactor"
+brian --provider openai --model gpt-4o "Help me refactor"
 
 # Model with provider prefix
-pi --model openai/gpt-4o "Help me refactor"
+brian --model openai/gpt-4o "Help me refactor"
 
 # Model with thinking level shorthand
-pi --model sonnet:high "Solve this complex problem"
+brian --model sonnet:high "Solve this complex problem"
 
 # Limit the models available to the session
-pi --models "claude-*,gpt-4o"
+brian --models "claude-*,gpt-4o"
 
 # Read-only mode
-pi --tools read,grep,find,ls -p "Review the code"
+brian --tools read,grep,find,ls -p "Review the code"
 
 # Disable one extension or built-in tool while keeping the rest available
-pi --exclude-tools ask_question
+brian --exclude-tools ask_question
 ```
 
 Terminal support for mouse input, keyboard shortcuts, and inline images varies. See [Terminal Setup](terminal-setup.md) for platform-specific configuration and [Keybindings](keybindings.md) for every configurable shortcut. Run `/hotkeys` to inspect the shortcuts active in your current session.
 
 ## Collect diagnostic information
 
-When troubleshooting terminal rendering or conversation state, run `/debug`. Pi writes the rendered terminal lines and current session messages to `pi-debug.log` in your [agent directory](configuration.md#agent-directory).
+When troubleshooting terminal rendering or conversation state, run `/debug`. Brian writes the rendered terminal lines and current session messages to `brian-debug.log` in your [agent directory](configuration.md#agent-directory).
 
 Review this file before sharing it. It can contain prompts, model responses, tool output, file contents, and terminal data.

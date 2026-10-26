@@ -17,7 +17,7 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { Api, Model } from "@punch-bot/ai";
+import type { Api, Model } from "@brian-agent/ai";
 import type { AgentSessionRuntime } from "../../core/agent-session-runtime.ts";
 import { deliveryFromMessage } from "../../core/delivery.ts";
 import type {

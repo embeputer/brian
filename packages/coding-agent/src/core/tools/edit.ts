@@ -1,4 +1,4 @@
-import type { AgentTool } from "@punch-bot/agent";
+import type { AgentTool } from "@brian-agent/agent";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile, writeFile as fsWriteFile } from "fs/promises";
 import { type Static, Type } from "typebox";

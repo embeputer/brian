@@ -2,7 +2,7 @@
  * List available models with optional fuzzy search
  */
 
-import type { Api, Model } from "@punch-bot/ai";
+import type { Api, Model } from "@brian-agent/ai";
 import chalk from "chalk";
 import { formatNoModelsAvailableMessage } from "../core/auth-guidance.ts";
 import type { ModelRuntime } from "../core/model-runtime.ts";

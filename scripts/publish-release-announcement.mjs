@@ -9,7 +9,7 @@ import { getPublicWorkspacePackages } from "./release-packages.mjs";
 
 const RELEASES_PREFIX = "releases/v1";
 const INSTALLER_PREFIX = "installer/v1";
-const INSTALLER_PACKAGE_NAME = "@punch-bot/cli-install";
+const INSTALLER_PACKAGE_NAME = "@brian-agent/cli-install";
 const REGISTRY_URL = "https://registry.npmjs.org";
 const RETRY_DELAY_MS = 5000;
 const RETRY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -114,16 +114,16 @@ async function verifyPackagesAreAvailable(packages) {
 			result.status === "rejected" ? [`${packages[index].name}: ${result.reason}`] : [],
 		);
 		if (failures.length === 0) {
-			console.log(`All ${packages.length} Pi packages are available from npm (attempt ${attempt}).`);
+			console.log(`All ${packages.length} Brian packages are available from npm (attempt ${attempt}).`);
 			return results.map((result) => result.value);
 		}
 
-		console.log(`Waiting for ${failures.length} Pi package${failures.length === 1 ? "" : "s"} on npm (attempt ${attempt}):`);
+		console.log(`Waiting for ${failures.length} Brian package${failures.length === 1 ? "" : "s"} on npm (attempt ${attempt}):`);
 		for (const failure of failures) console.log(`  ${failure}`);
 		if (Date.now() < deadline) await sleep(RETRY_DELAY_MS);
 	} while (Date.now() < deadline);
 
-	throw new Error(`Timed out waiting for Pi packages to become available from npm:\n${failures.map((failure) => `  ${failure}`).join("\n")}`);
+	throw new Error(`Timed out waiting for Brian packages to become available from npm:\n${failures.map((failure) => `  ${failure}`).join("\n")}`);
 }
 
 function gitSourceCommit() {
@@ -169,7 +169,7 @@ function readLatestRelease(bucket, endpoint, key, outputPath) {
 
 	const metadata = JSON.parse(head);
 	if (typeof metadata.ETag !== "string") {
-		throw new Error("Latest Pi release marker has no ETag.");
+		throw new Error("Latest Brian release marker has no ETag.");
 	}
 	runAws([
 		"s3api",
@@ -190,7 +190,7 @@ function readLatestRelease(bucket, endpoint, key, outputPath) {
 		typeof release.version !== "string" ||
 		!STABLE_SEMVER_RE.test(release.version)
 	) {
-		throw new Error("Latest Pi release marker has an invalid version.");
+		throw new Error("Latest Brian release marker has an invalid version.");
 	}
 	return { etag: metadata.ETag, version: release.version };
 }
@@ -233,9 +233,9 @@ function validateInstallerArtifacts(packageJsonPath, packageLockPath, version) {
 		packageLock.lockfileVersion !== 3 ||
 		packageLock.version !== version ||
 		root?.version !== version ||
-		root.dependencies?.["@punch-bot/cli"] !== version
+		root.dependencies?.["@brian-agent/cli"] !== version
 	) {
-		throw new Error(`Installer package-lock.json must describe Pi ${version}`);
+		throw new Error(`Installer package-lock.json must describe Brian ${version}`);
 	}
 }
 
@@ -263,7 +263,7 @@ export async function advanceLatestRelease(version, readLatest, writeLatest) {
 			return { advanced: true, version };
 		}
 	}
-	throw new Error(`Could not advance the Pi release marker to ${version} after ${MAX_POINTER_UPDATE_ATTEMPTS} attempts.`);
+	throw new Error(`Could not advance the Brian release marker to ${version} after ${MAX_POINTER_UPDATE_ATTEMPTS} attempts.`);
 }
 
 async function main() {
@@ -283,7 +283,7 @@ async function main() {
 		publishedAt: new Date().toISOString(),
 		packages: publishedPackages,
 	};
-	const temporaryDirectory = mkdtempSync(join(tmpdir(), "pi-release-announcement-"));
+	const temporaryDirectory = mkdtempSync(join(tmpdir(), "brian-release-announcement-"));
 	try {
 		const releasePath = join(temporaryDirectory, "release.json");
 		const latestPath = join(temporaryDirectory, "latest.json");
@@ -349,8 +349,8 @@ async function main() {
 		);
 		console.log(
 			installerLatest.advanced
-				? `Published installer artifacts for Pi ${options.version} through s3://${options.bucket}/${INSTALLER_PREFIX}/latest.json`
-				: `Pi ${installerLatest.version} is already the latest installer release.`,
+				? `Published installer artifacts for Brian ${options.version} through s3://${options.bucket}/${INSTALLER_PREFIX}/latest.json`
+				: `Brian ${installerLatest.version} is already the latest installer release.`,
 		);
 
 		const result = await advanceLatestRelease(
@@ -374,8 +374,8 @@ async function main() {
 		);
 		console.log(
 			result.advanced
-				? `Announced Pi ${options.version} through s3://${options.bucket}/${RELEASES_PREFIX}/latest.json`
-				: `Pi ${result.version} is already the latest announced release.`,
+				? `Announced Brian ${options.version} through s3://${options.bucket}/${RELEASES_PREFIX}/latest.json`
+				: `Brian ${result.version} is already the latest announced release.`,
 		);
 	} finally {
 		rmSync(temporaryDirectory, { force: true, recursive: true });

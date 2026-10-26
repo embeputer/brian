@@ -1,5 +1,5 @@
-import { copyJson, type JsonValue } from "@punch-bot/chord";
-import type { Op } from "@punch-bot/chord/delta";
+import { copyJson, type JsonValue } from "@brian-agent/chord";
+import type { Op } from "@brian-agent/chord/delta";
 import { idFromNumber } from "./ids.ts";
 import type {
 	CheckpointInfo,

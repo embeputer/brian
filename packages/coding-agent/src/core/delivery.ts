@@ -1,5 +1,5 @@
-import type { AgentMessage } from "@punch-bot/agent";
-import type { TextContent } from "@punch-bot/ai";
+import type { AgentMessage } from "@brian-agent/agent";
+import type { TextContent } from "@brian-agent/ai";
 
 export interface DeliveryEmbedAuthor {
 	name: string;

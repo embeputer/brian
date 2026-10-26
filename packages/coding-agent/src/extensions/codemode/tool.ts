@@ -22,10 +22,10 @@
  */
 
 import { join } from "node:path";
-import type { AgentTool } from "@punch-bot/agent";
-import type { CodemodeJsonSchema, CodemodeTool } from "@punch-bot/codemode";
-import { renderToolOutputType, renderToolSample, toCodemodeIdentifier } from "@punch-bot/codemode/declarations";
-import { CODEMODE_SOURCE_GRAMMAR } from "@punch-bot/codemode/source";
+import type { AgentTool } from "@brian-agent/agent";
+import type { CodemodeJsonSchema, CodemodeTool } from "@brian-agent/codemode";
+import { renderToolOutputType, renderToolSample, toCodemodeIdentifier } from "@brian-agent/codemode/declarations";
+import { CODEMODE_SOURCE_GRAMMAR } from "@brian-agent/codemode/source";
 import { type Static, Type } from "typebox";
 import { getDocsPath } from "../../config.ts";
 import type { ToolDefinition, ToolLoadout, ToolLoadoutChanges, ToolNamespace } from "../../core/extensions/types.ts";

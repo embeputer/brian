@@ -1,6 +1,6 @@
-# @punch-bot/telemetry
+# @brian-agent/telemetry
 
-Vendor-neutral telemetry contracts and typed schema utilities for pi packages.
+Vendor-neutral telemetry contracts and typed schema utilities for brian packages.
 
 This package provides:
 
@@ -10,7 +10,7 @@ This package provides:
 - serializable schema definitions with inferred TypeScript types;
 - no exporter, global current-span state, or dependency on a telemetry backend.
 
-Applications can use the in-memory reference or provide an adapter for OpenTelemetry, Sentry, logs, or another backend. Pi packages pass telemetry contexts explicitly and define their domain schemas separately.
+Applications can use the in-memory reference or provide an adapter for OpenTelemetry, Sentry, logs, or another backend. Brian packages pass telemetry contexts explicitly and define their domain schemas separately.
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@ Applications can use the in-memory reference or provide an adapter for OpenTelem
 - [Typed Schemas](#typed-schemas)
   - [Start and Completion Attributes](#start-and-completion-attributes)
 - [Schema Metadata](#schema-metadata)
-- [Pi Package Integration](#pi-package-integration)
+- [Brian Package Integration](#brian-package-integration)
 - [Security and Portability](#security-and-portability)
 - [API Reference](#api-reference)
 - [Development](#development)
@@ -33,7 +33,7 @@ Applications can use the in-memory reference or provide an adapter for OpenTelem
 ## Installation
 
 ```bash
-npm install @punch-bot/telemetry
+npm install @brian-agent/telemetry
 ```
 
 ## Telemetry Concepts
@@ -69,7 +69,7 @@ A `TelemetryContext` starts a span around a callback. The callback receives a `T
 import {
   NOOP_TELEMETRY_CONTEXT,
   type TelemetryContext,
-} from '@punch-bot/telemetry';
+} from '@brian-agent/telemetry';
 
 async function loadAccount(
   accountId: string,
@@ -129,14 +129,14 @@ An adapter implements `TelemetryContext` and bridges the generic API to its back
 - ignore calls made after settlement;
 - ignore a failed recording call atomically, suppress backend failures, and still execute the business callback exactly once.
 
-Adapters may activate backend-native ambient context internally for automatic instrumentation, but pi code always propagates the parent through `TelemetryContext` arguments. Exporter buffering, flushing, sampling, backend IDs, and backend-specific context objects belong to the adapter. Use the [adapter conformance suite](#adapter-conformance) to check these observable semantics.
+Adapters may activate backend-native ambient context internally for automatic instrumentation, but brian code always propagates the parent through `TelemetryContext` arguments. Exporter buffering, flushing, sampling, backend IDs, and backend-specific context objects belong to the adapter. Use the [adapter conformance suite](#adapter-conformance) to check these observable semantics.
 
 ## No-op Context
 
 Use `NOOP_TELEMETRY_CONTEXT` when telemetry is optional:
 
 ```typescript
-import { NOOP_TELEMETRY_CONTEXT } from '@punch-bot/telemetry';
+import { NOOP_TELEMETRY_CONTEXT } from '@brian-agent/telemetry';
 
 const result = await NOOP_TELEMETRY_CONTEXT.startSpan(
   { name: 'example.operation' },
@@ -156,7 +156,7 @@ The no-op context:
 `InMemoryTelemetryContext` is the backend-neutral reference implementation. It is useful for tests, local diagnostics, and applications that intentionally want process-local capture without an exporter:
 
 ```typescript
-import { InMemoryTelemetryContext } from '@punch-bot/telemetry';
+import { InMemoryTelemetryContext } from '@brian-agent/telemetry';
 
 const telemetry = new InMemoryTelemetryContext();
 
@@ -177,13 +177,13 @@ The adapter is safe to use as an ordinary `TelemetryContext`, but storage is unb
 
 ## Adapter Conformance
 
-`@punch-bot/telemetry/testing` exports a runner-independent conformance suite modeled as grouped cases. A fixture supplies a fresh context and converts its backend's finished spans into normalized `RecordedTelemetrySpan` snapshots:
+`@brian-agent/telemetry/testing` exports a runner-independent conformance suite modeled as grouped cases. A fixture supplies a fresh context and converts its backend's finished spans into normalized `RecordedTelemetrySpan` snapshots:
 
 ```typescript
 import {
   createTelemetryAdapterConformance,
   type TelemetryAdapterFixture,
-} from '@punch-bot/telemetry/testing';
+} from '@brian-agent/telemetry/testing';
 import { describe, it } from 'vitest';
 
 const conformance = createTelemetryAdapterConformance(async () => {
@@ -216,7 +216,7 @@ The low-level span API intentionally accepts open names and attribute bags so ad
 import {
   createTypedSpanStarter,
   defineTelemetrySchema,
-} from '@punch-bot/telemetry';
+} from '@brian-agent/telemetry';
 
 export const EXAMPLE_TELEMETRY_SCHEMA = defineTelemetrySchema({
   version: 1,
@@ -323,7 +323,7 @@ Attributes do not end the span. Returning, resolving, throwing, or rejecting fro
 A starter can compose multiple independently versioned schemas:
 
 ```typescript
-import { AGENT_TELEMETRY_SCHEMAS } from '@punch-bot/agent';
+import { AGENT_TELEMETRY_SCHEMAS } from '@brian-agent/agent';
 
 const startAgentSpan = createTypedSpanStarter(
   telemetryContext,
@@ -362,13 +362,13 @@ Parent metadata is descriptive schema data:
 
 Adapters do not need to understand schema objects. Instrumentation helpers and tests use them to keep emitted names and attributes consistent.
 
-## Pi Package Integration
+## Brian Package Integration
 
 Package ownership is intentionally split:
 
-- `@punch-bot/telemetry` owns the vendor-neutral contract, no-op and in-memory reference contexts, schema utilities, and adapter conformance suite;
-- `@punch-bot/ai` accepts and propagates `telemetryContext` in provider request options but owns no telemetry schema;
-- `@punch-bot/agent` owns and exports the pi AI-request and harness schemas, their combined readonly schema tuple, and typed span helpers.
+- `@brian-agent/telemetry` owns the vendor-neutral contract, no-op and in-memory reference contexts, schema utilities, and adapter conformance suite;
+- `@brian-agent/ai` accepts and propagates `telemetryContext` in provider request options but owns no telemetry schema;
+- `@brian-agent/agent` owns and exports the brian AI-request and harness schemas, their combined readonly schema tuple, and typed span helpers.
 
 ```typescript
 import {
@@ -377,10 +377,10 @@ import {
   HARNESS_TELEMETRY_SCHEMA,
   startAiSpan,
   startHarnessSpan,
-} from '@punch-bot/agent';
+} from '@brian-agent/agent';
 ```
 
-The pi schemas use pi-owned `pi.ai.*`, `pi.harness.*`, and `pi.session.*` names. Adapters may translate them to backend conventions without changing the emitted pi vocabulary.
+The brian schemas use brian-owned `brian.ai.*`, `brian.harness.*`, and `brian.session.*` names. Adapters may translate them to backend conventions without changing the emitted brian vocabulary.
 
 ## Security and Portability
 

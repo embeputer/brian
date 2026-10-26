@@ -1,4 +1,4 @@
-import { defineDoc, defineDocFamily } from "@punch-bot/durable";
+import { defineDoc, defineDocFamily } from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { context, createConversation, documentChanges, flush, openTestSession } from "./session-support.ts";
 

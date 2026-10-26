@@ -6,9 +6,9 @@
  *   node --conditions=source --experimental-strip-types test/scheduler-fanout-bench.ts [calls...]
  */
 
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT as context } from "@punch-bot/chord/context";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT as context } from "@brian-agent/chord/context";
 import { Type } from "typebox";
 import { createRegistry, defineExtension, defineTool, Harness, ToolResultEntry } from "../src/index.ts";
 import { MemoryStorage } from "../src/storage/memory.ts";

@@ -1,6 +1,6 @@
-import type { AgentTool } from "@punch-bot/agent";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
-import type { ExtensionAPI } from "@punch-bot/cli";
+import type { AgentTool } from "@brian-agent/agent";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
+import type { ExtensionAPI } from "@brian-agent/cli";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, getAssistantTexts, getUserTexts, type Harness } from "../harness.ts";
@@ -37,9 +37,9 @@ describe("issue #2023 queued slash-command follow-up", () => {
 		const harness = await createHarness({
 			tools: [waitTool],
 			extensionFactories: [
-				(pi) => {
-					extensionApi = pi;
-					pi.registerCommand("testcmd", {
+				(brian) => {
+					extensionApi = brian;
+					brian.registerCommand("testcmd", {
 						description: "Test command",
 						handler: async (args) => {
 							commandRuns.push(args);

@@ -2,9 +2,9 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/15-system-prompt.ts
 
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import { NodeExecutionEnv } from "../../src/env/node.ts";
 import {
 	type Conversation,
@@ -26,7 +26,7 @@ faux.setResponses([fauxAssistantMessage("Done."), fauxAssistantMessage("Done."),
 // Pico stores no prompt state. Before each model request, the sections of the
 // conversation's selected extensions render the desired prompt, and only the
 // difference to what the model already saw is appended to the transcript as a
-// `pi.system` entry.
+// `brian.system` entry.
 const Coding = defineExtension({
 	name: "coding",
 	sections: [

@@ -13,8 +13,8 @@ export default mergeConfig(baseConfig, defineConfig({
 	resolve: {
 		conditions: ["source"],
 		alias: [
-			{ find: /^@punch-bot\/durable$/, replacement: durableSrcIndex },
-			{ find: /^@punch-bot\/durable\/testing$/, replacement: durableSrcTesting },
+			{ find: /^@brian-agent\/durable$/, replacement: durableSrcIndex },
+			{ find: /^@brian-agent\/durable\/testing$/, replacement: durableSrcTesting },
 		],
 	},
 	ssr: { resolve: { conditions: ["source"] } },

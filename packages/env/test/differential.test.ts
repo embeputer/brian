@@ -2,12 +2,12 @@ import { spawn } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Context } from "@punch-bot/chord";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
-import type { ToolExecutionApi } from "@punch-bot/durable";
-import type { ExecutionEnv, FileError, Result } from "@punch-bot/durable/env";
-import { NodeExecutionEnv } from "@punch-bot/durable/env/node";
-import { createBashTool, createReadTool } from "@punch-bot/durable/tools";
+import type { Context } from "@brian-agent/chord";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
+import type { ToolExecutionApi } from "@brian-agent/durable";
+import type { ExecutionEnv, FileError, Result } from "@brian-agent/durable/env";
+import { NodeExecutionEnv } from "@brian-agent/durable/env/node";
+import { createBashTool, createReadTool } from "@brian-agent/durable/tools";
 import { afterAll, describe, expect, it } from "vitest";
 import { Connection } from "../src/connection.ts";
 import { RemoteExecutionEnv } from "../src/remote-env.ts";
@@ -22,12 +22,12 @@ afterAll(() => {
 });
 
 function pair(): { local: ExecutionEnv; remote: ExecutionEnv; roots: [string, string] } {
-	const localRoot = mkdtempSync(join(tmpdir(), "pi-env-local-"));
-	const remoteRoot = mkdtempSync(join(tmpdir(), "pi-env-remote-"));
+	const localRoot = mkdtempSync(join(tmpdir(), "brian-env-local-"));
+	const remoteRoot = mkdtempSync(join(tmpdir(), "brian-env-remote-"));
 	dirs.push(localRoot, remoteRoot);
 	return {
 		local: new NodeExecutionEnv({ cwd: localRoot }),
-		remote: new RemoteExecutionEnv({ connection, id: "pi-env:test", cwd: remoteRoot }),
+		remote: new RemoteExecutionEnv({ connection, id: "brian-env:test", cwd: remoteRoot }),
 		roots: [localRoot, remoteRoot],
 	};
 }

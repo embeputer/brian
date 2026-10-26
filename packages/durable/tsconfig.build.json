@@ -3,8 +3,8 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"paths": {
-			"@punch-bot/chord": ["../chord/dist/index.d.ts"],
-			"@punch-bot/ai": ["../ai/dist/index.d.ts"]
+			"@brian-agent/chord": ["../chord/dist/index.d.ts"],
+			"@brian-agent/ai": ["../ai/dist/index.d.ts"]
 		},
 		"rootDir": "./src"
 	},

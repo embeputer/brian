@@ -13,7 +13,7 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: [
-			{ find: /^@punch-bot\/telemetry$/, replacement: telemetrySrcIndex },
+			{ find: /^@brian-agent\/telemetry$/, replacement: telemetrySrcIndex },
 		],
 	},
 });

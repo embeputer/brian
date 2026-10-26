@@ -1,4 +1,4 @@
-import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@punch-bot/ai";
+import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@brian-agent/ai";
 import {
 	AgentDoc,
 	type Conversation,
@@ -8,7 +8,7 @@ import {
 	type JsonObject,
 	MemoryStorage,
 	type ToolRegistration,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { createToolSearchExtension } from "../src/tool-search/index.ts";
 import { allEntries, type ChatSetup, chatSetup, openChat } from "./chat-support.ts";
@@ -46,16 +46,16 @@ async function offered(root: Conversation): Promise<string[]> {
 	return (await root.agent(context)).tools.map((each) => each.name);
 }
 
-/** The model messages of the `pi.system` entries, oldest first. */
+/** The model messages of the `brian.system` entries, oldest first. */
 function systemMessages(entries: readonly EntryRecord[]) {
 	return entries
-		.filter((entry) => entry.kind === "pi.system")
+		.filter((entry) => entry.kind === "brian.system")
 		.map((entry) => entry.model![0] as { toolsAdded?: { name: string }[]; toolsRemoved?: { name: string }[] });
 }
 
 function toolResultTexts(entries: readonly EntryRecord[]): string[] {
 	return entries
-		.filter((entry) => entry.kind === "pi.tool-result")
+		.filter((entry) => entry.kind === "brian.tool-result")
 		.map((entry) => (entry.model![0] as { content: { text?: string }[] }).content.map((item) => item.text).join(""));
 }
 

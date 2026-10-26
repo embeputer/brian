@@ -1,7 +1,7 @@
 /**
- * Adapts MCP tools to pi tool definitions.
+ * Adapts MCP tools to brian tool definitions.
  *
- * Results map onto pi's model-facing content (text and images). Text over 20KB keeps its start and
+ * Results map onto brian's model-facing content (text and images). Text over 20KB keeps its start and
  * end with the middle cut out, like Codex does, and the full text is saved to a temp file the model
  * can read. Binary resources other than images are saved to temp files too, and resource links name
  * the `read_mcp_resource` tool. Codemode scripts receive the whole `CallToolResult` without `_meta`
@@ -11,15 +11,15 @@
  */
 
 import { createHash } from "node:crypto";
-import type { AgentToolResult } from "@punch-bot/agent";
-import type { ImageContent, JsonValue, TextContent } from "@punch-bot/ai";
+import type { AgentToolResult } from "@brian-agent/agent";
+import type { ImageContent, JsonValue, TextContent } from "@brian-agent/ai";
 import {
 	type CallToolResult,
 	type ContentBlock,
 	type McpRequestOptions,
 	type Tool as McpTool,
 	toLlmContent,
-} from "@punch-bot/mcp";
+} from "@brian-agent/mcp";
 import type { TSchema } from "typebox";
 import type { ToolAnnotations, ToolDefinition, ToolExposure, ToolNamespace } from "../../core/extensions/types.ts";
 import { READ_MCP_RESOURCE_TOOL } from "../../core/mcp-servers.ts";
@@ -56,7 +56,7 @@ export interface McpToolDetails {
 export type McpOutputSaver = (data: string | Uint8Array, extension: string) => Promise<string>;
 
 export function saveToTempFile(data: string | Uint8Array, extension: string): Promise<string> {
-	return writeOutputFile("pi-mcp", extension, data);
+	return writeOutputFile("brian-mcp", extension, data);
 }
 
 export interface McpToolCaller {

@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import { Agent, type AgentMessage, setDefaultStreamFn, type ThinkingLevel } from "@punch-bot/agent";
-import type { ModelsSimpleStreamOptions } from "@punch-bot/ai";
-import { clampThinkingLevel, type Message, type Model, streamSimple } from "@punch-bot/ai/compat";
+import { Agent, type AgentMessage, setDefaultStreamFn, type ThinkingLevel } from "@brian-agent/agent";
+import type { ModelsSimpleStreamOptions } from "@brian-agent/ai";
+import { clampThinkingLevel, type Message, type Model, streamSimple } from "@brian-agent/ai/compat";
 import { getAgentDir } from "../config.ts";
 import { resolvePath } from "../utils/paths.ts";
 import { AgentSession } from "./agent-session.ts";
@@ -42,13 +42,13 @@ import { getBranchSelection } from "./virtual-models.ts";
 
 // Preserve the pre-0.81 fallback for extensions that construct Agent instances
 // or invoke low-level agent loops without supplying streamFn. Agent core remains
-// provider-agnostic and does not import pi-ai/compat itself.
+// provider-agnostic and does not import brian-ai/compat itself.
 setDefaultStreamFn(streamSimple);
 
 export interface CreateAgentSessionOptions {
 	/** Working directory for project-local discovery. Default: process.cwd() */
 	cwd?: string;
-	/** Global config directory. Default: ~/.pi/agent */
+	/** Global config directory. Default: ~/.brian/agent */
 	agentDir?: string;
 
 	/** Canonical model/auth runtime. Defaults to a runtime using agentDir/auth.json and models.json. */
@@ -72,7 +72,7 @@ export interface CreateAgentSessionOptions {
 	/**
 	 * Optional allowlist of tool names or patterns, where `*` matches any characters.
 	 *
-	 * When omitted, pi uses the resolved `defaultTools` setting for the initial
+	 * When omitted, brian uses the resolved `defaultTools` setting for the initial
 	 * selection when configured. Otherwise it enables the default built-in tools
 	 * (read, bash, edit, write). Extension/custom tools remain enabled unless
 	 * `noTools` changes that default. When provided, only matching tools are
@@ -162,7 +162,7 @@ function getDefaultAgentDir(): string {
  * const { session } = await createAgentSession();
  *
  * // With explicit model
- * import { getModel } from '@punch-bot/ai';
+ * import { getModel } from '@brian-agent/ai';
  * const { session } = await createAgentSession({
  *   model: getModel('anthropic', 'claude-opus-4-5'),
  *   thinkingLevel: 'high',

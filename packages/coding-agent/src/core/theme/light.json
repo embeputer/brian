@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/punch-bot/core/main/packages/coding-agent/schemas/theme.schema.json",
+	"$schema": "https://raw.githubusercontent.com/embeputer/brian/main/packages/coding-agent/schemas/theme.schema.json",
 	"name": "light",
 	"appearance": "light",
 	"vars": {

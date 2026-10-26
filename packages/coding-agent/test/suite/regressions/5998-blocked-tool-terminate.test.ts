@@ -1,5 +1,5 @@
-import type { AgentTool } from "@punch-bot/agent";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
+import type { AgentTool } from "@brian-agent/agent";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, getAssistantTexts, type Harness } from "../harness.ts";
@@ -26,8 +26,8 @@ describe("#5998 blocked tool termination", () => {
 		const harness = await createHarness({
 			tools: [echoTool],
 			extensionFactories: [
-				(pi) => {
-					pi.on("tool_call", async () => ({
+				(brian) => {
+					brian.on("tool_call", async () => ({
 						block: true,
 						reason: "Blocked by terminating policy",
 						terminate: true,

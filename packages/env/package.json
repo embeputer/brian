@@ -1,7 +1,7 @@
 {
-	"name": "@punch-bot/env",
+	"name": "@brian-agent/env",
 	"version": "1.3.0",
-	"description": "Remote execution environments for Pi Durable: a small daemon deployed over SSH and its ExecutionEnv client",
+	"description": "Remote execution environments for Brian Durable: a small daemon deployed over SSH and its ExecutionEnv client",
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -38,15 +38,15 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/punch-bot/core.git",
+		"url": "git+https://github.com/embeputer/brian.git",
 		"directory": "packages/env"
 	},
 	"engines": {
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@punch-bot/chord": "1.3.0",
-		"@punch-bot/durable": "1.3.0"
+		"@brian-agent/chord": "1.3.0",
+		"@brian-agent/durable": "1.3.0"
 	},
 	"devDependencies": {
 		"shx": "0.3.4",

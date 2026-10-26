@@ -1,6 +1,6 @@
-import type { AgentMessage } from "@punch-bot/agent";
-import type { AssistantMessage, Usage } from "@punch-bot/ai/compat";
-import { getModel } from "@punch-bot/ai/compat";
+import type { AgentMessage } from "@brian-agent/agent";
+import type { AssistantMessage, Usage } from "@brian-agent/ai/compat";
+import { getModel } from "@brian-agent/ai/compat";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { beforeEach, describe, expect, it } from "vitest";

@@ -1,11 +1,11 @@
-// Issue triage: sync issues, triage new ones with a pi-durable agent, and serve a small web UI for decisions.
+// Issue triage: sync issues, triage new ones with a brian-durable agent, and serve a small web UI for decisions.
 // See README.md.
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ModelThinkingLevel } from "@punch-bot/ai";
+import type { ModelThinkingLevel } from "@brian-agent/ai";
 import { Corpus, issueStatus, REPO } from "./github.ts";
 import { PRIORITIES, type Priority, Triage } from "./triage.ts";
 

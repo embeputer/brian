@@ -4,8 +4,8 @@
  * patterns end to end.
  */
 
-import { type AssistantMessage, type Models, type ToolCall, Type } from "@punch-bot/ai";
-import type { Context, Draft } from "@punch-bot/chord";
+import { type AssistantMessage, type Models, type ToolCall, Type } from "@brian-agent/ai";
+import type { Context, Draft } from "@brian-agent/chord";
 import {
 	type ConversationId,
 	configure,
@@ -31,7 +31,7 @@ import {
 	type Tx,
 	type UserInput,
 	wrapTool,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { expect, expectTypeOf, it } from "vitest";
 import type { ExecutionEnv } from "../src/env/index.ts";
 import { CodingTools, createBashTool, createEditTool, createReadTool } from "../src/tools/index.ts";

@@ -1,7 +1,7 @@
-import * as durable from "@punch-bot/durable";
-import * as environment from "@punch-bot/durable/env";
-import * as jsonl from "@punch-bot/durable/storage/jsonl";
-import * as sqlite from "@punch-bot/durable/storage/sqlite";
+import * as durable from "@brian-agent/durable";
+import * as environment from "@brian-agent/durable/env";
+import * as jsonl from "@brian-agent/durable/storage/jsonl";
+import * as sqlite from "@brian-agent/durable/storage/sqlite";
 
 // Keep runtime-neutral public entry points live so the browser smoke build
 // catches accidental imports of Node-only adapters or built-ins.

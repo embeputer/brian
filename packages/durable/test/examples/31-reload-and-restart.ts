@@ -5,10 +5,10 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type ToolResultMessage, Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { type ToolResultMessage, Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import { createRegistry, defineExtension, defineTool, Harness, ToolResultEntry } from "../../src/index.ts";
 import { openNodeSqliteStorage } from "../../src/storage/sqlite/node.ts";
 
@@ -41,7 +41,7 @@ models.setProvider(faux.provider);
 const callVersion = () => fauxAssistantMessage(fauxToolCall("version", {}), { stopReason: "toolUse" });
 faux.setResponses([callVersion(), fauxAssistantMessage("Done."), callVersion(), fauxAssistantMessage("Done.")]);
 
-const directory = await mkdtemp(join(tmpdir(), "pi-durable-reload-"));
+const directory = await mkdtemp(join(tmpdir(), "brian-durable-reload-"));
 const open = async (registry: ReturnType<typeof createRegistry>) =>
 	Harness.open(await openNodeSqliteStorage(join(directory, "session.sqlite")), { models, registry }, context);
 

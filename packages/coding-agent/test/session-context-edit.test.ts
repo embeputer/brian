@@ -1,4 +1,4 @@
-import type { AssistantMessage, ToolResultMessage } from "@punch-bot/ai";
+import type { AssistantMessage, ToolResultMessage } from "@brian-agent/ai";
 import { describe, expect, it } from "vitest";
 import {
 	DEFAULT_COMPACTION_SETTINGS,

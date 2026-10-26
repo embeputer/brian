@@ -1,38 +1,38 @@
-# Punch
+# Brian
 
-This is [`punch-bot/core`](https://github.com/punch-bot/core), a fork of the [pi agent harness](https://github.com/earendil-works/pi). npm packages are `@punch-bot/*`. The CLI binary, config dir, and most env vars are still `pi` / `.pi` / `PI_*` until a later rebrand.
+This is [`embeputer/brian`](https://github.com/embeputer/brian), a fork of the [pi agent harness](https://github.com/earendil-works/pi). npm packages are `@brian-agent/*`. The CLI binary is `brian`, the config dir is `~/.brian` (project: `.brian/`), and env vars use the `BRIAN_` prefix. Rename upstream pi names (`pi`, `.pi`, `PI_*`, `@earendil-works/*`) when merging upstream changes. Kept for protocol compatibility: the OpenAI Codex `originator` and xAI `referrer` OAuth values stay `pi`, and pi.dev services (model catalog, MCP OAuth client metadata, share viewer, Radius gateway) keep their URLs.
 
-Directory names did not change with the npm rename. `@punch-bot/cli` lives in `packages/coding-agent`.
+Directory names did not change with the npm rename. `@brian-agent/cli` lives in `packages/coding-agent`.
 
 | npm name | Directory |
 |----------|-----------|
-| `@punch-bot/cli` | `packages/coding-agent` |
-| `@punch-bot/agent` | `packages/agent` |
-| `@punch-bot/ai` | `packages/ai` |
-| `@punch-bot/telemetry` | `packages/telemetry` |
-| `@punch-bot/chord` | `packages/chord` |
-| `@punch-bot/durable` | `packages/durable` |
-| `@punch-bot/mcp` | `packages/mcp` |
-| `@punch-bot/codemode` | `packages/codemode` |
-| `@punch-bot/a2a` | `packages/a2a` |
-| `@punch-bot/env` | `packages/env` |
+| `@brian-agent/cli` | `packages/coding-agent` |
+| `@brian-agent/agent` | `packages/agent` |
+| `@brian-agent/ai` | `packages/ai` |
+| `@brian-agent/telemetry` | `packages/telemetry` |
+| `@brian-agent/chord` | `packages/chord` |
+| `@brian-agent/durable` | `packages/durable` |
+| `@brian-agent/mcp` | `packages/mcp` |
+| `@brian-agent/codemode` | `packages/codemode` |
+| `@brian-agent/a2a` | `packages/a2a` |
+| `@brian-agent/env` | `packages/env` |
 
-## Merging upstream pi
+## Merging upstream brian
 
-Punch dropped several parts of pi. Upstream merges bring changes to them back as modify/delete conflicts, new files, or edits to files that survived. Before resolving, check whether the code belongs to something Punch dropped, and do not restore it.
+Brian dropped several parts of brian. Upstream merges bring changes to them back as modify/delete conflicts, new files, or edits to files that survived. Before resolving, check whether the code belongs to something Brian dropped, and do not restore it.
 
-- [PR #19](https://github.com/punch-bot/core/pull/19) made `@punch-bot/cli` headless. Only print, JSON, and RPC modes exist. Removed:
-  - `packages/tui` (`@punch-bot/tui`) and `packages/evals`;
+- [PR #19](https://github.com/embeputer/brian/pull/19) made `@brian-agent/cli` headless. Only print, JSON, and RPC modes exist. Removed:
+  - `packages/tui` (`@brian-agent/tui`) and `packages/evals`;
   - interactive mode (`src/modes/interactive`), the session picker, startup UI, config selector, and TUI keybindings;
   - TUI-only extension APIs: `renderCall`/`renderResult`, tool renderers (`src/core/tools/renderers`), custom editors/footers/headers, `InteractiveMode`, `registerMarkdownTransformer`;
   - the MCP manager UI (`src/extensions/mcp/ui.ts`), the codemode renderer, and experimental TUI entrypoints (`src/experimental/client-tui*.ts`, `src/experimental/*/{main,tui}.ts`);
   - TUI-only examples and tests.
   Theme tokens moved to `src/core/theme`.
-- [PR #9](https://github.com/punch-bot/core/pull/9) disabled GitHub Actions. Workflows live in `.github/workflows-disabled/`. Put new upstream workflows there, not in `.github/workflows/`.
-- Model selection uses pi's resolver (partial matching, lenient session restore) with Punch patches in `src/core/model-resolver.ts` and `src/core/model-suffix-variants.ts`: partial matches prefer a base ID over its `:variant` and an ID ending in the typed text over one continuing it, and warn with the selected model; `<catalog id>:<suffix>` IDs (OpenRouter routing variants such as `:nitro`) copy the catalog model; restore and saved-default fallbacks print a warning. Keep these patches when merging upstream resolver changes, and do not add provider-specific suffix lists.
-- pi 1.0.1 removed `packages/coding-agent/npm-shrinkwrap.json` and its generator. Punch keeps both, along with `check:shrinkwrap` and the `shrinkwrap` step in `prepublishOnly` and `scripts/release.mjs`.
-- The pi 1.1 merge left out the Nix flake (`flake.nix`, `flake.lock`, `nix/`, `nix.yml`, `scripts/update-model-catalog-pin.mjs`). It packages `packages/tui` and pins pi.dev's model catalog.
-- Rename new upstream `@earendil-works/*` packages, imports, and docs references to `@punch-bot/*`, and add new packages to the table above.
+- [PR #9](https://github.com/embeputer/brian/pull/9) disabled GitHub Actions. Workflows live in `.github/workflows-disabled/`. Put new upstream workflows there, not in `.github/workflows/`.
+- Model selection uses brian's resolver (partial matching, lenient session restore) with Brian patches in `src/core/model-resolver.ts` and `src/core/model-suffix-variants.ts`: partial matches prefer a base ID over its `:variant` and an ID ending in the typed text over one continuing it, and warn with the selected model; `<catalog id>:<suffix>` IDs (OpenRouter routing variants such as `:nitro`) copy the catalog model; restore and saved-default fallbacks print a warning. Keep these patches when merging upstream resolver changes, and do not add provider-specific suffix lists.
+- brian 1.0.1 removed `packages/coding-agent/npm-shrinkwrap.json` and its generator. Brian keeps both, along with `check:shrinkwrap` and the `shrinkwrap` step in `prepublishOnly` and `scripts/release.mjs`.
+- The brian 1.1 merge left out the Nix flake (`flake.nix`, `flake.lock`, `nix/`, `nix.yml`, `scripts/update-model-catalog-pin.mjs`). It packages `packages/tui` and pins pi.dev's model catalog.
+- Rename new upstream `@earendil-works/*` packages, imports, and docs references to `@brian-agent/*`, and add new packages to the table above.
 
 How to resolve:
 
@@ -88,7 +88,7 @@ How to resolve:
 - Hydrate/update locally with `npm install --ignore-scripts`; clean/CI-style with `npm ci --ignore-scripts`. Don't run lifecycle scripts unless the user asks.
 - If dep metadata changes, refresh `package-lock.json` with `npm install --package-lock-only --ignore-scripts`.
 - If `packages/coding-agent/npm-shrinkwrap.json` needs regen, run `node scripts/generate-coding-agent-shrinkwrap.mjs`; if `packages/coding-agent/install-lock/` needs regen, run `node scripts/generate-coding-agent-install-lock.mjs` (verify with `--check` or `npm run check`). New deps with lifecycle scripts require review and an explicit allowlist entry in both scripts; never add one silently.
-- Pre-commit blocks lockfile commits unless `PI_ALLOW_LOCKFILE_CHANGE=1`. Don't bypass unless the user wants the lockfile change committed.
+- Pre-commit blocks lockfile commits unless `BRIAN_ALLOW_LOCKFILE_CHANGE=1`. Don't bypass unless the user wants the lockfile change committed.
 
 ## Git
 
@@ -150,8 +150,8 @@ Rules:
 
 Attribution:
 
-- Internal (from issues): `Fixed foo bar ([#123](https://github.com/punch-bot/core/issues/123))`
-- External contributions: `Added feature X ([#456](https://github.com/punch-bot/core/pull/456) by [@username](https://github.com/username))`
+- Internal (from issues): `Fixed foo bar ([#123](https://github.com/embeputer/brian/issues/123))`
+- External contributions: `Added feature X ([#456](https://github.com/embeputer/brian/pull/456) by [@username](https://github.com/username))`
 
 ## Releasing
 
@@ -161,33 +161,33 @@ Attribution:
 
 2. **Local smoke test**: build an unpublished release and smoke test from outside the repo (so it can't resolve workspace files):
    ```bash
-   npm run release:local -- --out /tmp/pi-local-release --force
+   npm run release:local -- --out /tmp/brian-local-release --force
    cd /tmp
 
    # Node package install smoke tests
-   /tmp/pi-local-release/node/pi --help
-   /tmp/pi-local-release/node/pi --version
-   /tmp/pi-local-release/node/pi --list-models
-   /tmp/pi-local-release/node/pi -p "Say exactly: ok"
+   /tmp/brian-local-release/node/brian --help
+   /tmp/brian-local-release/node/brian --version
+   /tmp/brian-local-release/node/brian --list-models
+   /tmp/brian-local-release/node/brian -p "Say exactly: ok"
 
    # Bun binary smoke tests
-   /tmp/pi-local-release/bun/pi --help
-   /tmp/pi-local-release/bun/pi --version
-   /tmp/pi-local-release/bun/pi --list-models
-   /tmp/pi-local-release/bun/pi -p "Say exactly: ok"
+   /tmp/brian-local-release/bun/brian --help
+   /tmp/brian-local-release/bun/brian --version
+   /tmp/brian-local-release/bun/brian --list-models
+   /tmp/brian-local-release/bun/brian -p "Say exactly: ok"
    ```
    Verify both Node and Bun startup, model/account listing, and at least one print-mode prompt with the intended default provider. Failures are release blockers unless the user explicitly accepts the risk.
 
 3. **Run the release script**:
    ```bash
-   PI_ALLOW_LOCKFILE_CHANGE=1 npm_config_min_release_age=0 npm run release:patch    # fixes + additions
-   PI_ALLOW_LOCKFILE_CHANGE=1 npm_config_min_release_age=0 npm run release:minor    # breaking changes
+   BRIAN_ALLOW_LOCKFILE_CHANGE=1 npm_config_min_release_age=0 npm run release:patch    # fixes + additions
+   BRIAN_ALLOW_LOCKFILE_CHANGE=1 npm_config_min_release_age=0 npm run release:minor    # breaking changes
    ```
    Use `npm_config_min_release_age=0` only for the release command. The repo's normal npm age gate can otherwise block the release lockfile refresh when the current workspace package version was published recently. Review any lockfile or shrinkwrap diffs the release creates before push.
 
    The release script bumps all package versions, updates changelogs, regenerates release artifacts, runs `npm run check`, commits `Release vX.Y.Z`, tags `vX.Y.Z`, adds fresh `## [Unreleased]` changelog sections, commits `Add [Unreleased] section for next cycle`, then pushes `main` and the tag. Do not rerun the release script after a tag was pushed.
 
-4. **CI verifies and announces the npm release**: pushing the `vX.Y.Z` tag triggers `.github/workflows/build-binaries.yml`. The `publish-npm` job uses npm trusted publishing through GitHub Actions OIDC with environment `npm-publish`; no local `npm publish`, `npm whoami`, OTP, or WebAuthn flow is required. After publishing, `announce-pi-dev-release` verifies every public workspace package resolves at the exact release version and that its npm tarball is available, then writes the verified release marker to R2. `pi.dev/api/latest-version` reads that marker; it must never announce a release from npm before this job succeeds.
+4. **CI verifies and announces the npm release**: pushing the `vX.Y.Z` tag triggers `.github/workflows/build-binaries.yml`. The `publish-npm` job uses npm trusted publishing through GitHub Actions OIDC with environment `npm-publish`; no local `npm publish`, `npm whoami`, OTP, or WebAuthn flow is required. After publishing, `announce-brian-dev-release` verifies every public workspace package resolves at the exact release version and that its npm tarball is available, then writes the verified release marker to R2. `pi.dev/api/latest-version` reads that marker; it must never announce a release from npm before this job succeeds.
 
 5. **If CI publish or announcement fails**: inspect the failed job. The publish helper is idempotent and skips package versions already present on npm; the announcement job rechecks availability before updating the R2 marker. Rerun the failed job or workflow after fixing CI or transient npm issues. Do not rerun `npm run release:patch` or `npm run release:minor` for the same version.
 

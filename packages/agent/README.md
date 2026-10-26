@@ -1,19 +1,19 @@
-# @punch-bot/agent
+# @brian-agent/agent
 
-Stateful agent with tool execution and event streaming. Built on `@punch-bot/ai`.
+Stateful agent with tool execution and event streaming. Built on `@brian-agent/ai`.
 
 ## Installation
 
 ```bash
-npm install @punch-bot/agent
+npm install @brian-agent/agent
 ```
 
 ## Quick Start
 
 ```typescript
-import { Agent } from "@punch-bot/agent";
-import { createModels } from "@punch-bot/ai";
-import { anthropicProvider } from "@punch-bot/ai/providers/anthropic";
+import { Agent } from "@brian-agent/agent";
+import { createModels } from "@brian-agent/ai";
+import { anthropicProvider } from "@brian-agent/ai/providers/anthropic";
 
 const models = createModels();
 models.setProvider(anthropicProvider());
@@ -296,7 +296,7 @@ Access state via `agent.state`.
 
 Assigning `agent.state.tools = [...]` or `agent.state.messages = [...]` copies the top-level array before storing it. Mutating the returned array mutates the current agent state.
 
-The transcript owns the system prompt and tool declarations: the leading system message is the prompt, later system messages patch it (see `SystemMessage` in pi-ai). `agent.state.systemPrompt` is read-only and replays the transcript. `agent.state.tools` is the executable loadout; before every request the loop diffs it against the tools the transcript declares and, if they differ, announces the change in a system message (merged into a pending system message when one exists). pi-ai's `getCurrentSystemMessage(messages)` returns the replayed head, including declared tools, for any message array, including agent transcripts with custom message roles.
+The transcript owns the system prompt and tool declarations: the leading system message is the prompt, later system messages patch it (see `SystemMessage` in brian-ai). `agent.state.systemPrompt` is read-only and replays the transcript. `agent.state.tools` is the executable loadout; before every request the loop diffs it against the tools the transcript declares and, if they differ, announces the change in a system message (merged into a pending system message when one exists). brian-ai's `getCurrentSystemMessage(messages)` returns the replayed head, including declared tools, for any message array, including agent transcripts with custom message roles.
 
 To change the prompt mid-conversation, append a system message with `content` (added instructions) or `sections` (named replacements):
 
@@ -426,7 +426,7 @@ Follow-up messages are checked only when there are no more tool calls and no ste
 Extend `AgentMessage` via declaration merging:
 
 ```typescript
-declare module "@punch-bot/agent" {
+declare module "@brian-agent/agent" {
   interface CustomAgentMessages {
     notification: { role: "notification"; text: string; timestamp: number };
   }
@@ -505,14 +505,14 @@ Return `terminate: true` from `execute()`, a blocked `beforeToolCall`, or `after
 
 ### MCP and Codemode
 
-`@punch-bot/mcp` connects to MCP servers and `@punch-bot/codemode` runs model-written JavaScript that calls tools. [examples/mcp-codemode](examples/mcp-codemode) wraps both as `AgentTool`s: one tool per MCP tool, and a `codemode` tool whose scripts call the agent's tools through `runToolCall()`, so `beforeToolCall` and `afterToolCall` apply to those calls too.
+`@brian-agent/mcp` connects to MCP servers and `@brian-agent/codemode` runs model-written JavaScript that calls tools. [examples/mcp-codemode](examples/mcp-codemode) wraps both as `AgentTool`s: one tool per MCP tool, and a `codemode` tool whose scripts call the agent's tools through `runToolCall()`, so `beforeToolCall` and `afterToolCall` apply to those calls too.
 
 ## Proxy Usage
 
 For browser apps that proxy through a backend:
 
 ```typescript
-import { Agent, streamProxy } from "@punch-bot/agent";
+import { Agent, streamProxy } from "@brian-agent/agent";
 
 const agent = new Agent({
   streamFn: (model, context, options) =>
@@ -529,7 +529,7 @@ const agent = new Agent({
 For direct control without the Agent class:
 
 ```typescript
-import { agentLoop, agentLoopContinue } from "@punch-bot/agent";
+import { agentLoop, agentLoopContinue } from "@brian-agent/agent";
 
 const context: AgentContext = {
   messages: [{ role: "system", content: "You are helpful.", timestamp: Date.now() }],

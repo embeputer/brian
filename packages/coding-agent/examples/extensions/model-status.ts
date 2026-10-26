@@ -4,13 +4,13 @@
  * Demonstrates the `model_select` hook which fires when the model changes
  * via /model command, Ctrl+P cycling, or session restore.
  *
- * Usage: pi -e ./model-status.ts
+ * Usage: brian -e ./model-status.ts
  */
 
-import type { ExtensionAPI } from "@punch-bot/cli";
+import type { ExtensionAPI } from "@brian-agent/cli";
 
-export default function (pi: ExtensionAPI) {
-	pi.on("model_select", async (event, ctx) => {
+export default function (brian: ExtensionAPI) {
+	brian.on("model_select", async (event, ctx) => {
 		const { model, previousModel, source } = event;
 
 		// Format model identifiers

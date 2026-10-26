@@ -4,7 +4,7 @@ import {
 	fauxAssistantMessage,
 	type Model,
 	type Provider,
-} from "@punch-bot/ai";
+} from "@brian-agent/ai";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, type Harness } from "../harness.ts";
 

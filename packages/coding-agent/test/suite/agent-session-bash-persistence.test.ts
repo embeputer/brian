@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer";
-import type { AgentTool } from "@punch-bot/agent";
-import { fauxAssistantMessage, fauxToolCall } from "@punch-bot/ai";
+import type { AgentTool } from "@brian-agent/agent";
+import { fauxAssistantMessage, fauxToolCall } from "@brian-agent/ai";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import type { BashOperations } from "../../src/core/tools/bash.ts";

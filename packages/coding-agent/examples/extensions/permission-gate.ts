@@ -5,12 +5,12 @@
  * Patterns checked: rm -rf, sudo, chmod/chown 777
  */
 
-import type { ExtensionAPI } from "@punch-bot/cli";
+import type { ExtensionAPI } from "@brian-agent/cli";
 
-export default function (pi: ExtensionAPI) {
+export default function (brian: ExtensionAPI) {
 	const dangerousPatterns = [/\brm\s+(-rf?|--recursive)/i, /\bsudo\b/i, /\b(chmod|chown)\b.*777/i];
 
-	pi.on("tool_call", async (event, ctx) => {
+	brian.on("tool_call", async (event, ctx) => {
 		if (event.toolName !== "bash") return undefined;
 
 		const command = event.input.command as string;

@@ -5,7 +5,7 @@
  * createAgentSession() options. The SDK does the heavy lifting.
  */
 
-import { type ImageContent, modelsAreEqual } from "@punch-bot/ai";
+import { type ImageContent, modelsAreEqual } from "@brian-agent/ai";
 import chalk from "chalk";
 import { type Args, type Mode, normalizeSessionName, parseArgs, printHelp } from "./cli/args.ts";
 import {
@@ -549,10 +549,10 @@ export async function main(args: string[], options?: MainOptions) {
 	// Commands and startup selectors can load user-authored themes before runtime creation.
 	setThemeJsonValidator(validateThemeJson);
 	const extensionFactories = [...builtInExtensions, ...(options?.extensionFactories ?? [])];
-	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.PI_OFFLINE);
+	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.BRIAN_OFFLINE);
 	if (offlineMode) {
-		process.env.PI_OFFLINE = "1";
-		process.env.PI_SKIP_VERSION_CHECK = "1";
+		process.env.BRIAN_OFFLINE = "1";
+		process.env.BRIAN_SKIP_VERSION_CHECK = "1";
 	}
 
 	if (await runAuthCommand(args)) {
@@ -575,7 +575,7 @@ export async function main(args: string[], options?: MainOptions) {
 		if (process.platform === "win32" && exitCode === 0 && args[0] === "update") {
 			// We normally prefer process.exit(0) for package commands so bad extensions cannot keep
 			// one-shot commands alive. On Windows, Node can assert after fetch() if process.exit(0)
-			// runs during teardown; let successful `pi update` drain naturally instead.
+			// runs during teardown; let successful `brian update` drain naturally instead.
 			// https://github.com/nodejs/node/issues/56645
 			return;
 		}
@@ -904,8 +904,8 @@ export async function main(args: string[], options?: MainOptions) {
 		process.exit(1);
 	}
 
-	if (isTruthyEnvFlag(process.env.PI_STARTUP_BENCHMARK)) {
-		console.error(chalk.red("Error: PI_STARTUP_BENCHMARK is not supported"));
+	if (isTruthyEnvFlag(process.env.BRIAN_STARTUP_BENCHMARK)) {
+		console.error(chalk.red("Error: BRIAN_STARTUP_BENCHMARK is not supported"));
 		process.exit(1);
 	}
 

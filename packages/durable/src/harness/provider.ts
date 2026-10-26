@@ -1,5 +1,5 @@
-import { uuidv7 } from "@punch-bot/ai/utils/uuid";
-import type { Context } from "@punch-bot/chord";
+import { uuidv7 } from "@brian-agent/ai/utils/uuid";
+import type { Context } from "@brian-agent/chord";
 import { defineDoc } from "../documents.ts";
 import type { TaskRuntime } from "../types.ts";
 
@@ -10,7 +10,7 @@ export type ProviderState = {
 
 /** Built-in provider state; every fork starts with a fresh identity instead of copying its parent. */
 export const ProviderDoc = defineDoc<ProviderState>({
-	kind: "pi.provider",
+	kind: "brian.provider",
 	version: 1,
 	scope: "conversation",
 	history: "latest",
@@ -20,7 +20,7 @@ export const ProviderDoc = defineDoc<ProviderState>({
 });
 
 /**
- * Return the persisted identity without writing in the normal path. A legacy conversation without `pi.provider` gets
+ * Return the persisted identity without writing in the normal path. A legacy conversation without `brian.provider` gets
  * one migration commit whose `tx.doc()` runs `initial()` before the provider request starts.
  */
 export async function ensureProviderSessionId<I, S, R, H extends object>(

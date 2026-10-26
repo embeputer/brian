@@ -9,7 +9,7 @@ const TELEMETRY_TIMEOUT_MS = 5000;
 /**
  * Send the one-time install ping without keeping the process alive.
  *
- * Reuses Pi's env-proxy dispatcher setup, so a configured `httpProxy` is honored
+ * Reuses Brian's env-proxy dispatcher setup, so a configured `httpProxy` is honored
  * and undici client errors cannot crash the CLI. The dispatcher is dedicated to
  * this request and destroyed once the ping settles, which bounds teardown
  * instead of leaving a connecting socket behind on one-shot commands.
@@ -39,7 +39,7 @@ function isTruthyEnvFlag(value: string | undefined): boolean {
 
 export function isInstallTelemetryEnabled(
 	settingsManager: SettingsManager,
-	telemetryEnv: string | undefined = process.env.PI_TELEMETRY,
+	telemetryEnv: string | undefined = process.env.BRIAN_TELEMETRY,
 ): boolean {
 	return telemetryEnv !== undefined ? isTruthyEnvFlag(telemetryEnv) : settingsManager.getEnableInstallTelemetry();
 }
@@ -52,9 +52,11 @@ export function recordInstallTelemetry(settingsManager: SettingsManager, version
 		if (getNewEntries(entries, lastVersion).length === 0) return;
 	}
 
-	if (isTruthyEnvFlag(process.env.PI_OFFLINE)) return;
+	if (isTruthyEnvFlag(process.env.BRIAN_OFFLINE)) return;
 	settingsManager.setLastChangelogVersion(version);
 	if (!isInstallTelemetryEnabled(settingsManager)) return;
 
-	sendInstallPing(`https://pi.dev/api/report-install?version=${encodeURIComponent(version)}`);
+	const reportUrl = process.env.BRIAN_TELEMETRY_URL?.trim();
+	if (!reportUrl) return;
+	sendInstallPing(`${reportUrl}?version=${encodeURIComponent(version)}`);
 }

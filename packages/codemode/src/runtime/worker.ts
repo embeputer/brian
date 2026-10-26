@@ -7,7 +7,7 @@
  *
  * Importing this module starts the worker. Hosts that bundle their code (for
  * example a Bun compiled executable) add a file that imports
- * `@punch-bot/codemode/worker` as a separate entrypoint and pass its URL
+ * `@brian-agent/codemode/worker` as a separate entrypoint and pass its URL
  * or embedded-module string specifier as `workerUrl`.
  */
 import { parentPort, workerData } from "node:worker_threads";

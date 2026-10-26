@@ -8,11 +8,11 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type AssistantMessage, type FauxResponseStep, Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { openaiProvider } from "@punch-bot/ai/providers/openai";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { type AssistantMessage, type FauxResponseStep, Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { openaiProvider } from "@brian-agent/ai/providers/openai";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	type AgentEvent,
 	AssistantEntry,
@@ -255,7 +255,7 @@ if (process.env.OPENAI_API_KEY !== undefined) {
 }
 const registry = createRegistry();
 registry.install(SubagentTools);
-const directory = await mkdtemp(join(tmpdir(), "pi-durable-subagents-"));
+const directory = await mkdtemp(join(tmpdir(), "brian-durable-subagents-"));
 const open = async () => {
 	const harness = await Harness.open(
 		await openNodeSqliteStorage(join(directory, "session.sqlite")),

@@ -24,9 +24,9 @@ import {
 	type SimpleStreamOptions,
 	type StreamOptions,
 	type TranscriptContext,
-} from "@punch-bot/ai";
-import { getApiProvider } from "@punch-bot/ai/compat";
-import { classifierErrorResult, imageErrorResult } from "@punch-bot/ai/utils/model-operations";
+} from "@brian-agent/ai";
+import { getApiProvider } from "@brian-agent/ai/compat";
+import { classifierErrorResult, imageErrorResult } from "@brian-agent/ai/utils/model-operations";
 import type { ModelConfig, ModelsJsonModel, ModelsJsonModelOverride, ModelsJsonProvider } from "./model-config.ts";
 import {
 	clearConfigValueCache,

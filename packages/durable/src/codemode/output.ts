@@ -5,8 +5,8 @@
  * the token budget is cut to its start and end, with the complete text in a temp file; images are saved to temp files
  * too, with their path next to them, because a script has no other way to hand their bytes on.
  */
-import type { ImageContent, TextContent } from "@punch-bot/ai";
-import type { CodemodeOutputItem, CodemodeResult } from "@punch-bot/codemode/portable";
+import type { ImageContent, TextContent } from "@brian-agent/ai";
+import type { CodemodeOutputItem, CodemodeResult } from "@brian-agent/codemode/portable";
 
 type Item = TextContent | ImageContent;
 

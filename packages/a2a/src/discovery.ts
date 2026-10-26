@@ -22,11 +22,11 @@ const DEFAULT_TTL_MS = 45_000;
 const ID_PATTERN = /^[A-Za-z0-9._-]+$/;
 
 export function defaultA2aDiscoveryDir(env: NodeJS.ProcessEnv = process.env): string {
-	const configured = env.PUNCH_A2A_DISCOVERY_DIR;
+	const configured = env.BRIAN_A2A_DISCOVERY_DIR;
 	if (configured?.trim()) return path.resolve(configured);
 	const runtimeDir = env.XDG_RUNTIME_DIR;
-	if (runtimeDir?.trim()) return path.join(runtimeDir, "punch", "a2a");
-	return path.join(tmpdir(), `punch-a2a-${currentUid()}`);
+	if (runtimeDir?.trim()) return path.join(runtimeDir, "brian", "a2a");
+	return path.join(tmpdir(), `brian-a2a-${currentUid()}`);
 }
 
 function currentUid(): string | number {

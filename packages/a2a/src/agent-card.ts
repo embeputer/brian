@@ -1,6 +1,6 @@
 import { A2A_PROTOCOL_VERSION, type AgentCard, type AgentSkill } from "@a2a-js/sdk";
 
-export interface CreatePunchAgentCardOptions {
+export interface CreateBrianAgentCardOptions {
 	baseUrl: string;
 	name?: string;
 	description?: string;
@@ -8,7 +8,7 @@ export interface CreatePunchAgentCardOptions {
 	skills?: readonly AgentSkill[];
 }
 
-export function createPunchAgentCard(options: CreatePunchAgentCardOptions): AgentCard {
+export function createBrianAgentCard(options: CreateBrianAgentCardOptions): AgentCard {
 	const normalizedBaseUrl = options.baseUrl.endsWith("/") ? options.baseUrl : `${options.baseUrl}/`;
 	const skills: AgentSkill[] = options.skills
 		? [...options.skills]
@@ -26,8 +26,8 @@ export function createPunchAgentCard(options: CreatePunchAgentCardOptions): Agen
 			];
 
 	return {
-		name: options.name ?? "Punch Agent",
-		description: options.description ?? "A punch coding agent exposed over the Agent2Agent protocol.",
+		name: options.name ?? "Brian Agent",
+		description: options.description ?? "A brian coding agent exposed over the Agent2Agent protocol.",
 		supportedInterfaces: [
 			{
 				url: normalizedBaseUrl,
@@ -37,8 +37,8 @@ export function createPunchAgentCard(options: CreatePunchAgentCardOptions): Agen
 			},
 		],
 		provider: {
-			organization: "Punch",
-			url: "https://github.com/punch-bot/core",
+			organization: "Brian",
+			url: "https://github.com/embeputer/brian",
 		},
 		version: options.version ?? "1.0.0",
 		capabilities: {
@@ -52,7 +52,7 @@ export function createPunchAgentCard(options: CreatePunchAgentCardOptions): Agen
 		defaultInputModes: ["text"],
 		defaultOutputModes: ["text"],
 		skills,
-		documentationUrl: "https://github.com/punch-bot/core",
+		documentationUrl: "https://github.com/embeputer/brian",
 		signatures: [],
 	};
 }

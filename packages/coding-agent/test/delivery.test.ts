@@ -1,4 +1,4 @@
-import type { AgentMessage } from "@punch-bot/agent";
+import type { AgentMessage } from "@brian-agent/agent";
 import { describe, expect, it } from "vitest";
 import {
 	buildEmbedFromJson,

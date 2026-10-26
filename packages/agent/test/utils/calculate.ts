@@ -1,4 +1,4 @@
-import type { Usage } from "@punch-bot/ai";
+import type { Usage } from "@brian-agent/ai";
 import { type Static, Type } from "typebox";
 import type { AgentTool, AgentToolResult } from "../../src/types.ts";
 

@@ -66,7 +66,7 @@ export function nodePlatform(info: Pick<RemoteInfo, "os" | "arch">): { platform:
 export interface ConnectionOptions {
 	/**
 	 * Command that starts the daemon, before its `serve --token <hex>` arguments, e.g. `["ssh", "-T", "--", "host",
-	 * "~/.pi/mobile/tools/pi-env"]`. A function computes it at each start (detecting and deploying first, for example);
+	 * "~/.brian/mobile/tools/brian-env"]`. A function computes it at each start (detecting and deploying first, for example);
 	 * its failure fails that start, and the next request tries again.
 	 */
 	command: readonly string[] | (() => Promise<readonly string[]>);
@@ -175,7 +175,7 @@ class Session {
 }
 
 /**
- * One connection to a pi-env daemon: started lazily on the first request and started again after it is lost. Requests
+ * One connection to a brian-env daemon: started lazily on the first request and started again after it is lost. Requests
  * in flight when it is lost fail with code `unknown`; for mutations their outcome is then unknown.
  */
 export class Connection {
@@ -204,7 +204,7 @@ export class Connection {
 		if (options.session !== undefined) {
 			const current = this.#session;
 			if (current === undefined || current.id !== options.session || !current.live) {
-				throw lost("pi-env connection lost");
+				throw lost("brian-env connection lost");
 			}
 			return this.#send(current, op, json, options);
 		}
@@ -238,7 +238,7 @@ export class Connection {
 	}
 
 	#send(session: Session, op: string, json: Json, options: RequestOptions): Promise<Reply> {
-		if (!session.live) return Promise.reject(lost("pi-env connection lost"));
+		if (!session.live) return Promise.reject(lost("brian-env connection lost"));
 		const id = this.#nextId++;
 		return new Promise((resolve, reject) => {
 			const onAbort = () => this.#write(session, frame(CANCEL, id, {}));
@@ -284,24 +284,24 @@ export class Connection {
 		let startTimer: ReturnType<typeof setTimeout> | undefined;
 		const failed = new Promise<never>((_resolve, reject) => {
 			startTimer = setTimeout(
-				() => reject(lost(`pi-env did not answer within ${START_TIMEOUT_MS / 1000} s`)),
+				() => reject(lost(`brian-env did not answer within ${START_TIMEOUT_MS / 1000} s`)),
 				START_TIMEOUT_MS,
 			);
 			child.once("error", (error) =>
 				reject(new RemoteError({ code: "spawn_error", message: error.message, lost: true })),
 			);
-			child.once("exit", (code) => reject(lost(`pi-env exited with code ${code} before it was ready`)));
+			child.once("exit", (code) => reject(lost(`brian-env exited with code ${code} before it was ready`)));
 		});
 		failed.catch(() => {});
 		child.stdout.on("data", (chunk: Buffer) => this.#onData(session, chunk));
 		child.stderr.on("data", (chunk: Buffer) => this.#options.onLog?.(chunk.toString("utf8")));
-		child.on("error", () => this.#teardown(session, lost("pi-env connection lost")));
-		child.on("exit", () => this.#teardown(session, lost("pi-env connection lost")));
+		child.on("error", () => this.#teardown(session, lost("brian-env connection lost")));
+		child.on("exit", () => this.#teardown(session, lost("brian-env connection lost")));
 		child.stdin.on("error", () => {});
 		session.timer = setInterval(() => {
 			this.#write(session, frame(PING, 0, {}));
 			if (Date.now() - session.lastSeen > SILENCE_LIMIT_MS) {
-				this.#teardown(session, lost("pi-env connection timed out"));
+				this.#teardown(session, lost("brian-env connection timed out"));
 			}
 		}, PING_INTERVAL_MS);
 		session.timer.unref();
@@ -356,7 +356,7 @@ export class Connection {
 		while (session.live && session.buffered >= 4) {
 			const length = session.peek(4).readUInt32BE(0);
 			if (length < 9 || length > MAX_FRAME) {
-				this.#teardown(session, lost("Corrupt frame from pi-env"));
+				this.#teardown(session, lost("Corrupt frame from brian-env"));
 				return;
 			}
 			if (session.buffered < 4 + length) return;
@@ -372,7 +372,7 @@ export class Connection {
 					throw new Error("not an object");
 				json = parsed as Json;
 			} catch {
-				this.#teardown(session, lost("Corrupt frame from pi-env"));
+				this.#teardown(session, lost("Corrupt frame from brian-env"));
 				return;
 			}
 			// A plain Uint8Array copy, like `NodeExecutionEnv`'s reader results, not a view of the receive buffer.

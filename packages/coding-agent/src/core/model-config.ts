@@ -1,14 +1,14 @@
 /** Immutable, credential-blind models.json snapshot. */
 
 import { readFile } from "node:fs/promises";
-import { ProviderCompatSchema } from "@punch-bot/ai/providers/compat-schema";
+import { ProviderCompatSchema } from "@brian-agent/ai/providers/compat-schema";
 import {
 	ModelCostSchema,
 	ModelInputLimitsSchema,
 	ModelInputModalitySchema,
 	ModelPromptCacheSchema,
 	ThinkingLevelMapSchema,
-} from "@punch-bot/ai/providers/model-schema";
+} from "@brian-agent/ai/providers/model-schema";
 import { type Static, Type } from "typebox";
 import { Compile } from "typebox/compile";
 import type { TLocalizedValidationError } from "typebox/error";

@@ -175,8 +175,8 @@ async function fetchText(url: string, rawLimit: number): Promise<{ text: string;
 	throw new Error("Too many redirects");
 }
 
-export default function webfetchExtension(pi: ExtensionAPI): void {
-	pi.registerTool({
+export default function webfetchExtension(brian: ExtensionAPI): void {
+	brian.registerTool({
 		name: "webfetch",
 		label: "Fetch web page",
 		description: "Fetch a URL and return readable text content",

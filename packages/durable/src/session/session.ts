@@ -1,6 +1,6 @@
-import { type Context, type JsonValue, replicatedState } from "@punch-bot/chord";
-import { awaitWithContext, BACKGROUND_CONTEXT, withoutAbortSignal } from "@punch-bot/chord/context";
-import { type Op, track } from "@punch-bot/chord/delta";
+import { type Context, type JsonValue, replicatedState } from "@brian-agent/chord";
+import { awaitWithContext, BACKGROUND_CONTEXT, withoutAbortSignal } from "@brian-agent/chord/context";
+import { type Op, track } from "@brian-agent/chord/delta";
 import {
 	type AnyDocToken,
 	addressId,

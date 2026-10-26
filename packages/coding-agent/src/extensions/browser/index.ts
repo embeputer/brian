@@ -4,8 +4,8 @@ import { type BrowserContext, chromium, type Page } from "playwright";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "../../core/extensions/types.ts";
 
-const SCREENSHOT_DIR = process.env.PI_SCREENSHOT_DIR || join(process.cwd(), "screenshots");
-const USER_DATA_DIR = process.env.PI_CHROME_PROFILE || join(process.cwd(), ".chrome-profile");
+const SCREENSHOT_DIR = process.env.BRIAN_SCREENSHOT_DIR || join(process.cwd(), "screenshots");
+const USER_DATA_DIR = process.env.BRIAN_CHROME_PROFILE || join(process.cwd(), ".chrome-profile");
 const DEFAULT_VIEWPORT = { width: 1280, height: 800 };
 const LAUNCH_ARGS = [
 	"--no-sandbox",
@@ -69,8 +69,8 @@ function safeName(name: unknown): string {
 	return base || "screenshot";
 }
 
-export default function browserExtension(pi: ExtensionAPI): void {
-	pi.registerTool({
+export default function browserExtension(brian: ExtensionAPI): void {
+	brian.registerTool({
 		name: "puppeteer_navigate",
 		label: "Browser navigate",
 		description: "Navigate the sandbox browser to a URL (headless Chromium)",
@@ -93,7 +93,7 @@ export default function browserExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "puppeteer_screenshot",
 		label: "Browser screenshot",
 		description:
@@ -142,7 +142,7 @@ export default function browserExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "puppeteer_click",
 		label: "Browser click",
 		description: "Click a CSS selector in the sandbox browser",
@@ -154,7 +154,7 @@ export default function browserExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "puppeteer_fill",
 		label: "Browser fill",
 		description: "Fill a CSS selector input with text in the sandbox browser",
@@ -172,7 +172,7 @@ export default function browserExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "puppeteer_select",
 		label: "Browser select",
 		description: "Select an option in a CSS selector dropdown in the sandbox browser",
@@ -191,7 +191,7 @@ export default function browserExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "puppeteer_hover",
 		label: "Browser hover",
 		description: "Hover a CSS selector in the sandbox browser",
@@ -203,7 +203,7 @@ export default function browserExtension(pi: ExtensionAPI): void {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		name: "puppeteer_evaluate",
 		label: "Browser evaluate",
 		description: "Run JavaScript in the sandbox browser page and return the JSON-serialized result",

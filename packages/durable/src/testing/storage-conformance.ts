@@ -1,6 +1,6 @@
-import type { JsonValue } from "@punch-bot/chord";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
-import type { Op } from "@punch-bot/chord/delta";
+import type { JsonValue } from "@brian-agent/chord";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
+import type { Op } from "@brian-agent/chord/delta";
 import { idFromNumber } from "../ids.ts";
 import {
 	type ConversationId,

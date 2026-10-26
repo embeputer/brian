@@ -9,7 +9,7 @@ import { SettingsManager } from "../src/core/settings-manager.ts";
 import { SettingsSchema } from "../src/core/settings-schema.ts";
 import { validateThemeJson } from "../src/core/theme/theme-schema.ts";
 
-const schemaBaseUrl = "https://raw.githubusercontent.com/punch-bot/core/main/packages/coding-agent/schemas";
+const schemaBaseUrl = "https://raw.githubusercontent.com/embeputer/brian/main/packages/coding-agent/schemas";
 const temporaryDirectories: string[] = [];
 
 afterEach(() => {
@@ -19,7 +19,7 @@ afterEach(() => {
 });
 
 function createTemporaryDirectory(): string {
-	const directory = mkdtempSync(join(tmpdir(), "pi-config-schema-test-"));
+	const directory = mkdtempSync(join(tmpdir(), "brian-config-schema-test-"));
 	temporaryDirectories.push(directory);
 	return directory;
 }
@@ -49,8 +49,8 @@ describe("generated configuration schemas", () => {
 		const accent = schema.properties.colors.properties.accent;
 		const colorValue = accent.$ref ? schema.$defs.ColorValue : accent;
 		expect(schema).toMatchObject({
-			title: "Pi Coding Agent Theme",
-			description: "Theme schema for Pi coding agent",
+			title: "Brian Coding Agent Theme",
+			description: "Theme schema for Brian coding agent",
 			properties: {
 				colors: {
 					description: expect.stringContaining("use compatible fallbacks"),

@@ -1,4 +1,4 @@
-import type { Context } from "@punch-bot/chord";
+import type { Context } from "@brian-agent/chord";
 import { SessionFailed } from "../errors.ts";
 import type { Cursor, Page } from "../types.ts";
 

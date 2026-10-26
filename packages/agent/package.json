@@ -1,5 +1,5 @@
 {
-	"name": "@punch-bot/agent",
+	"name": "@brian-agent/agent",
 	"version": "1.3.0",
 	"description": "General-purpose agent with transport abstraction, state management, and attachment support",
 	"type": "module",
@@ -23,7 +23,7 @@
 		"prepublishOnly": "npm run build"
 	},
 	"dependencies": {
-		"@punch-bot/ai": "1.3.0",
+		"@brian-agent/ai": "1.3.0",
 		"typebox": "1.3.27"
 	},
 	"keywords": [
@@ -37,7 +37,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/punch-bot/core.git",
+		"url": "git+https://github.com/embeputer/brian.git",
 		"directory": "packages/agent"
 	},
 	"engines": {

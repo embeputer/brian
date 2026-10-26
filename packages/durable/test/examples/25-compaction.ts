@@ -2,10 +2,10 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/25-compaction.ts
 
-import type { AssistantMessage, Message, TranscriptContext } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import type { AssistantMessage, Message, TranscriptContext } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	CompactionEntry,
 	type Conversation,

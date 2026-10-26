@@ -6,8 +6,8 @@ import {
 	normalizeContext,
 	Type,
 	uuidv7,
-} from "@punch-bot/ai";
-import { builtinModels } from "@punch-bot/ai/providers/all";
+} from "@brian-agent/ai";
+import { builtinModels } from "@brian-agent/ai/providers/all";
 import {
 	AssistantEntry,
 	createRegistry,
@@ -17,7 +17,7 @@ import {
 	Harness,
 	hook,
 	MemoryStorage,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { streamSimple as streamSimpleAnthropic } from "../../ai/src/api/anthropic-messages.ts";
 import { resolveApiKey } from "../../ai/test/oauth.ts";
@@ -35,7 +35,7 @@ function instructions(nonce: string): string {
 	];
 	for (let index = 0; index < 250; index++) {
 		lines.push(
-			`${nonce} cache record ${String(index).padStart(3, "0")}: alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega.`,
+			`${nonce} cache record ${String(index).padStart(3, "0")}: alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron brian rho sigma tau upsilon phi chi psi omega.`,
 		);
 	}
 	return lines.join("\n");
@@ -129,7 +129,7 @@ async function cacheReadAfterToolChange(token: string, legacyOrder: boolean): Pr
 }
 
 describe("Durable system message order e2e", () => {
-	// Live regression coverage for #10542; skipped without Anthropic credentials in ~/.pi/agent/auth.json.
+	// Live regression coverage for #10542; skipped without Anthropic credentials in ~/.brian/agent/auth.json.
 	it.skipIf(!anthropicToken)(
 		"keeps the prompt cache across a tool change only when the system message leads",
 		{ retry: 1, timeout: 180_000 },

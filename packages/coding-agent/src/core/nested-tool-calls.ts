@@ -14,8 +14,8 @@ import type {
 	AgentToolCallOutcome,
 	AgentToolResult,
 	AgentToolUpdateCallback,
-} from "@punch-bot/agent";
-import type { JsonObject, NestedToolCallRecord, NestedToolCalls, TextContent, Usage } from "@punch-bot/ai";
+} from "@brian-agent/agent";
+import type { JsonObject, NestedToolCallRecord, NestedToolCalls, TextContent, Usage } from "@brian-agent/ai";
 import { combineUsage } from "./usage-totals.ts";
 
 /**

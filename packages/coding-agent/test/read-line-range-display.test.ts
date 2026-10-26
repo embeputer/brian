@@ -47,7 +47,7 @@ describe("read line range display", () => {
 	];
 
 	beforeAll(() => {
-		tempDir = mkdtempSync(join(tmpdir(), "pi-read-range-"));
+		tempDir = mkdtempSync(join(tmpdir(), "brian-read-range-"));
 	});
 
 	afterAll(() => {

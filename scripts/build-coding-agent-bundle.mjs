@@ -36,15 +36,15 @@ const allowedExternalPackages = new Set([
 	"bun:sqlite",
 ]);
 
-// The `#punch-sqlite` import map selects `bun:sqlite` under the `bun` condition, but esbuild resolves it once at
+// The `#brian-sqlite` import map selects `bun:sqlite` under the `bun` condition, but esbuild resolves it once at
 // build time with Node's conditions, which left a static `node:sqlite` import that Bun cannot load. Select the
 // driver when the bundle runs instead.
 const runtimeSqliteDriverPlugin = {
 	name: "runtime-sqlite-driver",
 	setup(build) {
-		build.onResolve({ filter: /^#punch-sqlite$/ }, () => ({
+		build.onResolve({ filter: /^#brian-sqlite$/ }, () => ({
 			namespace: "runtime-sqlite-driver",
-			path: "#punch-sqlite",
+			path: "#brian-sqlite",
 		}));
 		build.onLoad({ filter: /.*/, namespace: "runtime-sqlite-driver" }, () => ({
 			contents: `
@@ -114,7 +114,7 @@ function commonBuildOptions() {
 		absWorkingDir: repoRoot,
 		banner,
 		bundle: true,
-		define: { PI_BUNDLED_NODE: "true" },
+		define: { BRIAN_BUNDLED_NODE: "true" },
 		external: ["@silvia-odwyer/photon-node", "playwright", "playwright-core", "bun:sqlite"],
 		format: "esm",
 		legalComments: "none",

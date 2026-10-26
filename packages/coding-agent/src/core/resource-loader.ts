@@ -51,9 +51,9 @@ export interface ResourceLoaderReloadOptions {
 }
 
 const HOST_PROVIDED_EXTENSION_PACKAGES = new Set([
-	"@punch-bot/agent",
-	"@punch-bot/ai",
-	"@punch-bot/cli",
+	"@brian-agent/agent",
+	"@brian-agent/ai",
+	"@brian-agent/cli",
 	"@mariozechner/pi-agent-core",
 	"@mariozechner/pi-ai",
 	"@mariozechner/pi-coding-agent",
@@ -141,7 +141,7 @@ function omitReplacedExtensions(
 			const registeredName = kind === "command" ? `/${rawName}` : kind === "flag" ? `--${rawName}` : rawName;
 			warnings?.push({
 				path: extension.path,
-				warning: `Extension ${replacement.extension.path} registers ${kind} \`${registeredName}\`, so built-in extension \`${builtinName}\` was not loaded. To use \`${builtinName}\`, run \`pi config\` and make sure it is enabled under Built-in extensions, then disable or remove the existing extension. We recommend only having one or the other loaded at a time.`,
+				warning: `Extension ${replacement.extension.path} registers ${kind} \`${registeredName}\`, so built-in extension \`${builtinName}\` was not loaded. To use \`${builtinName}\`, run \`brian config\` and make sure it is enabled under Built-in extensions, then disable or remove the existing extension. We recommend only having one or the other loaded at a time.`,
 			});
 		}
 		return false;

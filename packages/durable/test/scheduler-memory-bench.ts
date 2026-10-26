@@ -9,8 +9,8 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createModels } from "@punch-bot/ai/models";
-import { BACKGROUND_CONTEXT as context } from "@punch-bot/chord/context";
+import { createModels } from "@brian-agent/ai/models";
+import { BACKGROUND_CONTEXT as context } from "@brian-agent/chord/context";
 import { SCHEDULER_INDEX_SIZES } from "../src/harness/harness.ts";
 import {
 	type ConversationId,
@@ -48,7 +48,7 @@ async function release(name: string): Promise<void> {
 type Sizes = Record<"live" | "settled" | "edges" | "below" | "roots" | "unloaded" | "dropQueue", number>;
 
 async function run(cycles: number) {
-	const directory = mkdtempSync(join(tmpdir(), "pi-durable-memory-bench-"));
+	const directory = mkdtempSync(join(tmpdir(), "brian-durable-memory-bench-"));
 	try {
 		const storage = await openNodeSqliteStorage(join(directory, "session.sqlite"));
 		const reads = { count: 0 };

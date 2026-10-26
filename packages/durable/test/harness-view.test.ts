@@ -1,5 +1,5 @@
-import { type AssistantMessage, type FauxResponseStep, fauxAssistantMessage, fauxText } from "@punch-bot/ai";
-import { applyImmutable, type Op } from "@punch-bot/chord/delta";
+import { type AssistantMessage, type FauxResponseStep, fauxAssistantMessage, fauxText } from "@brian-agent/ai";
+import { applyImmutable, type Op } from "@brian-agent/chord/delta";
 import {
 	AgentDoc,
 	type Conversation,
@@ -11,7 +11,7 @@ import {
 	MemoryStorage,
 	ProviderDoc,
 	UsageDoc,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { allEntries, chatSetup, openChat, waitFor } from "./chat-support.ts";
 import { context } from "./session-support.ts";
@@ -19,7 +19,7 @@ import { aborted, deferred } from "./task-support.ts";
 
 type Frame = { value: ConversationView; ops: readonly Op[] };
 
-const MOUNTED = ["pi.agent", "pi.inbox", "pi.live", "pi.provider", "pi.usage"];
+const MOUNTED = ["brian.agent", "brian.inbox", "brian.live", "brian.provider", "brian.usage"];
 
 /** Start a watch of `conversation` that records its acquisition revision and every delivered frame. */
 async function record(conversation: Conversation) {
@@ -95,8 +95,8 @@ describe("conversation view", () => {
 		expect(view.conversation).toEqual({ id: root.id });
 		expect(view.entries).toEqual(await allEntries(root));
 		expect(Object.keys(view.docs).sort()).toEqual(MOUNTED);
-		expect(view.docs["pi.live"]).toEqual({});
-		expect(view.docs["pi.inbox"]).toEqual({ items: [] });
+		expect(view.docs["brian.live"]).toEqual({});
+		expect(view.docs["brian.inbox"]).toEqual({ items: [] });
 		await harness.close(context);
 	});
 
@@ -112,18 +112,26 @@ describe("conversation view", () => {
 		const { initial, frames, stop } = await record(root);
 		const touching = touches(harness, root);
 		const submission = await root.submit({ type: "input", content: "hi" }, context);
-		await waitFor(() => frames.some((frame) => (frame.value.docs["pi.live"] as { generation?: unknown }).generation));
+		await waitFor(() =>
+			frames.some((frame) => (frame.value.docs["brian.live"] as { generation?: unknown }).generation),
+		);
 		release.resolve();
 		await submission.wait(context);
 		await harness.waitForIdle(context);
 		await drained();
 		expect(frames).toHaveLength(touching.count);
 		expect(replay(initial, frames)).toEqual(await committed(harness, root, initial.conversation));
-		expect(frames[0]!.ops).toContainEqual(["p", ["entries"], 0, 0, [expect.objectContaining({ kind: "pi.user" })]]);
+		expect(frames[0]!.ops).toContainEqual([
+			"p",
+			["entries"],
+			0,
+			0,
+			[expect.objectContaining({ kind: "brian.user" })],
+		]);
 		// Document operations keep their exact shape under the mount path.
 		expect(frames.flatMap((frame) => frame.ops)).toContainEqual([
 			"s",
-			["docs", "pi.live", "generation"],
+			["docs", "brian.live", "generation"],
 			{ attempt: 1 },
 		]);
 		await stop();
@@ -140,9 +148,9 @@ describe("conversation view", () => {
 		await root.commit((tx) => tx.appendEntry(root.id, { kind: "note" }), context);
 		await drained();
 		expect(frames).toHaveLength(2);
-		expect(frames[0]!.ops).toEqual([["s", ["docs", "pi.agent", "thinkingLevel"], "high"]]);
+		expect(frames[0]!.ops).toEqual([["s", ["docs", "brian.agent", "thinkingLevel"], "high"]]);
 		expect(frames[0]!.value.entries).toBe(initial.entries);
-		expect(frames[0]!.value.docs["pi.live"]).toBe(initial.docs["pi.live"]);
+		expect(frames[0]!.value.docs["brian.live"]).toBe(initial.docs["brian.live"]);
 		expect(frames[1]!.value.docs).toBe(frames[0]!.value.docs);
 		await stop();
 		await harness.close(context);
@@ -160,7 +168,7 @@ describe("conversation view", () => {
 		await root.reset(undefined, context);
 		await drained();
 		const kinds = frames.map((frame) => frame.value.entries.map((entry) => entry.kind));
-		expect(kinds).toEqual([["summary", "b", "c"], ["summary", "b", "c", "d"], ["pi.reset"]]);
+		expect(kinds).toEqual([["summary", "b", "c"], ["summary", "b", "c", "d"], ["brian.reset"]]);
 		expect(frames[0]!.ops).toEqual([["p", ["entries"], 0, 1, [summary]]]);
 		expect(replay(initial, frames)).toEqual(await committed(harness, root, initial.conversation));
 		await stop();
@@ -220,10 +228,10 @@ describe("conversation view", () => {
 		}, context);
 		await drained();
 		expect(frames.map((frame) => frame.ops)).toEqual([
-			[["d", ["docs", "pi.live"]]],
-			[["s", ["docs", "pi.live"], { tools: [] }]],
+			[["d", ["docs", "brian.live"]]],
+			[["s", ["docs", "brian.live"], { tools: [] }]],
 		]);
-		expect(frames[0]!.value.docs["pi.live"]).toBeUndefined();
+		expect(frames[0]!.value.docs["brian.live"]).toBeUndefined();
 		await stop();
 		await harness.close(context);
 	});

@@ -38,7 +38,7 @@ jobs:
       - name: Check
         run: npm run check
 
-      - name: Build the pi-env daemon
+      - name: Build the brian-env daemon
         run: npm run build:daemon --workspace packages/env
 
       - name: Test
@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      # Runs pi's MCP client from source against the pinned official conformance suite and fails on
+      # Runs brian's MCP client from source against the pinned official conformance suite and fails on
       # regressions against packages/coding-agent/test/mcp-conformance/baseline.json.
       - name: MCP client conformance
         run: npm run test:mcp-conformance

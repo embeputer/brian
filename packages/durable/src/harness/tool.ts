@@ -1,15 +1,15 @@
-import type { ImageContent, TextContent, ToolCall, ToolResultMessage } from "@punch-bot/ai";
-import { validateToolArguments } from "@punch-bot/ai/utils/validation";
-import { type Context, copyJson, type Draft, type JsonRepresentation, type JsonValue } from "@punch-bot/chord";
-import { awaitWithContext } from "@punch-bot/chord/context";
-import { overlap } from "@punch-bot/chord/delta";
+import type { ImageContent, TextContent, ToolCall, ToolResultMessage } from "@brian-agent/ai";
+import { validateToolArguments } from "@brian-agent/ai/utils/validation";
+import { type Context, copyJson, type Draft, type JsonRepresentation, type JsonValue } from "@brian-agent/chord";
+import { awaitWithContext } from "@brian-agent/chord/context";
+import { overlap } from "@brian-agent/chord/delta";
 import {
 	boundOutput,
 	OutputBuffer,
 	type OutputLimits,
 	PROGRESS_BYTES_PER_SECOND,
 	Progress,
-} from "@punch-bot/chord/output";
+} from "@brian-agent/chord/output";
 import { Compile } from "typebox/compile";
 import { defineDocFamily } from "../documents.ts";
 import { AssistantEntry, ToolResultEntry } from "../entries.ts";
@@ -82,9 +82,9 @@ export type ToolTaskResult = { kind: "model"; entryId: EntryId; control?: ToolCo
 
 /**
  * Memo of a tool task that made a nested call, in any attempt, committed before the first admission of each attempt:
- * only then can `pi.live` hold slots below it, which settling removes. A crash between the two only costs a scan.
+ * only then can `brian.live` hold slots below it, which settling removes. A crash between the two only costs a scan.
  */
-const MADE_NESTED_CALLS = "pi.tool.madeNestedCalls";
+const MADE_NESTED_CALLS = "brian.tool.madeNestedCalls";
 
 /** One nested call of a running tool: its task, and once it ended, its result. */
 export type NestedCallState = {
@@ -100,7 +100,7 @@ export type NestedCallState = {
  * terminal commit adds its result. One document per call, so no commit rewrites the others. Retires with the caller.
  */
 export const NestedCallDoc = defineDocFamily<NestedCallState, null>({
-	kind: "pi.tool.nested-call",
+	kind: "brian.tool.nested-call",
 	version: 1,
 	scope: "task",
 	family: true,
@@ -117,7 +117,7 @@ type Content = (TextContent | ImageContent)[];
  * appending its result entry; a nested call by writing its result to its caller's `NestedCallDoc`.
  */
 export const ToolTask = defineTask<ToolTaskInput, ToolTaskCheckpoint, ToolTaskResult, ToolHooks>({
-	name: "pi.tool",
+	name: "brian.tool",
 	version: 2,
 	initial: () => ({ phase: "call" }),
 	// Version 1 had only model-issued calls.
@@ -435,7 +435,7 @@ async function run(
 }
 
 /**
- * Throttled commits of what the tool reported into its slot, in `pi.live.tools` or `pi.live.nestedTools`, each writing
+ * Throttled commits of what the tool reported into its slot, in `brian.live.tools` or `brian.live.nestedTools`, each writing
  * only what changed since the last one; none when `enabled` is false.
  */
 function publishProgress(runtime: Runtime, reported: Reported, enabled: boolean, context: Context): Progress {
@@ -583,7 +583,7 @@ function structuredOutputError(tool: ToolRegistration, result: ToolExecutionResu
  * Commit the tool's terminal state and mark its slot done. A model-issued call appends its result entry and ends with
  * the entry ID; a nested call writes its result to the caller's `NestedCallDoc`, records its usage, and ends with a
  * small receipt. Nested calls this call left running are aborted first, so they report into their slots before the
- * slots below the call leave `pi.live`. `build` receives the slot so interruption and abort can report the durable
+ * slots below the call leave `brian.live`. `build` receives the slot so interruption and abort can report the durable
  * partial output.
  */
 async function settle(
@@ -830,8 +830,8 @@ function errorTextOf(result: NestedToolExecutionResult, output: Content): string
 }
 
 /**
- * Append a `pi.tool-result` entry. The content ends with the rendered diagnostics, so the stored message is exactly
- * what the model sees; `data` keeps the structured list. A result's usage is added to `pi.usage` in the same commit.
+ * Append a `brian.tool-result` entry. The content ends with the rendered diagnostics, so the stored message is exactly
+ * what the model sees; `data` keeps the structured list. A result's usage is added to `brian.usage` in the same commit.
  */
 export async function appendToolResult(
 	tx: Tx,

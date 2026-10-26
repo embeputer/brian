@@ -6,8 +6,8 @@ import {
 	type Message,
 	type Models,
 	type RegisterFauxProviderOptions,
-} from "@punch-bot/ai";
-import type { Context } from "@punch-bot/chord";
+} from "@brian-agent/ai";
+import type { Context } from "@brian-agent/chord";
 import {
 	type Conversation,
 	createRegistry,
@@ -18,7 +18,7 @@ import {
 	type Registry,
 	type Storage,
 	type ToolRegistration,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import type { ExecutionEnv } from "../src/env/index.ts";
 import { context } from "./session-support.ts";
 

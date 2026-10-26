@@ -27,8 +27,8 @@ import {
 	type ResourceTemplate,
 	StdioTransport,
 	StreamableHttpTransport,
-} from "@punch-bot/mcp";
-import { McpOAuthAuthorizationRequiredError, type OAuthChallenge } from "@punch-bot/mcp/oauth";
+} from "@brian-agent/mcp";
+import { McpOAuthAuthorizationRequiredError, type OAuthChallenge } from "@brian-agent/mcp/oauth";
 import { VERSION } from "../../config.ts";
 import { resolveConfigValueOrThrow, resolveHeadersOrThrow } from "../../core/resolve-config-value.ts";
 import type { McpServerEntry } from "./config.ts";
@@ -168,7 +168,7 @@ export class McpServerConnection implements McpToolCaller, McpResourceServer {
 		cwd: string;
 		createTransport: McpTransportFactory;
 		credentials: McpOAuthCredentialStore;
-		/** The current token of a pi provider, for servers with `auth.provider`. */
+		/** The current token of a brian provider, for servers with `auth.provider`. */
 		providerToken?: (provider: string) => Promise<string | undefined>;
 		onTools: (connection: McpServerConnection) => void;
 		/** Called when `state`, `error`, or `tools` change. */
@@ -358,7 +358,7 @@ export class McpServerConnection implements McpToolCaller, McpResourceServer {
 
 	private async connectOnce(): Promise<McpClient> {
 		const client = new McpClient({
-			name: "pi",
+			name: "brian",
 			version: VERSION,
 			requestTimeoutMs: this.timeoutMs,
 			roots: [{ uri: pathToFileURL(this.cwd).href, name: basename(this.cwd) }],

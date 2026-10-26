@@ -3,10 +3,10 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/21-late-join.ts
 
-import { Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	type AgentEvent,
 	createRegistry,
@@ -58,14 +58,14 @@ await pause(500);
 
 // Structural client: the view holds the committed transcript and documents, including the running tool's output.
 const view = await root.viewState(context);
-const live = view.value.docs["pi.live"] as LiveState;
+const live = view.value.docs["brian.live"] as LiveState;
 console.log(
 	"view entries:",
 	view.value.entries.map((entry) => entry.kind),
 );
 console.log("view tool slot:", live.tools?.[0]?.status, JSON.stringify(live.tools?.[0]?.output));
 view.subscribe((value) => {
-	const slot = (value.docs["pi.live"] as LiveState).tools?.[0];
+	const slot = (value.docs["brian.live"] as LiveState).tools?.[0];
 	if (slot?.status === "running") console.log("view output now:", JSON.stringify(slot.output));
 });
 

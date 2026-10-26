@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Agent } from "@punch-bot/agent";
-import { type AssistantMessage, createAssistantMessageEventStream, getModel, type Model } from "@punch-bot/ai/compat";
+import { Agent } from "@brian-agent/agent";
+import { type AssistantMessage, createAssistantMessageEventStream, getModel, type Model } from "@brian-agent/ai/compat";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AgentSession } from "../src/core/agent-session.ts";
 import type { AgentSessionRuntime } from "../src/core/agent-session-runtime.ts";
@@ -86,7 +86,7 @@ async function createRuntimeHost(options: {
 	runtimeHost: AgentSessionRuntime;
 	cleanup: () => Promise<void>;
 }> {
-	const tempDir = join(tmpdir(), `pi-rpc-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const tempDir = join(tmpdir(), `brian-rpc-prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 
 	const model = options.model ?? getModel("anthropic", "claude-sonnet-4-5");
@@ -242,9 +242,9 @@ describe("RPC prompt response semantics", () => {
 			withAuth: false,
 			responseDelayMs: 0,
 			extensionsResult: await createTestExtensionsResult([
-				(pi) => {
-					pi.registerCommand("handled", { handler: async () => {} });
-					pi.on("input", (event) => {
+				(brian) => {
+					brian.registerCommand("handled", { handler: async () => {} });
+					brian.on("input", (event) => {
 						if (event.text === "handled input") return { action: "handled" };
 					});
 				},
@@ -314,10 +314,10 @@ describe("RPC prompt response semantics", () => {
 				withAuth: true,
 				responseDelayMs: 500,
 				extensionsResult: await createTestExtensionsResult([
-					(pi) => {
-						pi.on("input", (event) => {
+					(brian) => {
+						brian.on("input", (event) => {
 							if (event.text === "A" && event.source === "rpc") {
-								pi.sendUserMessage("B", { deliverAs: type === "steer" ? "steer" : "followUp" });
+								brian.sendUserMessage("B", { deliverAs: type === "steer" ? "steer" : "followUp" });
 								return { action: "handled" };
 							}
 						});
@@ -360,8 +360,8 @@ describe("RPC prompt response semantics", () => {
 			withAuth: false,
 			responseDelayMs: 0,
 			extensionsResult: await createTestExtensionsResult([
-				(pi) => {
-					pi.on("input", (event) => {
+				(brian) => {
+					brian.on("input", (event) => {
 						if (event.text === "A") return { action: "transform", text: "B" };
 					});
 				},

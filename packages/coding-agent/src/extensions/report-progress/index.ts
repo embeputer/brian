@@ -3,8 +3,8 @@ import type { ExtensionAPI } from "../../core/extensions/types.ts";
 
 const limits = { goal: 200, finding: 300, next: 200 } as const;
 
-export default function reportProgressExtension(pi: ExtensionAPI): void {
-	pi.registerTool({
+export default function reportProgressExtension(brian: ExtensionAPI): void {
+	brian.registerTool({
 		name: "report_progress",
 		label: "Report progress",
 		description:

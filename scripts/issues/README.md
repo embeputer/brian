@@ -3,7 +3,7 @@
 A local tool for the daily issue review. It runs in this order:
 
 1. **Sync.** Keeps a local copy of the repository's issues in `data/corpus.json` with `gh api`. The first run fetches the last 120 days; after that it syncs every 20 minutes and only fetches what changed.
-2. **Triage.** Each new issue gets its own conversation with a [pi-durable](../../packages/durable/README.md) agent. The agent:
+2. **Triage.** Each new issue gets its own conversation with a [brian-durable](../../packages/durable/README.md) agent. The agent:
    - searches the local copy for duplicates and related issues (`search_issues`, `read_issue`)
    - picks a category from `categories/*.md`
    - writes a one-sentence summary and signals
@@ -15,7 +15,7 @@ Decisions are stored locally only. Nothing is written to GitHub yet.
 All state lives in `data/` (gitignored):
 
 - `corpus.json`: the local copy of the issues
-- `triage.sqlite`: pi-durable storage with one conversation per triaged issue, the triage results, and your decisions in the `triage.state` document
+- `triage.sqlite`: brian-durable storage with one conversation per triaged issue, the triage results, and your decisions in the `triage.state` document
 - `token`: the UI access token
 
 Restarting the server resumes any triage runs that were in flight.
@@ -38,7 +38,7 @@ Restarting the server resumes any triage runs that were in flight.
 
 Open `http://127.0.0.1:7788/?t=<token>` once, with the token from `scripts/issues/data/token`. The server then sets a cookie, so later visits don't need the token.
 
-The agent authenticates through `~/.pi/agent/auth.json`, the same credentials pi uses.
+The agent authenticates through `~/.brian/agent/auth.json`, the same credentials brian uses.
 
 | Variable | Default | |
 |---|---|---|

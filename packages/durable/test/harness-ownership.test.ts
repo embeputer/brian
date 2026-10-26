@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@punch-bot/ai";
+import { type AssistantMessage, fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@brian-agent/ai";
 import {
 	type Conversation,
 	type ConversationHandle,
@@ -18,7 +18,7 @@ import {
 	type Storage,
 	type Submission,
 	type TaskId,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { afterEach, describe, expect, it } from "vitest";
 import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
 import { chatSetup, openChat } from "./chat-support.ts";
@@ -334,7 +334,7 @@ describe("ownership", () => {
 	}, 60_000);
 
 	it("holds an owner for work a commit creates below ended tasks loaded from storage", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-ownership-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-ownership-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		let opened = await openHarness(await openNodeSqliteStorage(path));
@@ -724,7 +724,7 @@ describe("ownership", () => {
 	});
 
 	it("decides idle after reopen from owner edges it has to load first", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-ownership-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-ownership-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		let opened = await openHarness(await openNodeSqliteStorage(path));
@@ -762,7 +762,7 @@ describe("ownership", () => {
 		["an abort-marked owner", true, { status: "pending", checkpoint: { phase: "hold" } }],
 	] as const) {
 		it(`derives marks a crash left unapplied below ${label} at open`, async () => {
-			const directory = await mkdtemp(join(tmpdir(), "pi-durable-ownership-"));
+			const directory = await mkdtemp(join(tmpdir(), "brian-durable-ownership-"));
 			directories.add(directory);
 			const path = join(directory, "session.sqlite");
 			// Without a Harness, nothing derives marks: a cancelled owner with a live task below it.
@@ -815,7 +815,7 @@ describe("ownership", () => {
 	});
 
 	it("marks work admitted after reopen below a cancelled owner whose edge was not loaded", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-ownership-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-ownership-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		let opened = await openHarness(await openNodeSqliteStorage(path));
@@ -927,7 +927,7 @@ describe("ownership", () => {
 	});
 
 	it("applies marks found through an edge loaded after reopen once a failed cascade commit is reopened", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-ownership-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-ownership-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		let opened = await openHarness(await openNodeSqliteStorage(path));
@@ -1046,7 +1046,7 @@ describe("owned conversations from tools and supervisors", () => {
 		// Nothing was admitted or marked after the call ended.
 		const childConversation = (await harness.conversation(handle!.id, context))!;
 		const childEntries = (await childConversation.entries({}, 100, undefined, context)).items;
-		expect(childEntries.filter((entry) => entry.kind === "pi.user")).toHaveLength(1);
+		expect(childEntries.filter((entry) => entry.kind === "brian.user")).toHaveLength(1);
 		const childTasks = (await harness.inspect(context)).tasks.filter(
 			(task) => task.record.conversationId === handle!.id,
 		);
@@ -1194,7 +1194,7 @@ describe("owned conversations from tools and supervisors", () => {
 	});
 
 	it("aborts the children of a tool call that throws or is interrupted, while the run continues", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-tool-children-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-tool-children-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		const children: TaskId[] = [];
@@ -1245,7 +1245,7 @@ describe("owned conversations from tools and supervisors", () => {
 		opened.harness.resume();
 		expect((await opened.harness.waitForTask(children[1]!, context)).state.outcome.status).toBe("aborted");
 		expect((await (await opened.harness.submission(second, context))!.wait(context)).status).toBe("done");
-		const tools = (await opened.harness.commit((tx) => tx.scanTasks({ kind: "pi.tool" }, 10), context)).items;
+		const tools = (await opened.harness.commit((tx) => tx.scanTasks({ kind: "brian.tool" }, 10), context)).items;
 		expect(tools.map((task) => task.state.status === "terminal" && task.state.outcome.status)).toEqual([
 			"failed",
 			"failed",
@@ -1254,7 +1254,7 @@ describe("owned conversations from tools and supervisors", () => {
 	});
 
 	it("reruns a replay-safe subagent tool after a restart with the same child and submission", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-safe-subagent-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-safe-subagent-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		const children: ConversationId[] = [];
@@ -1302,14 +1302,14 @@ describe("owned conversations from tools and supervisors", () => {
 		expect(children[1]).toBe(children[0]);
 		const child = (await opened.harness.conversation(children[0]!, context))!;
 		const entries = (await child.entries({}, 100, undefined, context)).items;
-		expect(entries.filter((entry) => entry.kind === "pi.user")).toHaveLength(1);
+		expect(entries.filter((entry) => entry.kind === "brian.user")).toHaveLength(1);
 		const results = (await opened.root.context(context)).messages.filter((message) => message.role === "toolResult");
 		expect(results.map((message) => message.isError)).toEqual([false]);
 		await opened.harness.close(context);
 	});
 
 	it("lets a background supervisor resubmit after a restart without submitting twice", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "pi-durable-supervisor-"));
+		const directory = await mkdtemp(join(tmpdir(), "brian-durable-supervisor-"));
 		directories.add(directory);
 		const path = join(directory, "session.sqlite");
 		const Children = defineDoc<{ child?: ConversationId }>({
@@ -1368,7 +1368,7 @@ describe("owned conversations from tools and supervisors", () => {
 		expect(done.state.outcome.status).toBe("completed");
 		const childConversation = (await opened.harness.conversation(child, context))!;
 		const entries = (await childConversation.entries({}, 100, undefined, context)).items;
-		expect(entries.filter((entry) => entry.kind === "pi.user")).toHaveLength(1);
+		expect(entries.filter((entry) => entry.kind === "brian.user")).toHaveLength(1);
 		// The root never waited for the background supervisor.
 		await opened.root.waitForIdle(context);
 		await opened.harness.close(context);

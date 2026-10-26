@@ -1,5 +1,5 @@
-import type { Context } from "@punch-bot/chord";
-import { FileError, type FileWatcher, type WatchChange, type WatchTarget } from "@punch-bot/durable/env";
+import type { Context } from "@brian-agent/chord";
+import { FileError, type FileWatcher, type WatchChange, type WatchTarget } from "@brian-agent/durable/env";
 import { type Connection, isConnectionLost } from "./connection.ts";
 import { toFileError } from "./errors.ts";
 

@@ -60,7 +60,7 @@ describe("DefaultResourceLoader theme color mode", () => {
 	])(
 		"uses the $setting setting over a $environment environment",
 		async ({ environmentOverride, setting, expected }) => {
-			vi.stubEnv("PI_TRUE_COLOR", environmentOverride);
+			vi.stubEnv("BRIAN_TRUE_COLOR", environmentOverride);
 
 			const loader = new DefaultResourceLoader({
 				cwd,
@@ -80,7 +80,7 @@ describe("DefaultResourceLoader theme color mode", () => {
 	);
 
 	it("returns to automatic detection after an explicit setting is removed", async () => {
-		vi.stubEnv("PI_TRUE_COLOR", "1");
+		vi.stubEnv("BRIAN_TRUE_COLOR", "1");
 
 		const settingsPath = join(agentDir, "settings.json");
 		writeFileSync(settingsPath, JSON.stringify({ terminal: { trueColor: false } }));

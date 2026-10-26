@@ -5,13 +5,13 @@
  * Requires: npm install in this directory
  */
 
-import type { ExtensionAPI } from "@punch-bot/cli";
+import type { ExtensionAPI } from "@brian-agent/cli";
 import ms from "ms";
 import { Type } from "typebox";
 
-export default function (pi: ExtensionAPI) {
+export default function (brian: ExtensionAPI) {
 	// Register a tool that uses ms
-	pi.registerTool({
+	brian.registerTool({
 		name: "parse_duration",
 		label: "Parse Duration",
 		description: "Parse a human-readable duration string (e.g., '2 days', '1h', '5m') to milliseconds",

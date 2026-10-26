@@ -9,7 +9,7 @@ import test from "node:test";
 const script = fileURLToPath(new URL("./check-pinned-deps.mjs", import.meta.url));
 
 async function check(t, manifest) {
-	const root = await mkdtemp(join(tmpdir(), "pi-pinned-deps-"));
+	const root = await mkdtemp(join(tmpdir(), "brian-pinned-deps-"));
 	t.after(() => rm(root, { recursive: true, force: true }));
 	await writeFile(join(root, "package.json"), JSON.stringify(manifest));
 	return spawnSync(process.execPath, [script], { cwd: root, encoding: "utf8" });
@@ -19,20 +19,20 @@ async function check(t, manifest) {
 test("rejects internal and external registry dependency ranges in every direct dependency section", async (t) => {
 	const result = await check(t, {
 		dependencies: {
-			"@punch-bot/codemode": "^1.2.0",
-			"@punch-bot/chord": "~1.2.0",
+			"@brian-agent/codemode": "^1.2.0",
+			"@brian-agent/chord": "~1.2.0",
 			external: "^1.0.0",
 		},
-		devDependencies: { "@punch-bot/ai": "1.x" },
-		optionalDependencies: { "@punch-bot/tui": "*" },
+		devDependencies: { "@brian-agent/ai": "1.x" },
+		optionalDependencies: { "@brian-agent/tui": "*" },
 	});
 	assert.equal(result.status, 1);
 	for (const dependency of [
-		"dependencies.@punch-bot/codemode",
-		"dependencies.@punch-bot/chord",
+		"dependencies.@brian-agent/codemode",
+		"dependencies.@brian-agent/chord",
 		"dependencies.external",
-		"devDependencies.@punch-bot/ai",
-		"optionalDependencies.@punch-bot/tui",
+		"devDependencies.@brian-agent/ai",
+		"optionalDependencies.@brian-agent/tui",
 	]) {
 		assert.ok(result.stderr.includes(`${dependency} must be pinned`), result.stderr);
 	}
@@ -41,22 +41,22 @@ test("rejects internal and external registry dependency ranges in every direct d
 test("accepts exact internal and external versions, exact registry aliases, and non-registry specifiers", async (t) => {
 	const result = await check(t, {
 		dependencies: {
-			"@punch-bot/codemode": "1.2.0",
-			"@punch-bot/chord": "1.2.0",
+			"@brian-agent/codemode": "1.2.0",
+			"@brian-agent/chord": "1.2.0",
 			external: "1.0.0",
-			alias: "npm:@punch-bot/ai@1.1.0",
+			alias: "npm:@brian-agent/ai@1.1.0",
 			local: "file:../local",
 			workspace: "workspace:*",
 		},
-		devDependencies: { "@punch-bot/ai": "1.2.0" },
-		optionalDependencies: { "@punch-bot/tui": "1.2.0-rc.1" },
+		devDependencies: { "@brian-agent/ai": "1.2.0" },
+		optionalDependencies: { "@brian-agent/tui": "1.2.0-rc.1" },
 	});
 	assert.equal(result.status, 0, result.stderr);
 });
 
 test("rejects registry alias ranges", async (t) => {
 	const result = await check(t, {
-		dependencies: { alias: "npm:@punch-bot/ai@^1.2.0" },
+		dependencies: { alias: "npm:@brian-agent/ai@^1.2.0" },
 	});
 	assert.equal(result.status, 1);
 	assert.match(result.stderr, /dependencies\.alias must be pinned/);

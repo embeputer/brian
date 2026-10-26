@@ -1,7 +1,7 @@
 /**
  * Gondolin Tool Routing Example
  *
- * Runs pi's built-in tools inside a local Gondolin micro-VM. The host working
+ * Runs brian's built-in tools inside a local Gondolin micro-VM. The host working
  * directory is mounted at /workspace in the guest. File changes under
  * /workspace write through to the host; other guest filesystem changes are
  * isolated to the VM.
@@ -12,7 +12,7 @@
  *
  * Usage:
  *   cd /path/to/project
- *   pi -e /path/to/pi/packages/coding-agent/examples/extensions/gondolin
+ *   brian -e /path/to/brian/packages/coding-agent/examples/extensions/gondolin
  *
  * Requirements:
  *   - Node.js >= 23.6.0 for @earendil-works/gondolin
@@ -20,8 +20,7 @@
  */
 
 import path from "node:path";
-import { RealFSProvider, VM } from "@earendil-works/gondolin";
-import type { ExtensionAPI, ExtensionContext } from "@punch-bot/cli";
+import type { ExtensionAPI, ExtensionContext } from "@brian-agent/cli";
 import {
 	type BashOperations,
 	createBashTool,
@@ -42,7 +41,8 @@ import {
 	truncateHead,
 	truncateLine,
 	type WriteOperations,
-} from "@punch-bot/cli";
+} from "@brian-agent/cli";
+import { RealFSProvider, VM } from "@earendil-works/gondolin";
 
 const GUEST_WORKSPACE = "/workspace";
 const DEFAULT_GREP_LIMIT = 100;
@@ -362,7 +362,7 @@ function createGondolinBashOps(vm: VM, localCwd: string, shellPath: string): Bas
 	};
 }
 
-export default function (pi: ExtensionAPI) {
+export default function (brian: ExtensionAPI) {
 	const localCwd = process.cwd();
 	const localRead = createReadTool(localCwd);
 	const localWrite = createWriteTool(localCwd);
@@ -379,7 +379,7 @@ export default function (pi: ExtensionAPI) {
 	async function startVm(ctx?: ExtensionContext): Promise<VM> {
 		ctx?.ui.setStatus("gondolin", ctx.ui.theme.fg("accent", `Gondolin: starting ${GUEST_WORKSPACE}`));
 		const created = await VM.create({
-			sessionLabel: `pi ${path.basename(localCwd)}`,
+			sessionLabel: `brian ${path.basename(localCwd)}`,
 			vfs: {
 				mounts: {
 					[GUEST_WORKSPACE]: new RealFSProvider(localCwd),
@@ -407,11 +407,11 @@ export default function (pi: ExtensionAPI) {
 		return vmStarting;
 	}
 
-	pi.on("session_start", async (_event, ctx) => {
+	brian.on("session_start", async (_event, ctx) => {
 		await ensureVm(ctx);
 	});
 
-	pi.on("session_shutdown", async (_event, ctx) => {
+	brian.on("session_shutdown", async (_event, ctx) => {
 		const activeVm = vm;
 		vm = undefined;
 		vmStarting = undefined;
@@ -424,7 +424,7 @@ export default function (pi: ExtensionAPI) {
 		}
 	});
 
-	pi.registerCommand("gondolin", {
+	brian.registerCommand("gondolin", {
 		description: "Show Gondolin VM status",
 		handler: async (_args, ctx) => {
 			const activeVm = await ensureVm(ctx);
@@ -440,7 +440,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localRead,
 		async execute(id, params, signal, onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -451,7 +451,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localWrite,
 		async execute(id, params, signal, onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -462,7 +462,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localEdit,
 		async execute(id, params, signal, onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -473,7 +473,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localBash,
 		async execute(id, params, signal, onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -484,7 +484,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localLs,
 		async execute(id, params, signal, onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -495,7 +495,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localFind,
 		async execute(id, params, signal, onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -506,7 +506,7 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
+	brian.registerTool({
 		...localGrep,
 		async execute(_id, params, signal, _onUpdate, ctx) {
 			const activeVm = await ensureVm(ctx);
@@ -514,12 +514,12 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.on("user_bash", async (_event, ctx) => {
+	brian.on("user_bash", async (_event, ctx) => {
 		const activeVm = await ensureVm(ctx);
 		return { operations: createGondolinBashOps(activeVm, localCwd, shellPath) };
 	});
 
-	pi.on("before_agent_start", async (event, ctx) => {
+	brian.on("before_agent_start", async (event, ctx) => {
 		await ensureVm(ctx);
 		const localLine = `Current working directory: ${localCwd}`;
 		const guestLine = `Current working directory: ${GUEST_WORKSPACE} (Gondolin VM; host workspace mounted from ${localCwd})`;

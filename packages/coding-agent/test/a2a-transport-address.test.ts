@@ -31,7 +31,7 @@ describe("parseHttpListenAddress", () => {
 	});
 
 	test("rejects unsupported transports", () => {
-		expect(parseHttpListenAddress("unix:///tmp/pi.sock")).toEqual({
+		expect(parseHttpListenAddress("unix:///tmp/brian.sock")).toEqual({
 			error: 'Unsupported A2A listen transport "unix:"',
 		});
 	});

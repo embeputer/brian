@@ -17,4 +17,4 @@ Not here:
 
 Examples: #9566, #9884, #10160, #9099, #10236, #10552, #8810, #10507.
 
-Usually not worth opening: "add model X" when the data comes from models.dev (fix upstream), stale catalog fixed by updating pi.
+Usually not worth opening: "add model X" when the data comes from models.dev (fix upstream), stale catalog fixed by updating brian.

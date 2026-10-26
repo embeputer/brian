@@ -1,9 +1,9 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { normalizeContext } from "@punch-bot/ai";
-import type { AnthropicMessagesCompat, Api, Model, OpenAICompletionsCompat } from "@punch-bot/ai/compat";
-import { getApiProvider, getModels, getSupportedThinkingLevels } from "@punch-bot/ai/compat";
+import { normalizeContext } from "@brian-agent/ai";
+import type { AnthropicMessagesCompat, Api, Model, OpenAICompletionsCompat } from "@brian-agent/ai/compat";
+import { getApiProvider, getModels, getSupportedThinkingLevels } from "@brian-agent/ai/compat";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.ts";
 import type { ModelsJsonProvider } from "../src/core/model-config.ts";
@@ -16,7 +16,7 @@ describe("ModelRegistry", () => {
 	let authStorage: AuthStorage;
 
 	beforeEach(() => {
-		tempDir = join(tmpdir(), `pi-test-model-registry-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+		tempDir = join(tmpdir(), `brian-test-model-registry-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 		mkdirSync(tempDir, { recursive: true });
 		modelsJsonPath = join(tempDir, "models.json");
 		authStorage = AuthStorage.inMemory();

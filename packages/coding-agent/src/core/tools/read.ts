@@ -1,5 +1,5 @@
-import type { AgentTool } from "@punch-bot/agent";
-import type { Api, ImageContent, Model, ModelImageResizeOptions, TextContent } from "@punch-bot/ai";
+import type { AgentTool } from "@brian-agent/agent";
+import type { Api, ImageContent, Model, ModelImageResizeOptions, TextContent } from "@brian-agent/ai";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
 import { type Static, Type } from "typebox";

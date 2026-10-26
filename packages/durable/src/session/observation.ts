@@ -4,9 +4,9 @@ import type {
 	ReplicatedStateSource,
 	ReplicatedStateSourceAttachment,
 	ReplicatedStateSourceFrame,
-} from "@punch-bot/chord";
-import { withoutAbortSignal } from "@punch-bot/chord/context";
-import type { Op } from "@punch-bot/chord/delta";
+} from "@brian-agent/chord";
+import { withoutAbortSignal } from "@brian-agent/chord/context";
+import type { Op } from "@brian-agent/chord/delta";
 import { errorMessage } from "../errors.ts";
 import type { JsonObject, WatchEnd, WatchHandle } from "../types.ts";
 

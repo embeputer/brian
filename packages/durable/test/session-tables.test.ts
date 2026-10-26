@@ -1,4 +1,4 @@
-import type { JsonValue } from "@punch-bot/chord";
+import type { JsonValue } from "@brian-agent/chord";
 import {
 	type ConversationId,
 	defineDoc,
@@ -8,7 +8,7 @@ import {
 	ReadAfterWrite,
 	type TaskId,
 	type TaskRecord,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { idFromNumber } from "../src/ids.ts";
 import { context, createConversation, documentChanges, flush, openTestSession } from "./session-support.ts";

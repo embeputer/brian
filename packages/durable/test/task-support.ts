@@ -1,4 +1,4 @@
-import { createModels } from "@punch-bot/ai";
+import { createModels } from "@brian-agent/ai";
 import {
 	type AnyTask,
 	createRegistry,
@@ -8,7 +8,7 @@ import {
 	type Registry,
 	type RegistryReader,
 	type Storage,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { context, flush } from "./session-support.ts";
 
 export type Deferred<T = void> = {

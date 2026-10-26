@@ -8,8 +8,8 @@ import {
 	fauxToolCall,
 	type ToolResultMessage,
 	Type,
-} from "@punch-bot/ai";
-import type { JsonValue } from "@punch-bot/chord";
+} from "@brian-agent/ai";
+import type { JsonValue } from "@brian-agent/chord";
 import {
 	defineTool,
 	MemoryStorage,
@@ -21,7 +21,7 @@ import {
 	ToolResultEntry,
 	ToolTask,
 	watchEvents,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { NodeExecutionEnv } from "../src/env/node.ts";
 import { createBashTool } from "../src/tools/index.ts";
@@ -368,7 +368,7 @@ describe("structured output", () => {
 	});
 
 	it("gives callers of bash its retained output and exit code, also for a nonzero exit", async () => {
-		const directory = mkdtempSync(join(tmpdir(), "pi-durable-structured-"));
+		const directory = mkdtempSync(join(tmpdir(), "brian-durable-structured-"));
 		try {
 			const setup = chatSetup();
 			addTool(setup.registry, createBashTool());

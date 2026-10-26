@@ -5,10 +5,10 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AssistantMessage } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import type { AssistantMessage } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import { NodeExecutionEnv } from "../../src/env/node.ts";
 import {
 	AssistantEntry,
@@ -46,7 +46,7 @@ const Reviewer = defineExtension({
 // ─── Host setup ─────────────────────────────────────────────────────────────
 
 // The reviewer works in its own checkout, in practice a `git worktree add`.
-const worktree = await mkdtemp(join(tmpdir(), "pi-durable-review-"));
+const worktree = await mkdtemp(join(tmpdir(), "brian-durable-review-"));
 await writeFile(join(worktree, "user.ts"), "export const name = (user) => user.name;\n");
 
 const faux = fauxProvider({ models: [{ id: "big" }, { id: "small" }] });

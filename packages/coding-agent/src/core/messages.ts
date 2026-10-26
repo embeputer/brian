@@ -5,8 +5,8 @@
  * and provides a transformer to convert them to LLM-compatible messages.
  */
 
-import type { AgentMessage } from "@punch-bot/agent";
-import type { ImageContent, Message, TextContent } from "@punch-bot/ai";
+import type { AgentMessage } from "@brian-agent/agent";
+import type { ImageContent, Message, TextContent } from "@brian-agent/ai";
 
 export const COMPACTION_SUMMARY_PREFIX = `The conversation history before this point was compacted into the following summary:
 
@@ -67,7 +67,7 @@ export interface CompactionSummaryMessage {
 }
 
 // Extend CustomAgentMessages via declaration merging
-declare module "@punch-bot/agent" {
+declare module "@brian-agent/agent" {
 	interface CustomAgentMessages {
 		bashExecution: BashExecutionMessage;
 		custom: CustomMessage;

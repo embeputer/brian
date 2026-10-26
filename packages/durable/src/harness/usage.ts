@@ -1,5 +1,5 @@
-import type { Usage } from "@punch-bot/ai";
-import { copyJson, type Draft, type JsonRepresentation } from "@punch-bot/chord";
+import type { Usage } from "@brian-agent/ai";
+import { copyJson, type Draft, type JsonRepresentation } from "@brian-agent/chord";
 import { defineDoc } from "../documents.ts";
 import type { ConversationId, Tx } from "../types.ts";
 
@@ -12,7 +12,7 @@ export type UsageState = {
 };
 
 export const UsageDoc = defineDoc<UsageState>({
-	kind: "pi.usage",
+	kind: "brian.usage",
 	version: 1,
 	scope: "conversation",
 	history: "latest",
@@ -21,7 +21,7 @@ export const UsageDoc = defineDoc<UsageState>({
 	checkpointWhen: () => true,
 });
 
-/** Add `usage` to one bucket of the conversation's `pi.usage`, in the commit that records the response. */
+/** Add `usage` to one bucket of the conversation's `brian.usage`, in the commit that records the response. */
 export async function recordUsage(
 	tx: Tx,
 	conversationId: ConversationId,

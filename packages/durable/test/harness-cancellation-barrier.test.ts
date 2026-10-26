@@ -1,5 +1,5 @@
-import type { Context } from "@punch-bot/chord";
-import { createSession, defineTask, MemoryStorage, type StorageWrite, type TaskId } from "@punch-bot/durable";
+import type { Context } from "@brian-agent/chord";
+import { createSession, defineTask, MemoryStorage, type StorageWrite, type TaskId } from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import { context, flush } from "./session-support.ts";
 import { aborted, deferred, eventually, openTasks } from "./task-support.ts";

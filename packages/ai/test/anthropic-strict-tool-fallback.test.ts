@@ -3,7 +3,7 @@ import type { BetaTool, MessageCreateParamsStreaming } from "@anthropic-ai/sdk/r
 import { Type } from "typebox";
 import { describe, expect, it, vi } from "vitest";
 import { type AnthropicOptions, stream as streamAnthropic } from "../src/api/anthropic-messages.ts";
-import { stream as streamPiMessages } from "../src/api/pi-messages.ts";
+import { stream as streamBrianMessages } from "../src/api/brian-messages.ts";
 import type { Model, Tool, TranscriptContext } from "../src/types.ts";
 import { normalizeContext } from "../src/utils/transcript.ts";
 
@@ -270,7 +270,7 @@ describe("Anthropic preferred strict tool fallback", () => {
 			baseUrl: "https://radius.example/v1",
 			compat: undefined,
 		};
-		const result = await streamPiMessages(gatewayModel, transcript, {
+		const result = await streamBrianMessages(gatewayModel, transcript, {
 			apiKey: "radius-test",
 			fetch: async (_input, init) => {
 				const request = JSON.parse(init?.body as string) as { context: TranscriptContext };

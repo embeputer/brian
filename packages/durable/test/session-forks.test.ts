@@ -6,7 +6,7 @@ import {
 	type EntryId,
 	type StorageWrite,
 	type TaskId,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it } from "vitest";
 import {
 	context,

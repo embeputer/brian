@@ -1,8 +1,8 @@
 // The Session's document cache is bounded by use: unattached documents leave it after the retention period and load
 // from Storage again; documents with a watch or a document state never leave it.
 
-import { fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@punch-bot/ai";
-import type { Context } from "@punch-bot/chord";
+import { fauxAssistantMessage, fauxText, fauxToolCall, Type } from "@brian-agent/ai";
+import type { Context } from "@brian-agent/chord";
 import {
 	type AgentEvent,
 	type ConversationId,
@@ -13,7 +13,7 @@ import {
 	MemoryStorage,
 	type StorageWrite,
 	watchEvents,
-} from "@punch-bot/durable";
+} from "@brian-agent/durable";
 import { describe, expect, it, onTestFinished } from "vitest";
 import { SessionImpl, setDefaultDocumentRetention } from "../src/session/session.ts";
 import { chatSetup, openChat } from "./chat-support.ts";
@@ -68,9 +68,9 @@ const Failing = defineDoc<Counter>({
 
 /** The default retention of this run, as the setup file set it. */
 const defaultForRun =
-	process.env.PI_DURABLE_DOCUMENT_RETENTION_MS === undefined
+	process.env.BRIAN_DURABLE_DOCUMENT_RETENTION_MS === undefined
 		? 600_000
-		: Number(process.env.PI_DURABLE_DOCUMENT_RETENTION_MS);
+		: Number(process.env.BRIAN_DURABLE_DOCUMENT_RETENTION_MS);
 
 /** A conversation document any Harness test can read. */
 const TestDoc = defineDoc<Counter>({

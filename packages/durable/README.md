@@ -1,10 +1,10 @@
-# @punch-bot/durable
+# @brian-agent/durable
 
 > **Experimental.** The API changes without notice between releases.
 
 A durable agent harness. Conversations, model turns, tool calls, and your own state are committed to storage before anything is shown. If the process dies mid-turn, reopening the storage picks the work up where it stopped.
 
-Built on [`@punch-bot/ai`](../ai/README.md) for model access and `@punch-bot/chord` for document state.
+Built on [`@brian-agent/ai`](../ai/README.md) for model access and `@brian-agent/chord` for document state.
 
 ## Table of Contents
 
@@ -40,16 +40,16 @@ Built on [`@punch-bot/ai`](../ai/README.md) for model access and `@punch-bot/cho
 ## Installation
 
 ```bash
-npm install @punch-bot/durable @punch-bot/ai @punch-bot/chord
+npm install @brian-agent/durable @brian-agent/ai @brian-agent/chord
 ```
 
 ## Quick Start
 
 ```typescript
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
-import { createModels } from "@punch-bot/ai/models";
-import { openaiProvider } from "@punch-bot/ai/providers/openai";
-import { AssistantEntry, createRegistry, Harness, MemoryStorage } from "@punch-bot/durable";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
+import { createModels } from "@brian-agent/ai/models";
+import { openaiProvider } from "@brian-agent/ai/providers/openai";
+import { AssistantEntry, createRegistry, Harness, MemoryStorage } from "@brian-agent/durable";
 
 const context = BACKGROUND_CONTEXT;
 
@@ -81,23 +81,23 @@ Every async call takes a Chord `Context`, which carries cancellation. `BACKGROUN
 
 - **Harness**: one open storage plus the machinery that runs agents on it. All changes go through one line of atomic commits, and nothing is shown before its commit is stored.
 - **Conversation**: a transcript. `root()` creates the root conversation on first use; you can create more and fork them. A `Conversation` handle holds no state; compare handles by `id`.
-- **Entry**: one immutable transcript record, such as a user message (`pi.user`), a model response (`pi.assistant`), a tool result (`pi.tool-result`), a system prompt change (`pi.system`), a reset (`pi.reset`), or your own kind. The model sees the entries from the newest reset onward.
+- **Entry**: one immutable transcript record, such as a user message (`brian.user`), a model response (`brian.assistant`), a tool result (`brian.tool-result`), a system prompt change (`brian.system`), a reset (`brian.reset`), or your own kind. The model sees the entries from the newest reset onward.
 - **Commit**: an atomic write. `conversation.commit((tx) => ...)` can append entries, edit documents, and create tasks together; either all of it is stored or none of it.
-- **Document**: typed JSON state stored next to the transcript and changed in commits. Built-in ones hold each conversation's agent choices (`pi.agent`), provider-facing session identity (`pi.provider`), running generation and tools (`pi.live`), queued submissions (`pi.inbox`), and spend (`pi.usage`).
-- **Task**: a durable state machine that saves a checkpoint at every step, so a restarted process continues from the last one. Every task has an owner: its conversation, or another task. The Harness runs answers as built-in tasks: `pi.generation` calls the model and owns the `pi.tool` tasks of its tool calls, waits for them, and hands the run to the next generation.
+- **Document**: typed JSON state stored next to the transcript and changed in commits. Built-in ones hold each conversation's agent choices (`brian.agent`), provider-facing session identity (`brian.provider`), running generation and tools (`brian.live`), queued submissions (`brian.inbox`), and spend (`brian.usage`).
+- **Task**: a durable state machine that saves a checkpoint at every step, so a restarted process continues from the last one. Every task has an owner: its conversation, or another task. The Harness runs answers as built-in tasks: `brian.generation` calls the model and owns the `brian.tool` tasks of its tool calls, waits for them, and hands the run to the next generation.
 - **Submission**: something you hand to a conversation, either user input or an entry to write, which you can wait for.
 - **Turn and run**: a turn is one model response and its tool calls; a run is the turns from an input to its final answer. A conversation is busy while a run is going.
 - **Extension**: a named bundle of tools, system prompt sections, hooks, wrappers, and tasks.
 - **Registry**: the extensions this process installed. It can change while the Harness runs; new work uses the new state.
-- **Agent**: what a conversation runs with: model, thinking level, selected extensions, tools, instructions, and working directory. Stored per conversation as names in `pi.agent`, resolved against the registry at each use.
+- **Agent**: what a conversation runs with: model, thinking level, selected extensions, tools, instructions, and working directory. Stored per conversation as names in `brian.agent`, resolved against the registry at each use.
 
 One answered input, as entries and tasks:
 
 ```text
-submit(input) → pi.user
-  pi.generation → pi.system (only if the prompt or tools changed), pi.assistant (tool calls)
-    pi.tool × n → pi.tool-result × n   (owned by the generation, which waits for them)
-  pi.generation → pi.assistant (answer) → submission done
+submit(input) → brian.user
+  brian.generation → brian.system (only if the prompt or tools changed), brian.assistant (tool calls)
+    brian.tool × n → brian.tool-result × n   (owned by the generation, which waits for them)
+  brian.generation → brian.assistant (answer) → submission done
 ```
 
 ## Persist and Resume
@@ -105,14 +105,14 @@ submit(input) → pi.user
 Use SQLite or JSONL storage to keep conversations across restarts:
 
 ```typescript
-import { openNodeSqliteStorage } from "@punch-bot/durable/storage/sqlite/node";
+import { openNodeSqliteStorage } from "@brian-agent/durable/storage/sqlite/node";
 
 const harness = await Harness.open(await openNodeSqliteStorage("./session.sqlite"), { models, registry }, context);
 const root = await harness.root(context); // the same root as last time
 harness.resume(); // continue any run the last process left unfinished
 ```
 
-Work interrupted by a crash or close stays pending. `resume()` starts the task scheduler; submitting or waiting starts it too. Each conversation has its own persisted UUIDv7 in `pi.provider`, forwarded to pi-ai as `sessionId` for provider prompt-cache and session affinity. It survives reopen, retries, reset, compaction, and model changes; a child or fork receives a fresh identity. A legacy conversation receives and persists one before its first generation or compaction request.
+Work interrupted by a crash or close stays pending. `resume()` starts the task scheduler; submitting or waiting starts it too. Each conversation has its own persisted UUIDv7 in `brian.provider`, forwarded to brian-ai as `sessionId` for provider prompt-cache and session affinity. It survives reopen, retries, reset, compaction, and model changes; a child or fork receives a fresh identity. A legacy conversation receives and persists one before its first generation or compaction request.
 
 A retried submission with the same `requestId` returns the existing submission instead of submitting twice:
 
@@ -130,8 +130,8 @@ const again = await root.submit({ type: "input", content: "Hello", requestId: "g
 Code the Harness runs, other than its built-in tasks, comes in named extensions installed in a registry your process owns:
 
 ```typescript
-import { createRegistry, defineExtension, defineTool, hook, section, ToolTask } from "@punch-bot/durable";
-import { CodingTools } from "@punch-bot/durable/tools";
+import { createRegistry, defineExtension, defineTool, hook, section, ToolTask } from "@brian-agent/durable";
+import { CodingTools } from "@brian-agent/durable/tools";
 
 const Coding = defineExtension({
 	name: "coding",
@@ -148,13 +148,13 @@ An extension may bring `tools`, `sections`, `hooks`, `wraps` (decorators of a to
 
 ## Tools
 
-`@punch-bot/durable/tools` provides `read`, `write`, `edit`, and `bash`, and the `CodingTools` extension with all four. They touch files and processes only through the call's environment (see [Environment](#environment)).
+`@brian-agent/durable/tools` provides `read`, `write`, `edit`, and `bash`, and the `CodingTools` extension with all four. They touch files and processes only through the call's environment (see [Environment](#environment)).
 
 `read` returns an image file as one image block, which programs calling it get as an `ImageContent`. Limits are the model's `inputLimits.images.resize`, by default 2000x2000 pixels and 4.5 MB of base64. Without an image processor it sends PNG, JPEG, GIF, and WebP files within them (dimensions read from the file's header) as they are, without decoding them, and refuses larger ones and other formats. With one, it decodes every image, turns it upright by its EXIF orientation, converts BMP to PNG, and shrinks it to fit. The Photon-based processor runs on WebAssembly and is only loaded when you import it:
 
 ```typescript
-import { createNodePhotonImages } from "@punch-bot/durable/images/node"; // or /images/cloudflare, or createPhotonImages(wasm) from /images
-import { createCodingTools } from "@punch-bot/durable/tools";
+import { createNodePhotonImages } from "@brian-agent/durable/images/node"; // or /images/cloudflare, or createPhotonImages(wasm) from /images
+import { createCodingTools } from "@brian-agent/durable/tools";
 
 registry.install(createCodingTools({ images: await createNodePhotonImages() }));
 ```
@@ -164,7 +164,7 @@ A model without image input sees a placeholder instead of the image, and `read` 
 Define your own tool with a TypeBox schema. `defineTool()` types `args` from `parameters`, which the Harness validates before `execute()`. `api.output()` streams running output, which becomes the result when `execute()` returns no `output`:
 
 ```typescript
-import { Type } from "@punch-bot/ai";
+import { Type } from "@brian-agent/ai";
 
 const count = defineTool({
 	name: "count",
@@ -228,7 +228,7 @@ const testsPass = defineTool({
 
 - The caller gets the nested call's `taskId`, `structuredOutput`, `details`, `diagnostics`, `usage`, and `isError`, not the `output` meant for the model. A blocked, invalid, failed, or aborted nested call returns an `isError` result. `executeTool()` itself rejects once `execute()` has returned, when the caller is aborted, or when the Harness closes; cancelling its `context` stops only the wait.
 - Hooks see a nested call's `call.parent`, so a guard can treat calls from scripts differently.
-- While the caller runs, its nested calls show in `docs["pi.live"].nestedTools`, with the arguments they run with and a `summary` (error, duration, usage) once done, and as tool events with `parentToolCallId` and `parentTaskId`. `progress: false` keeps a nested call's running output out of `pi.live`. Before the caller settles, nested calls it left running are aborted, also those an earlier attempt made. The caller's result message does not list its nested calls; their task records keep them.
+- While the caller runs, its nested calls show in `docs["brian.live"].nestedTools`, with the arguments they run with and a `summary` (error, duration, usage) once done, and as tool events with `parentToolCallId` and `parentTaskId`. `progress: false` keeps a nested call's running output out of `brian.live`. Before the caller settles, nested calls it left running are aborted, also those an earlier attempt made. The caller's result message does not list its nested calls; their task records keep them.
 - Each nested call has a key, its position among the caller's nested calls unless the caller passes `{ key }`. A replay-safe caller that reruns after a crash and calls in the same order, or passes the same keys, gets the nested calls it already made back, finished or still running, instead of starting them again. A nested call the crash interrupted before its result was committed follows its own `replay` policy, so a replay-safe tool with external effects still needs its own idempotency. A caller that is not replay-safe never reruns, so after a restart its unfinished nested calls are abandoned, with everything they own, before they run again.
 - A nested call's `usage` is counted under its own tool; passing it on in the caller's result counts it twice.
 - Nested results are not kept: they live in the caller's task documents (`NestedCallDoc`, one per nested call, keyed by its key, holding `{ taskId, result? }`) only until the caller settles. The nested call's task record keeps only a small receipt. A stored result is exactly what `executeTool()` returns, without the model's `output`, so an image or a `bash` tail is stored once.
@@ -250,7 +250,7 @@ await root.configure({ modelTools: { remove: [bash] } }, context);
 
 `conversation.agent()` resolves both lists: `tools`, offered to the model, and `callable`, which nested calls resolve among. `tools` still decides what is enabled at all; `modelTools` cannot add to it.
 
-A `deferred: true` tool is not offered to the model until it is loaded, though other tools can call it any time. The `tool_search` tool from `@punch-bot/durable/tool-search` (`createToolSearchExtension()`) lets the model search the deferred tools and loads the matches with `control.addTools`, which records them in `modelTools`; loaded tools stay offered on that branch, also after a compaction, and the `codemode` section leaves deferred tools out. Use it for large tool sets, such as an MCP server's.
+A `deferred: true` tool is not offered to the model until it is loaded, though other tools can call it any time. The `tool_search` tool from `@brian-agent/durable/tool-search` (`createToolSearchExtension()`) lets the model search the deferred tools and loads the matches with `control.addTools`, which records them in `modelTools`; loaded tools stay offered on that branch, also after a compaction, and the `codemode` section leaves deferred tools out. Use it for large tool sets, such as an MCP server's.
 
 ### Tasks a restart abandons
 
@@ -258,11 +258,11 @@ A task that its creator awaits only in memory, and that the creator never resume
 
 ## Code Mode
 
-`@punch-bot/durable/codemode` adds a `codemode` tool: the model writes JavaScript that calls the conversation's tools as `await tools.<name>(args)`, in a QuickJS sandbox (`@punch-bot/codemode`). Each call is a nested tool call, and only the script's output reaches the model. The script survives a restart: it resumes where it was, without running its finished calls again.
+`@brian-agent/durable/codemode` adds a `codemode` tool: the model writes JavaScript that calls the conversation's tools as `await tools.<name>(args)`, in a QuickJS sandbox (`@brian-agent/codemode`). Each call is a nested tool call, and only the script's output reaches the model. The script survives a restart: it resumes where it was, without running its finished calls again.
 
 ```typescript
-import { CodemodeSandbox } from "@punch-bot/codemode";
-import { createCodemodeExtension } from "@punch-bot/durable/codemode";
+import { CodemodeSandbox } from "@brian-agent/codemode";
+import { createCodemodeExtension } from "@brian-agent/durable/codemode";
 
 registry.install(createCodemodeExtension({ sandbox: new CodemodeSandbox({ memoryLimitBytes: 256 * 1024 * 1024 }) }));
 ```
@@ -283,7 +283,7 @@ A conversation's `instructions` render last, as the section `instructions`. Sect
 
 ## Per-Conversation Agent
 
-Each conversation stores what it runs with in its `pi.agent` document. `configure()` changes it in one commit; unset fields follow the host:
+Each conversation stores what it runs with in its `brian.agent` document. `configure()` changes it in one commit; unset fields follow the host:
 
 ```typescript
 await root.configure(
@@ -333,7 +333,7 @@ const harness = await Harness.open(storage, {
 `env` builds the execution environment for each tool call, section rendering, and `runtime.env()`. It receives the conversation's ID, its agent `cwd`, and committed reads, so one function serves a directory per conversation or a container per conversation:
 
 ```typescript
-import { NodeExecutionEnv } from "@punch-bot/durable/env/node";
+import { NodeExecutionEnv } from "@brian-agent/durable/env/node";
 
 const harness = await Harness.open(storage, {
 	models,
@@ -355,9 +355,9 @@ await env.exec(["git", "status", "--porcelain=v2", "-z"], {
 }, context);
 ```
 
-Abort the context to stop one call; `cleanup()` is for shutting the environment down. A custom environment can check itself with `registerEnvConformance()` from `@punch-bot/durable/testing`, like storage below.
+Abort the context to stop one call; `cleanup()` is for shutting the environment down. A custom environment can check itself with `registerEnvConformance()` from `@brian-agent/durable/testing`, like storage below.
 
-Some environments also implement the optional `listFiles()`: the files and directories below a directory at any depth, as `fd` lists them, skipping what git ignores and stopping at bounds with `truncated`. `NodeExecutionEnv` does not; pi-env's `RemoteExecutionEnv` and `LocalExecutionEnv` do. Callers fall back to their own walk when the method is missing or fails with `not_supported`:
+Some environments also implement the optional `listFiles()`: the files and directories below a directory at any depth, as `fd` lists them, skipping what git ignores and stopping at bounds with `truncated`. `NodeExecutionEnv` does not; brian-env's `RemoteExecutionEnv` and `LocalExecutionEnv` do. Callers fall back to their own walk when the method is missing or fails with `not_supported`:
 
 ```typescript
 const listing = await env.listFiles?.(".", { exclude: ["node_modules"], maxEntries: 50_000 }, context);
@@ -383,8 +383,8 @@ Everything a UI needs is committed state. `viewState()` returns the conversation
 const view = await root.viewState(context);
 view.subscribe((value) => {
 	// value.entries: the active transcript
-	// value.docs["pi.live"]: the running generation (streamed partial, retry, deferred) and tool calls (output, details)
-	// value.docs["pi.inbox"], value.docs["pi.usage"], value.docs["pi.agent"], value.docs["pi.provider"]
+	// value.docs["brian.live"]: the running generation (streamed partial, retry, deferred) and tool calls (output, details)
+	// value.docs["brian.inbox"], value.docs["brian.usage"], value.docs["brian.agent"], value.docs["brian.provider"]
 	render(value);
 });
 // later: view.dispose();
@@ -407,7 +407,7 @@ Partial answers and tool output are committed at most every 100 ms by default, s
 
 ## Busy Conversations
 
-A conversation is busy while a run is working on an input. Submitting to a busy conversation queues the submission in the conversation's inbox, `docs["pi.inbox"]` in the view:
+A conversation is busy while a run is working on an input. Submitting to a busy conversation queues the submission in the conversation's inbox, `docs["brian.inbox"]` in the view:
 
 ```typescript
 await root.submit({ type: "input", content: "Also run the tests" }, context); // follow-up (default)
@@ -424,7 +424,7 @@ await root.submit({ type: "write", entry: { kind: "app.note", data: "user opened
 
 If a run fails, queued items stay in the inbox until the next input or queued write places them, oldest first.
 
-An input is placed as a `pi.user` entry. To show it as something else, give it an `entry` with your kind and data; the model still sees `content` as the user message:
+An input is placed as a `brian.user` entry. To show it as something else, give it an `entry` with your kind and data; the model still sees `content` as the user message:
 
 ```typescript
 await root.submit(
@@ -438,7 +438,7 @@ await root.submit(
 // placed as { kind: "chat.mention", data: { author: "ann", ... }, model: [{ role: "user", content: "ann: can you check the build?" }] }
 ```
 
-It behaves like any other input: it starts a run, steers, follows up, or rejects, and is answered. While queued, its inbox item carries the entry. The kind must not start with `pi.`.
+It behaves like any other input: it starts a run, steers, follows up, or rejects, and is answered. While queued, its inbox item carries the entry. The kind must not start with `brian.`.
 
 ## Reset and Handoff
 
@@ -453,7 +453,7 @@ While busy, the reset is queued like a write. When it is placed during a tool ro
 
 ## Compaction
 
-Compaction shrinks what the model sees: it summarizes older entries and appends a `pi.compaction` entry that holds the summary and heads the first entry it keeps. Older entries stay in storage.
+Compaction shrinks what the model sees: it summarizes older entries and appends a `brian.compaction` entry that holds the summary and heads the first entry it keeps. Older entries stay in storage.
 
 ```typescript
 const id = await root.compact("Keep the failing test names", context); // manual, with optional instructions
@@ -479,18 +479,18 @@ settings: {
 }
 ```
 
-When a provider rejects a request because the context is too long, generation compacts and retries once. A summary that would cut before the start of the current context settles as `stale` when it is placed, so when several are in flight, the furthest cut stays in effect. Summarization spend counts in `pi.usage`. A `beforeCompact` hook on `CompactionTask` can decline or supply its own summary.
+When a provider rejects a request because the context is too long, generation compacts and retries once. A summary that would cut before the start of the current context settles as `stale` when it is placed, so when several are in flight, the furthest cut stays in effect. Summarization spend counts in `brian.usage`. A `beforeCompact` hook on `CompactionTask` can decline or supply its own summary.
 
 When a compaction that a generation waits for at the blocking threshold fails, the generation fails too, without sending a request: its inputs settle `unanswered` with `model_error` and detail `Compaction failed: <error>`. One that finds nothing to compact or is declined lets the request go ahead.
 
-Running compactions are listed in `docs["pi.live"].compactions` with their reason, attempt, and retry backoff. The newest failure stays in `docs["pi.live"].compactionFailure` (task, reason, error) until a compaction produces a summary. The agent events add `compaction_start` and `compaction_end` (with `error` when the compaction failed), and `compactions` and `compactionFailure` fields in the snapshot.
+Running compactions are listed in `docs["brian.live"].compactions` with their reason, attempt, and retry backoff. The newest failure stays in `docs["brian.live"].compactionFailure` (task, reason, error) until a compaction produces a summary. The agent events add `compaction_start` and `compaction_end` (with `error` when the compaction failed), and `compactions` and `compactionFailure` fields in the snapshot.
 
 ## Agent Events (Experimental)
 
 For consumers that want coding-agent style events (`message_start`, `message_update`, `tool_execution_start`, ...) instead of structural state:
 
 ```typescript
-import { watchEvents } from "@punch-bot/durable";
+import { watchEvents } from "@brian-agent/durable";
 
 const stream = await watchEvents(harness, root.id, context);
 initialize(stream.snapshot); // entries, run, in-flight generation, tools, compactions, inbox, agent, usage
@@ -506,7 +506,7 @@ Events are derived from commits, one batch per commit, and apply on top of the s
 Hooks let extensions observe or adjust the built-in tasks, in the conversations that select them:
 
 ```typescript
-import { GenerationTask, hook, ToolTask } from "@punch-bot/durable";
+import { GenerationTask, hook, ToolTask } from "@brian-agent/durable";
 
 const Guard = defineExtension({
 	name: "guard",
@@ -626,7 +626,7 @@ A task appears with the commit that creates it and leaves with the commit that m
 Documents are typed JSON objects committed together with entries. Define one, and edit it in a commit:
 
 ```typescript
-import { defineDoc } from "@punch-bot/durable";
+import { defineDoc } from "@brian-agent/durable";
 
 const Todos = defineDoc<{ items: string[] }>({
 	kind: "app.todos",
@@ -647,7 +647,7 @@ console.log(await harness.snapshot(Todos, root.id, context));
 
 ## Usage and Cost
 
-Each conversation keeps token and cost totals in `docs["pi.usage"]`: per `provider/model` for model responses, and per tool name for tool results that report usage. Failed and aborted attempts count too. For the whole Session:
+Each conversation keeps token and cost totals in `docs["brian.usage"]`: per `provider/model` for model responses, and per tool name for tool results that report usage. Failed and aborted attempts count too. For the whole Session:
 
 ```typescript
 const usage = await harness.usage(context); // { models: { "openai/gpt-6-sol": Usage }, tools: {...} }
@@ -658,9 +658,9 @@ const usage = await harness.usage(context); // { models: { "openai/gpt-6-sol": U
 | Backend | Import | Notes |
 |---|---|---|
 | Memory | `MemoryStorage` from the package root | Nothing is persisted. |
-| SQLite | `openNodeSqliteStorage(file)` from `@punch-bot/durable/storage/sqlite/node` | One database file. WAL mode with `synchronous = NORMAL`: commits survive process crashes; the newest may be lost on power or host failure. |
-| JSONL | `openNodeJsonlStorage(directory, context)` from `@punch-bot/durable/storage/jsonl/node` | Append-only files in one directory. Pass `{ fsync: true }` to flush before each commit marker. Keeps the whole history in memory too, so memory grows with it; use SQLite for long-running agents. |
-| Cloudflare Durable Object | `openDurableObjectSqliteStorage(ctx.storage)` from `@punch-bot/durable/storage/sqlite/cloudflare` | The SQLite storage of one SQLite-backed Durable Object; commits are its storage transactions. |
+| SQLite | `openNodeSqliteStorage(file)` from `@brian-agent/durable/storage/sqlite/node` | One database file. WAL mode with `synchronous = NORMAL`: commits survive process crashes; the newest may be lost on power or host failure. |
+| JSONL | `openNodeJsonlStorage(directory, context)` from `@brian-agent/durable/storage/jsonl/node` | Append-only files in one directory. Pass `{ fsync: true }` to flush before each commit marker. Keeps the whole history in memory too, so memory grows with it; use SQLite for long-running agents. |
+| Cloudflare Durable Object | `openDurableObjectSqliteStorage(ctx.storage)` from `@brian-agent/durable/storage/sqlite/cloudflare` | The SQLite storage of one SQLite-backed Durable Object; commits are its storage transactions. |
 
 SQLite storage can namespace its tables and indexes when sharing a database: pass `{ prefix: "pi_" }` to
 `SqliteStorage.open(database, options)`, `openNodeSqliteStorage(path, options)`, or
@@ -668,18 +668,18 @@ SQLite storage can namespace its tables and indexes when sharing a database: pas
 need no support. A prefix must be a SQLite identifier and cannot begin with `sqlite_`; a host may reserve more, such
 as `_cf_` in Durable Objects. Changing the prefix does not migrate existing data.
 
-Multiple Pi storages opened through the Cloudflare adapter with the same storage object automatically share an
-operation queue. To share the database with host tables, create an adapter and use it for both Pi and all host queries;
-direct storage calls bypass the queue and may be rolled back with a Pi transaction:
+Multiple Brian storages opened through the Cloudflare adapter with the same storage object automatically share an
+operation queue. To share the database with host tables, create an adapter and use it for both Brian and all host queries;
+direct storage calls bypass the queue and may be rolled back with a Brian transaction:
 
 ```typescript
 const database = new DurableObjectSqliteDatabase(ctx.storage);
-const piStorage = await SqliteStorage.open(database, { prefix: "pi_" });
+const brianStorage = await SqliteStorage.open(database, { prefix: "pi_" });
 await database.exec("CREATE TABLE IF NOT EXISTS host_notes (text TEXT)");
 await database.run("INSERT INTO host_notes (text) VALUES (?)", text);
 ```
 
-One process owns a storage at a time; there is no cross-process locking. The portable SQLite and JSONL cores (`/storage/sqlite`, `/storage/jsonl`) run without Node APIs, for example on Bun or in Cloudflare Durable Objects, given an asynchronous `SqliteDatabase` facade or a `FileSystem` from `@punch-bot/durable/env`.
+One process owns a storage at a time; there is no cross-process locking. The portable SQLite and JSONL cores (`/storage/sqlite`, `/storage/jsonl`) run without Node APIs, for example on Bun or in Cloudflare Durable Objects, given an asynchronous `SqliteDatabase` facade or a `FileSystem` from `@brian-agent/durable/env`.
 
 SQLite adapters implement promise-based `exec`, `run`, `get`, `all`, `transaction`, and `close`. `run`, `get`, and `all` take SQL text plus positional bindings; adapters may cache prepared statements by SQL text. A transaction callback receives a transaction handle; all work in the transaction must use it, and the handle expires when the callback settles. Adapters must queue unrelated operations and other transactions until the transaction finishes, so calling `database` itself inside the callback never settles:
 
@@ -693,7 +693,7 @@ await database.transaction(async (transaction) => {
 Custom backends can run the shared conformance suite with any Vitest- or Jest-compatible runner:
 
 ```typescript
-import { registerStorageConformance } from "@punch-bot/durable/testing";
+import { registerStorageConformance } from "@brian-agent/durable/testing";
 import { describe, expect, it } from "vitest";
 
 registerStorageConformance({ describe, expect, it }, "My Storage", async (use) => {
@@ -706,7 +706,7 @@ registerStorageConformance({ describe, expect, it }, "My Storage", async (use) =
 });
 ```
 
-The package root loads TypeBox, because the tool task validates arguments with pi-ai's `validateToolArguments()`. That costs about 23 MB of peak RSS unbundled, about 4 MB in a tree-shaken bundle.
+The package root loads TypeBox, because the tool task validates arguments with brian-ai's `validateToolArguments()`. That costs about 23 MB of peak RSS unbundled, about 4 MB in a tree-shaken bundle.
 
 ## Errors
 

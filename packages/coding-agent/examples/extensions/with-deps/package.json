@@ -1,5 +1,5 @@
 {
-	"name": "pi-extension-with-deps",
+	"name": "brian-extension-with-deps",
 	"private": true,
 	"version": "1.3.0",
 	"type": "module",
@@ -8,7 +8,7 @@
 		"build": "echo 'nothing to build'",
 		"check": "echo 'nothing to check'"
 	},
-	"pi": {
+	"brian": {
 		"extensions": [
 			"./index.ts"
 		]

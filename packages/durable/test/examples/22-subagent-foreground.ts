@@ -5,12 +5,12 @@
 // Run from packages/durable:
 //   node --conditions=source --experimental-strip-types test/examples/22-subagent-foreground.ts
 
-import { type AssistantMessage, type FauxResponseStep, Type } from "@punch-bot/ai";
-import { createModels } from "@punch-bot/ai/models";
-import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@punch-bot/ai/providers/faux";
-import { openaiProvider } from "@punch-bot/ai/providers/openai";
-import type { Context } from "@punch-bot/chord";
-import { BACKGROUND_CONTEXT } from "@punch-bot/chord/context";
+import { type AssistantMessage, type FauxResponseStep, Type } from "@brian-agent/ai";
+import { createModels } from "@brian-agent/ai/models";
+import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall } from "@brian-agent/ai/providers/faux";
+import { openaiProvider } from "@brian-agent/ai/providers/openai";
+import type { Context } from "@brian-agent/chord";
+import { BACKGROUND_CONTEXT } from "@brian-agent/chord/context";
 import {
 	type AgentEvent,
 	AssistantEntry,
@@ -103,7 +103,7 @@ const root = await harness.root(context, { agent: { model } });
 // ─── UI: the parent's events, with each subagent's events indented under its call ───
 
 const print = (indent: string, event: AgentEvent): void => {
-	if (event.type === "message_end" && event.entry.kind === "pi.assistant") {
+	if (event.type === "message_end" && event.entry.kind === "brian.assistant") {
 		const message = event.entry.model?.[0] as AssistantMessage;
 		const text = message.content.flatMap((c) => (c.type === "text" ? [c.text] : [])).join("");
 		if (text !== "") console.log(`${indent}assistant: ${text}`);
