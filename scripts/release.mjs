@@ -235,7 +235,8 @@ console.log();
 
 // 5. Regenerate release artifacts
 console.log("Regenerating release artifacts...");
-run("npm run generate:models");
+// Model data is committed and updated in its own PRs (`npm run generate:models`); the
+// release ships it as reviewed. Brian fetches newer catalogs at runtime.
 run("npm run check:model-data");
 run("npm run shrinkwrap:coding-agent");
 run("npm run install-lock:coding-agent");
