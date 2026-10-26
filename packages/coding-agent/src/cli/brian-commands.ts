@@ -22,8 +22,8 @@ import { SettingsManager } from "../core/settings-manager.ts";
 import { loadSkills } from "../core/skills.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
 import { runAuditCommand } from "./audit-command.ts";
-import { runRoutinesCommand } from "./routines-command.ts";
 import { connectModel, saveDefaultModel } from "./connect-model.ts";
+import { runRoutinesCommand } from "./routines-command.ts";
 
 export const BRIAN_COMMANDS = [
 	"setup",
