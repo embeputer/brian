@@ -31,6 +31,7 @@ import type {
 } from "../../core/extensions/types.ts";
 
 const DEFAULT_SUPERVISOR_URL = "http://localhost:4097";
+const SUPERVISOR_TIMEOUT_MS = 15_000;
 
 export interface PlanProposalResponse {
 	planId?: string;
@@ -42,7 +43,7 @@ export interface PlanProposalResponse {
 export interface InstallPlanGateOptions {
 	env?: NodeJS.ProcessEnv;
 	/** POST helper for tests; production posts to the sandbox supervisor. */
-	post?: (path: string, body: Record<string, unknown>) => Promise<PlanProposalResponse>;
+	post?: (path: string, body: Record<string, unknown>, signal?: AbortSignal) => Promise<PlanProposalResponse>;
 }
 
 /** The gate only exists inside a Punch sandbox (or when pointed at one). */
@@ -60,12 +61,16 @@ async function postToSupervisor(
 	env: NodeJS.ProcessEnv,
 	path: string,
 	body: Record<string, unknown>,
+	signal?: AbortSignal,
 ): Promise<PlanProposalResponse> {
 	const base = (env.PUNCH_PLAN_GATE_URL || DEFAULT_SUPERVISOR_URL).replace(/\/+$/, "");
 	const response = await fetch(`${base}${path}`, {
 		method: "POST",
 		headers: { "content-type": "application/json", authorization: supervisorAuthHeader(env) },
 		body: JSON.stringify(body),
+		signal: signal
+			? AbortSignal.any([signal, AbortSignal.timeout(SUPERVISOR_TIMEOUT_MS)])
+			: AbortSignal.timeout(SUPERVISOR_TIMEOUT_MS),
 	});
 	const text = await response.text();
 	let data: PlanProposalResponse;
@@ -89,7 +94,10 @@ function endTurn(text: string, details: PlanProposalResponse): AgentToolResult<P
 export function installPlanGate(pi: ExtensionAPI, options: InstallPlanGateOptions = {}): void {
 	const env = options.env ?? process.env;
 	if (!isPlanGateEnabled(env)) return;
-	const post = options.post ?? ((path: string, body: Record<string, unknown>) => postToSupervisor(env, path, body));
+	const post =
+		options.post ??
+		((path: string, body: Record<string, unknown>, signal?: AbortSignal) =>
+			postToSupervisor(env, path, body, signal));
 
 	pi.registerTool({
 		name: "propose_plan",
@@ -114,7 +122,7 @@ export function installPlanGate(pi: ExtensionAPI, options: InstallPlanGateOption
 			commands: Type.Optional(Type.Array(Type.String(), { description: "Shell commands the plan intends to run" })),
 			est: Type.Optional(Type.String({ description: "Concrete estimate, e.g. '~2 min'" })),
 		}),
-		async execute(_toolCallId, args) {
+		async execute(_toolCallId, args, signal) {
 			const body = {
 				summary: args.summary,
 				steps: args.steps,
@@ -124,7 +132,7 @@ export function installPlanGate(pi: ExtensionAPI, options: InstallPlanGateOption
 			};
 			let response: PlanProposalResponse;
 			try {
-				response = await post("/plan/propose", body);
+				response = await post("/plan/propose", body, signal);
 			} catch (err) {
 				// No decision, no execution: end the turn rather than run ungated.
 				return endTurn(`Plan gate unreachable (${(err as Error).message}). Turn ended; retry later.`, {});

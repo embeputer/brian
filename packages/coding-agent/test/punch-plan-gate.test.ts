@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ExtensionAPI } from "../src/core/extensions/index.ts";
 import type { ToolCallEvent } from "../src/core/extensions/types.ts";
@@ -69,13 +69,17 @@ describe("propose_plan", () => {
 	it("posts the proposal and ends the turn when decision is pending", async () => {
 		const { tool, post } = setup([{ planId: "pl_1", decision: "pending" }]);
 		const result = await tool?.execute?.("call-1", args, undefined, undefined, undefined);
-		expect(post).toHaveBeenCalledWith("/plan/propose", {
-			summary: args.summary,
-			steps: args.steps,
-			touch: args.touch,
-			commands: args.commands,
-			est: args.est,
-		});
+		expect(post).toHaveBeenCalledWith(
+			"/plan/propose",
+			{
+				summary: args.summary,
+				steps: args.steps,
+				touch: args.touch,
+				commands: args.commands,
+				est: args.est,
+			},
+			undefined,
+		);
 		expect(result?.terminate).toBe(true);
 		expect(result?.content[0]?.text).toContain("awaiting approval");
 	});
@@ -139,5 +143,64 @@ describe("createDeferredApprovalHook", () => {
 		const hook = createDeferredApprovalHook({ decide, exemptToolNames: ["read"] });
 		expect(await hook(toolCall("read"), {} as never)).toBeUndefined();
 		expect(decide).not.toHaveBeenCalled();
+	});
+});
+
+describe("propose_plan supervisor transport", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	function setupWithFetch(fetchImpl: (url: string, init: RequestInit) => Promise<Response>) {
+		const tools: ToolDefinition[] = [];
+		const api = {
+			on(_event: string, _handler: unknown) {},
+			registerTool(tool: ToolDefinition) {
+				tools.push(tool);
+			},
+		} as unknown as ExtensionAPI;
+		const fetchMock = vi.fn(fetchImpl);
+		vi.stubGlobal("fetch", fetchMock);
+		installPlanGate(api, { env: { PUNCH_PLAN_GATE_URL: "http://supervisor.test/" } });
+		return { fetchMock, tool: tools.find((candidate) => candidate.name === "propose_plan") };
+	}
+
+	it("posts to the supervisor and ends the turn on a non-2xx response", async () => {
+		const { tool, fetchMock } = setupWithFetch(async () => new Response("supervisor down", { status: 503 }));
+		const result = await tool?.execute?.("call-1", args, undefined, undefined, undefined);
+		expect(fetchMock.mock.calls[0]?.[0]).toBe("http://supervisor.test/plan/propose");
+		expect(result?.terminate).toBe(true);
+		expect(result?.content[0]?.text).toContain("unreachable");
+		expect(result?.content[0]?.text).toContain("503");
+	});
+
+	it("fails closed when the response has no decision", async () => {
+		const { tool } = setupWithFetch(async () => Response.json({ planId: "pl_4" }));
+		const result = await tool?.execute?.("call-1", args, undefined, undefined, undefined);
+		expect(result?.terminate).toBe(true);
+		expect(result?.content[0]?.text).toContain("do not proceed");
+	});
+
+	it("fails closed on an unknown decision", async () => {
+		const { tool } = setupWithFetch(async () => Response.json({ planId: "pl_5", decision: "maybe" }));
+		const result = await tool?.execute?.("call-1", args, undefined, undefined, undefined);
+		expect(result?.terminate).toBe(true);
+		expect(result?.content[0]?.text).toContain("do not proceed");
+	});
+
+	it("aborts the request with the tool signal and ends the turn", async () => {
+		const { tool, fetchMock } = setupWithFetch(
+			(_url, init) =>
+				new Promise<Response>((_resolve, reject) => {
+					init.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+				}),
+		);
+		const controller = new AbortController();
+		const pending = tool?.execute?.("call-1", args, controller.signal, undefined, undefined);
+		controller.abort();
+		const result = await pending;
+		expect(fetchMock.mock.calls[0]?.[1].signal).toBeInstanceOf(AbortSignal);
+		expect(result?.terminate).toBe(true);
+		expect(result?.content[0]?.text).toContain("unreachable");
 	});
 });
