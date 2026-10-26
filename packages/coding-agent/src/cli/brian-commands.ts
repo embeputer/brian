@@ -18,6 +18,7 @@ import {
 	VERSION,
 } from "../config.ts";
 import { ensureMemoryVault, listMemoryNotes, writeMemoryNote } from "../core/memory/vault.ts";
+import { buildServicePlan, removeService, serviceState } from "../core/service.ts";
 import { SettingsManager } from "../core/settings-manager.ts";
 import { loadSkills } from "../core/skills.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
@@ -25,6 +26,7 @@ import { runAuditCommand } from "./audit-command.ts";
 import { connectModel, saveDefaultModel } from "./connect-model.ts";
 import { runConnectBeeper, runMessagesCommand } from "./messages-command.ts";
 import { runRoutinesCommand } from "./routines-command.ts";
+import { runServe, runSleep, runWake } from "./serve-command.ts";
 
 export const BRIAN_COMMANDS = [
 	"setup",
@@ -42,6 +44,10 @@ export const BRIAN_COMMANDS = [
 	"audit",
 	"messages",
 	"gateway",
+	"serve",
+	"wake",
+	"sleep",
+	"hatch",
 	"uninstall",
 ] as const;
 
@@ -156,11 +162,13 @@ async function runOnboard(command: string, args: string[]): Promise<number> {
 		"--model",
 	]);
 	if (isHelp(flags)) {
-		console.log(`Usage: ${APP_NAME} ${command} [--name <full name>] [--nickname <n>] [--email <e>] [--occupation <o>] [--about <text>] [--voice <text>] [--provider <id>] [--model <provider/id>] [--yes]
+		console.log(`Usage: ${APP_NAME} ${command} [--name <full name>] [--nickname <n>] [--email <e>] [--occupation <o>] [--about <text>] [--voice <text>] [--provider <id>] [--model <provider/id>] [--yes] [--wake|--no-wake]
 
 Creates ${join(homedir(), CONFIG_DIR_NAME)}, the memory vault, a People/ note for you, and Agent/ notes for how Brian should sound,
 then connects a model provider (API key or subscription login) and sets the default model.
 Prompts for missing answers when run in a terminal; --yes skips the prompts.
+Then offers to wake Brian: run it in the background so routines, the audit, and messaging work
+(--wake does it without asking, --no-wake skips; --yes skips unless --wake).
 Messaging and other connections are set up later by asking Brian or with the CLI.`);
 		return 0;
 	}
@@ -196,8 +204,14 @@ Messaging and other connections are set up later by asking Brian or with the CLI
 			? `${chalk.green("Default model:")} ${model}`
 			: chalk.yellow(`No model connected yet: run ${APP_NAME} connect`),
 	);
+	const wake =
+		flags.switches.has("--wake") ||
+		(interactive &&
+			!flags.switches.has("--no-wake") &&
+			!/^n/i.test((await ask("Wake Brian now? It runs in the background and starts when you log in [Y/n]")) ?? ""));
+	const awake = wake && (await runWake([])) === 0;
 	console.log(`\n${chalk.green("Brian is set up.")} Next:
-  ${APP_NAME} "plan my week"         talk to Brian
+  ${APP_NAME} "plan my week"         talk to Brian${awake ? "" : `\n  ${APP_NAME} wake                   run Brian in the background (routines, audit, messages)`}
   ${APP_NAME} doctor                 check providers, paths, and memory
 Ask Brian to set up messaging and other connections when you need them.`);
 	return 0;
@@ -292,6 +306,7 @@ function countFiles(dir: string, suffix: string): number {
 function runStatus(args: string[]): number {
 	const flags = parseFlags(args, []);
 	const settings = SettingsManager.create(process.cwd(), getAgentDir(), { projectTrusted: false });
+	const plan = buildServicePlan();
 	const status = {
 		version: VERSION,
 		agentDir: getAgentDir(),
@@ -303,6 +318,7 @@ function runStatus(args: string[]): number {
 			.length,
 		defaultProvider: settings.getDefaultProvider() ?? null,
 		defaultModel: settings.getDefaultModel() ?? null,
+		background: plan ? serviceState(plan) : "unsupported",
 	};
 	if (flags.switches.has("--json")) console.log(JSON.stringify(status, null, 2));
 	else for (const [key, value] of Object.entries(status)) console.log(`${key.padEnd(16)} ${value ?? "-"}`);
@@ -521,6 +537,8 @@ Remove the CLI itself with: npm uninstall -g @brian-agent/cli`);
 		console.log(`Nothing to remove: ${root} does not exist.`);
 		return 0;
 	}
+	const plan = buildServicePlan();
+	if (plan && removeService(plan)) console.log(`Stopped and removed the background service (${plan.file}).`);
 	const memory = resolve(getMemoryDir());
 	for (const entry of readdirSync(root)) {
 		const full = resolve(root, entry);
@@ -540,7 +558,14 @@ export async function runBrianCommand(args: string[]): Promise<number | undefine
 	switch (command) {
 		case "setup":
 		case "onboard":
+		case "hatch":
 			return runOnboard(command, rest);
+		case "serve":
+			return runServe(rest);
+		case "wake":
+			return runWake(rest);
+		case "sleep":
+			return runSleep(rest);
 		case "doctor":
 			return runDoctor();
 		case "status":

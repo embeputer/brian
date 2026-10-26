@@ -52,6 +52,10 @@
               "path": "brian-audit.md"
             },
             {
+              "title": "Waking Brian",
+              "path": "brian-serve.md"
+            },
+            {
               "title": "Messages and the Gateway",
               "path": "brian-messages.md"
             },

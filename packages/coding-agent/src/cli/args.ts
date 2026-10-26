@@ -281,14 +281,16 @@ ${chalk.bold("Usage:")}
   ${APP_NAME} [options] [--] [@files...] [messages...]
 
 ${chalk.bold("Commands:")}
-  ${APP_NAME} setup | onboard           Create ~/.brian and the memory vault, tell Brian who you are
+  ${APP_NAME} hatch | onboard | setup   Create ~/.brian and the memory vault, tell Brian who you are
+  ${APP_NAME} wake | sleep              Run Brian in the background (starts at login), or stop it
+  ${APP_NAME} serve                     Run Brian's routines, gateway, and local API in the foreground
   ${APP_NAME} doctor                    Check node, config, memory, providers, and skills
   ${APP_NAME} status [--json]           Show paths, counts, and the default model
   ${APP_NAME} connect [--provider id]   Connect a model provider and pick the default model
   ${APP_NAME} model [provider/id]       Show or set the default model
   ${APP_NAME} memory <command>          Search and write the markdown memory vault
   ${APP_NAME} skill <command>           List, show, add, create, or remove skills
-  ${APP_NAME} routines <command>        Reminders and scheduled tasks (run with routines daemon)
+  ${APP_NAME} routines <command>        Reminders and scheduled tasks (run by brian wake)
   ${APP_NAME} audit [--report|--schedule] Review skills and memory, weekly with --schedule
   ${APP_NAME} connect beeper            Connect Beeper Desktop (Discord, WhatsApp, iMessage, ...)
   ${APP_NAME} messages <command>        Chats, drafts to approve, per-chat policies, message log
