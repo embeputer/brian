@@ -12,9 +12,7 @@ function writeJson(path, value) {
 	writeFileSync(path, `${JSON.stringify(value)}\n`);
 }
 
-test("publishes explicit per-type and total model counts", (t) => {
-	const input = mkdtempSync(join(tmpdir(), "brian-model-catalog-counts-"));
-	t.after(() => rmSync(input, { recursive: true, force: true }));
+function writeBundle(input) {
 	const providersDir = join(input, "providers");
 	mkdirSync(providersDir);
 
@@ -45,6 +43,13 @@ test("publishes explicit per-type and total model counts", (t) => {
 		writeJson(join(providersDir, `${providerId}.all.json`), allModels[providerId]);
 	}
 
+}
+
+test("publishes explicit per-type and total model counts", (t) => {
+	const input = mkdtempSync(join(tmpdir(), "brian-model-catalog-counts-"));
+	t.after(() => rmSync(input, { recursive: true, force: true }));
+	writeBundle(input);
+
 	const result = spawnSync(
 		process.execPath,
 		[
@@ -64,4 +69,36 @@ test("publishes explicit per-type and total model counts", (t) => {
 	assert.equal(publication.imageModelCount, 1);
 	assert.equal(publication.classifierModelCount, 1);
 	assert.equal(publication.totalModelCount, 502);
+});
+
+test("writes per-provider shards with generatedAt and skips an unchanged revision", (t) => {
+	const input = mkdtempSync(join(tmpdir(), "brian-model-catalog-input-"));
+	const output = mkdtempSync(join(tmpdir(), "brian-model-catalog-output-"));
+	t.after(() => {
+		rmSync(input, { recursive: true, force: true });
+		rmSync(output, { recursive: true, force: true });
+	});
+	writeBundle(input);
+	const publish = () =>
+		spawnSync(
+			process.execPath,
+			["scripts/publish-model-catalog.mjs", "--input", input, "--output", output, "--source-commit", "test-commit"],
+			{ cwd: root, encoding: "utf8" },
+		);
+
+	const first = publish();
+	assert.equal(first.status, 0, `${first.stdout}\n${first.stderr}`);
+	const catalog = JSON.parse(readFileSync(join(output, "v1", "catalog.json"), "utf8"));
+	const shard = JSON.parse(readFileSync(join(output, "v1", "providers", "openrouter.json"), "utf8"));
+	assert.equal(shard.revision, catalog.revision);
+	assert.equal(shard.generatedAt, catalog.generatedAt);
+	assert.deepEqual(
+		shard.models.map((model) => `${model.type}:${model.id}`),
+		["image:shared", "classifier:shared"],
+	);
+
+	const second = publish();
+	assert.equal(second.status, 0, `${second.stdout}\n${second.stderr}`);
+	assert.match(second.stdout, /already current/);
+	assert.equal(JSON.parse(readFileSync(join(output, "v1", "catalog.json"), "utf8")).generatedAt, catalog.generatedAt);
 });

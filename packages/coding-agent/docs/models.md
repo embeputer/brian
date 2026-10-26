@@ -12,7 +12,7 @@ For a built-in provider, start with `/login`, then choose a model with `/model`.
 | An OpenAI-, Anthropic-, or Google-compatible endpoint | Add it to `models.json` |
 | A provider with a custom protocol or authentication flow | Build or install a provider extension |
 
-Browse the [model catalog](https://pi.dev/models) for current providers, model IDs, capabilities, context limits, and pricing. Brian starts with its bundled catalog and can overlay newer catalog data from pi.dev. Cached catalog data remains available offline; run `brian update --models` to force a refresh.
+Brian starts with its bundled catalog and overlays a newer one that is rebuilt every few hours from [models.dev](https://models.dev) and the providers' own model lists, so new models show up without a Brian update. OpenRouter keys also get the list of models available to that key straight from OpenRouter. Cached catalog data remains available offline; run `brian update --models` to force a refresh.
 
 ## Authenticate
 

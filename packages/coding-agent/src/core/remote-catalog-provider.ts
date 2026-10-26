@@ -11,15 +11,12 @@ import { VERSION } from "../config.ts";
 import { getBrianUserAgent } from "../utils/brian-user-agent.ts";
 import { fetchWithRetry } from "../utils/management-http.ts";
 
-const DEFAULT_CATALOG_BASE_URL = "https://pi.dev";
+/** Static catalog regenerated from models.dev and provider model lists by `.github/workflows/model-catalog.yml`. */
+const DEFAULT_CATALOG_BASE_URL = "https://raw.githubusercontent.com/embeputer/brian/model-catalog/";
+const REMOTE_CATALOG_SCHEMA_VERSION = 1;
 const REMOTE_CATALOG_ATTEMPT_TIMEOUT_MS = 4_000;
 export const REMOTE_CATALOG_REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000;
-/**
- * Model types this client can consume. Sent as `?types=` so the catalog server
- * returns the full-type shard instead of the chat-only one served to clients
- * that predate model types. A server that ignores the parameter still returns
- * the chat-only shard, which this client handles unchanged.
- */
+/** Model types this client can consume. Entries of other types are dropped. */
 export const REMOTE_CATALOG_MODEL_TYPES: readonly ModelType[] = ["chat", "image", "classifier"];
 
 function isSupportedModelType(model: { type?: unknown }): boolean {
@@ -50,20 +47,28 @@ function parseCatalog(providerId: string, value: unknown): AnyModel[] {
 		.map((model) => ({ ...model, provider: providerId }) as AnyModel);
 }
 
-/** Read a successful pi.dev catalog response. A missing or invalid Last-Modified header is 0. */
+/**
+ * Read a successful catalog response. The catalog's age is its `generatedAt` field, or the
+ * Last-Modified header when the body has none. A missing or invalid timestamp is 0.
+ */
 async function readCatalog(
 	providerId: string,
 	response: Response,
 ): Promise<{ models: AnyModel[]; lastModified: number; etag: string | undefined }> {
-	const lastModified = Date.parse(response.headers.get("last-modified") ?? "");
+	const body: unknown = await response.json();
+	const generatedAt =
+		typeof body === "object" && body !== null && "generatedAt" in body && typeof body.generatedAt === "string"
+			? body.generatedAt
+			: undefined;
+	const lastModified = Date.parse(generatedAt ?? response.headers.get("last-modified") ?? "");
 	return {
-		models: parseCatalog(providerId, await response.json()),
+		models: parseCatalog(providerId, body),
 		lastModified: Number.isNaN(lastModified) ? 0 : lastModified,
 		etag: response.headers.get("etag") ?? undefined,
 	};
 }
 
-/** Whether a pi.dev catalog is newer than the model data shipped with brian. */
+/** Whether a remote catalog is newer than the model data shipped with brian. */
 function isNewer(lastModified: number | undefined, localGeneratedAt: number | undefined): boolean {
 	return localGeneratedAt === undefined || (lastModified !== undefined && lastModified > localGeneratedAt);
 }
@@ -78,8 +83,8 @@ function requestCatalog(
 	signal: AbortSignal,
 	validator?: string,
 ): Promise<Response> {
-	const url = new URL(`/api/models/providers/${encodeURIComponent(providerId)}`, catalogBaseUrl);
-	url.searchParams.set("types", REMOTE_CATALOG_MODEL_TYPES.join(","));
+	const base = catalogBaseUrl.endsWith("/") ? catalogBaseUrl : `${catalogBaseUrl}/`;
+	const url = new URL(`v${REMOTE_CATALOG_SCHEMA_VERSION}/providers/${encodeURIComponent(providerId)}.json`, base);
 	return fetchWithRetry(
 		url,
 		{
@@ -100,7 +105,7 @@ export type PersonalizeCatalog = (
 	context: RefreshModelsContext,
 ) => Promise<readonly AnyModel[]>;
 
-/** Add a persisted pi.dev catalog overlay to a static built-in provider. */
+/** Add a persisted remote catalog overlay to a static built-in provider. */
 export function withRemoteCatalog(
 	provider: Provider,
 	catalogBaseUrl: string = DEFAULT_CATALOG_BASE_URL,
@@ -129,7 +134,7 @@ export function withRemoteCatalog(
 				return;
 			}
 			if (!context.allowNetwork || context.signal.aborted) return;
-			// Skip the request if pi.dev was checked less than REMOTE_CATALOG_REFRESH_INTERVAL_MS ago.
+			// Skip the request if the catalog was checked less than REMOTE_CATALOG_REFRESH_INTERVAL_MS ago.
 			// An entry without lastModified (saved by an older brian, or after a failed first request) is
 			// always refetched: remoteModels() ignores it, so waiting would leave the overlay empty.
 			if (
@@ -186,10 +191,10 @@ export function withRemoteCatalog(
 
 /**
  * Like `withRemoteCatalog`, but on each network refresh the catalog (built-in models plus a newer
- * pi.dev catalog) is passed through `personalize` and the result is saved. The saved entry holds
- * the personalized list, not the pi.dev catalog, and replaces the catalog, including offline.
+ * remote catalog) is passed through `personalize` and the result is saved. The saved entry holds
+ * the personalized list, not the remote catalog, and replaces the catalog, including offline.
  * The refresh interval and etag revalidation are skipped. An empty list (nothing saved yet, or an
- * empty catalog saved by an older brian after a failed or missing pi.dev catalog) falls back to the
+ * empty catalog saved by an older brian after a failed or missing remote catalog) falls back to the
  * built-in models.
  */
 export function withPersonalizedCatalog(
