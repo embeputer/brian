@@ -245,9 +245,9 @@
       "description": "Show the condensed changelog after update; use /changelog for the full changelog.",
       "default": false
     },
-    "enableInstallTelemetry": {
+    "providerAttribution": {
       "type": "boolean",
-      "description": "Send an anonymous version and update ping after changelog-detected updates.",
+      "description": "Identify requests as coming from Brian to providers that ask for it (OpenRouter, NVIDIA, Cloudflare).",
       "default": true
     },
     "enableAnalytics": {
