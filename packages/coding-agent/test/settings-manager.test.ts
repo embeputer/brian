@@ -32,7 +32,7 @@ describe("SettingsManager", () => {
 			writeFileSync(
 				settingsPath,
 				JSON.stringify({
-					theme: "dark",
+					shellCommandPrefix: "dark",
 					defaultModel: "claude-sonnet",
 				}),
 			);
@@ -53,11 +53,11 @@ describe("SettingsManager", () => {
 			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
 			expect(savedSettings.enabledModels).toEqual(["claude-opus-4-5", "gpt-5.2-codex"]);
 			expect(savedSettings.defaultThinkingLevel).toBe("high");
-			expect(savedSettings.theme).toBe("dark");
+			expect(savedSettings.shellCommandPrefix).toBe("dark");
 			expect(savedSettings.defaultModel).toBe("claude-sonnet");
 		});
 
-		it("should preserve custom settings when changing theme", async () => {
+		it("should preserve custom settings when changing another setting", async () => {
 			const settingsPath = join(agentDir, "settings.json");
 			writeFileSync(
 				settingsPath,
@@ -74,15 +74,15 @@ describe("SettingsManager", () => {
 			currentSettings.extensions = ["/path/to/extension.ts"];
 			writeFileSync(settingsPath, JSON.stringify(currentSettings, null, 2));
 
-			// User changes theme
-			manager.setTheme("light");
+			// User changes another setting
+			manager.setProviderAttribution(false);
 			await manager.flush();
 
 			// Verify all settings preserved
 			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
 			expect(savedSettings.shellPath).toBe("/bin/zsh");
 			expect(savedSettings.extensions).toEqual(["/path/to/extension.ts"]);
-			expect(savedSettings.theme).toBe("light");
+			expect(savedSettings.providerAttribution).toBe(false);
 		});
 
 		it("should let in-memory changes override file changes for same key", async () => {
@@ -90,7 +90,7 @@ describe("SettingsManager", () => {
 			writeFileSync(
 				settingsPath,
 				JSON.stringify({
-					theme: "dark",
+					shellCommandPrefix: "dark",
 				}),
 			);
 
@@ -114,7 +114,7 @@ describe("SettingsManager", () => {
 	describe("deviceId", () => {
 		it("creates one global device ID and reuses it in later processes", async () => {
 			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "dark" }));
 			writeFileSync(join(projectDir, ".brian", "settings.json"), JSON.stringify({ deviceId: "project-device" }));
 			const first = SettingsManager.create(projectDir, agentDir);
 
@@ -124,7 +124,7 @@ describe("SettingsManager", () => {
 			expect(deviceId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
 			expect(first.getOrCreateDeviceId()).toBe(deviceId);
 			expect(SettingsManager.create(projectDir, agentDir).getOrCreateDeviceId()).toBe(deviceId);
-			expect(JSON.parse(readFileSync(settingsPath, "utf-8"))).toEqual({ theme: "dark", deviceId });
+			expect(JSON.parse(readFileSync(settingsPath, "utf-8"))).toEqual({ shellCommandPrefix: "dark", deviceId });
 		});
 	});
 
@@ -179,7 +179,7 @@ describe("SettingsManager", () => {
 			writeFileSync(
 				settingsPath,
 				JSON.stringify({
-					theme: "dark",
+					shellCommandPrefix: "dark",
 					extensions: ["/before.ts"],
 				}),
 			);
@@ -189,7 +189,7 @@ describe("SettingsManager", () => {
 			writeFileSync(
 				settingsPath,
 				JSON.stringify({
-					theme: "light",
+					shellCommandPrefix: "light",
 					extensions: ["/after.ts"],
 					defaultModel: "claude-sonnet",
 				}),
@@ -197,52 +197,34 @@ describe("SettingsManager", () => {
 
 			await manager.reload();
 
-			expect(manager.getTheme()).toBe("light");
+			expect(manager.getShellCommandPrefix()).toBe("light");
 			expect(manager.getExtensionPaths()).toEqual(["/after.ts"]);
 			expect(manager.getDefaultModel()).toBe("claude-sonnet");
 		});
 
 		it("should keep previous settings and report the file path when the file is invalid", async () => {
 			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "dark" }));
 
 			const manager = SettingsManager.create(projectDir, agentDir);
 
 			writeFileSync(settingsPath, "{ invalid json");
 			await manager.reload();
 
-			expect(manager.getTheme()).toBe("dark");
+			expect(manager.getShellCommandPrefix()).toBe("dark");
 			expect(manager.drainErrors()).toMatchObject([{ scope: "global", path: settingsPath }]);
 		});
 
 		it("preserves runtime overrides when settings reload", async () => {
 			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "dark" }));
 			const manager = SettingsManager.create(projectDir, agentDir);
-			manager.applyOverrides({ theme: "runtime" });
+			manager.applyOverrides({ shellCommandPrefix: "runtime" });
 
-			writeFileSync(settingsPath, JSON.stringify({ theme: "light" }));
+			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "light" }));
 			await manager.reload();
 
-			expect(manager.getTheme()).toBe("runtime");
-		});
-	});
-
-	describe("theme setting", () => {
-		it("stores slash-separated automatic theme settings separately from fixed theme names", async () => {
-			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "light/dark" }));
-
-			const manager = SettingsManager.create(projectDir, agentDir);
-
-			expect(manager.getTheme()).toBeUndefined();
-			expect(manager.getThemeSetting()).toBe("light/dark");
-
-			manager.setTheme("solarized-light/tokyo-night");
-			await manager.flush();
-
-			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-			expect(savedSettings.theme).toBe("solarized-light/tokyo-night");
+			expect(manager.getShellCommandPrefix()).toBe("runtime");
 		});
 	});
 
@@ -267,25 +249,25 @@ describe("SettingsManager", () => {
 
 	describe("project trust", () => {
 		it("should skip project settings when project is not trusted", () => {
-			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ theme: "global" }));
-			writeFileSync(join(projectDir, ".brian", "settings.json"), JSON.stringify({ theme: "project" }));
+			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ shellCommandPrefix: "global" }));
+			writeFileSync(join(projectDir, ".brian", "settings.json"), JSON.stringify({ shellCommandPrefix: "project" }));
 
 			const manager = SettingsManager.create(projectDir, agentDir, { projectTrusted: false });
 
 			expect(manager.isProjectTrusted()).toBe(false);
-			expect(manager.getTheme()).toBe("global");
+			expect(manager.getShellCommandPrefix()).toBe("global");
 			expect(manager.getProjectSettings()).toEqual({});
 		});
 
 		it("should reload project settings after trust changes to true", () => {
-			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ theme: "global" }));
-			writeFileSync(join(projectDir, ".brian", "settings.json"), JSON.stringify({ theme: "project" }));
+			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ shellCommandPrefix: "global" }));
+			writeFileSync(join(projectDir, ".brian", "settings.json"), JSON.stringify({ shellCommandPrefix: "project" }));
 			const manager = SettingsManager.create(projectDir, agentDir, { projectTrusted: false });
 
 			manager.setProjectTrusted(true);
 
 			expect(manager.isProjectTrusted()).toBe(true);
-			expect(manager.getTheme()).toBe("project");
+			expect(manager.getShellCommandPrefix()).toBe("project");
 		});
 
 		it("should fail project settings writes when project is not trusted", async () => {
@@ -324,7 +306,7 @@ describe("SettingsManager", () => {
 		it("should not create .brian folder when only reading project settings", () => {
 			// Create agent dir with global settings, but NO .brian folder in project
 			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "dark" }));
 
 			// Delete the .brian folder that beforeEach created
 			rmSync(join(projectDir, ".brian"), { recursive: true });
@@ -336,13 +318,13 @@ describe("SettingsManager", () => {
 			expect(existsSync(join(projectDir, ".brian"))).toBe(false);
 
 			// Settings should still be loaded from global
-			expect(manager.getTheme()).toBe("dark");
+			expect(manager.getShellCommandPrefix()).toBe("dark");
 		});
 
 		it("should create .brian folder when writing project settings", async () => {
 			// Create agent dir with global settings, but NO .brian folder in project
 			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "dark" }));
 
 			// Delete the .brian folder that beforeEach created
 			rmSync(join(projectDir, ".brian"), { recursive: true });
@@ -614,7 +596,7 @@ describe("SettingsManager", () => {
 
 		it("should return undefined when shellCommandPrefix is not set", () => {
 			const settingsPath = join(agentDir, "settings.json");
-			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
+			writeFileSync(settingsPath, JSON.stringify({ defaultModel: "dark" }));
 
 			const manager = SettingsManager.create(projectDir, agentDir);
 
@@ -626,12 +608,12 @@ describe("SettingsManager", () => {
 			writeFileSync(settingsPath, JSON.stringify({ shellCommandPrefix: "shopt -s expand_aliases" }));
 
 			const manager = SettingsManager.create(projectDir, agentDir);
-			manager.setTheme("light");
+			manager.setProviderAttribution(false);
 			await manager.flush();
 
 			const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
 			expect(savedSettings.shellCommandPrefix).toBe("shopt -s expand_aliases");
-			expect(savedSettings.theme).toBe("light");
+			expect(savedSettings.providerAttribution).toBe(false);
 		});
 	});
 
@@ -696,7 +678,7 @@ describe("SettingsManager", () => {
 
 	describe("getSessionDir", () => {
 		it("should return undefined when not set", () => {
-			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ theme: "dark" }));
+			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ shellCommandPrefix: "dark" }));
 			const manager = SettingsManager.create(projectDir, agentDir);
 			expect(manager.getSessionDir()).toBeUndefined();
 		});
@@ -723,7 +705,7 @@ describe("SettingsManager", () => {
 
 	describe("getShellPath", () => {
 		it("should return undefined when not set", () => {
-			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ theme: "dark" }));
+			writeFileSync(join(agentDir, "settings.json"), JSON.stringify({ shellCommandPrefix: "dark" }));
 			const manager = SettingsManager.create(projectDir, agentDir);
 			expect(manager.getShellPath()).toBeUndefined();
 		});

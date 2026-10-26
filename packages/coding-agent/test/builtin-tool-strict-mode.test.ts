@@ -57,7 +57,6 @@ describe("strict built-in tools", () => {
 				noExtensions: true,
 				noSkills: true,
 				noPromptTemplates: true,
-				noThemes: true,
 				extensionFactories: [
 					(brian) => {
 						brian.on("session_start", () => {

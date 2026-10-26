@@ -591,11 +591,6 @@ export function getMemoryDir(): string {
 	return join(homedir(), CONFIG_DIR_NAME, "memory");
 }
 
-/** Get path to user's custom themes directory */
-export function getCustomThemesDir(): string {
-	return join(getAgentDir(), "themes");
-}
-
 /** Get path to models.json */
 export function getModelsPath(): string {
 	return join(getAgentDir(), "models.json");

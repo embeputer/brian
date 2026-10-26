@@ -1,5 +1,4 @@
 {
-	"$schema": "https://raw.githubusercontent.com/embeputer/brian/main/packages/coding-agent/schemas/theme.schema.json",
 	"name": "dark",
 	"appearance": "dark",
 	"vars": {

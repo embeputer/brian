@@ -144,7 +144,7 @@ import {
 	type NormalizedBuildSystemPromptOptions,
 	normalizeBuildSystemPromptOptions,
 } from "./system-prompt.ts";
-import { getThemeByName, theme } from "./theme/theme.ts";
+import { theme } from "./theme/theme.ts";
 import { type BashOperations, createLocalBashOperations } from "./tools/bash.ts";
 import { createAllToolDefinitions } from "./tools/index.ts";
 import { createToolDefinitionFromAgentTool } from "./tools/tool-definition-wrapper.ts";
@@ -3316,19 +3316,15 @@ export class AgentSession {
 			return;
 		}
 
-		const { skillPaths, promptPaths, themePaths } = await this._extensionRunner.emitResourcesDiscover(
-			this._cwd,
-			reason,
-		);
+		const { skillPaths, promptPaths } = await this._extensionRunner.emitResourcesDiscover(this._cwd, reason);
 
-		if (skillPaths.length === 0 && promptPaths.length === 0 && themePaths.length === 0) {
+		if (skillPaths.length === 0 && promptPaths.length === 0) {
 			return;
 		}
 
 		const extensionPaths: ResourceExtensionPaths = {
 			skillPaths: this.buildExtensionResourcePaths(skillPaths),
 			promptPaths: this.buildExtensionResourcePaths(promptPaths),
-			themePaths: this.buildExtensionResourcePaths(themePaths),
 		};
 
 		this._resourceLoader.extendResources(extensionPaths);
@@ -4312,14 +4308,9 @@ export class AgentSession {
 	/**
 	 * Export session to HTML.
 	 * @param outputPath Optional output path (defaults to session directory)
-	 * @param options Optional export presentation settings
 	 * @returns Path to exported file
 	 */
-	async exportToHtml(outputPath?: string, options: { themeName?: string } = {}): Promise<string> {
-		const themeName = [options.themeName, this.settingsManager.getTheme()].find(
-			(candidate) => candidate !== undefined && getThemeByName(candidate) !== undefined,
-		);
-
+	async exportToHtml(outputPath?: string): Promise<string> {
 		// Create tool renderer if we have an extension runner (for custom tool HTML rendering)
 		const toolRenderer: ToolHtmlRenderer = createToolHtmlRenderer({
 			getToolDefinition: (name) => this.getToolDefinition(name),
@@ -4329,7 +4320,6 @@ export class AgentSession {
 
 		return await exportSessionToHtml(this.sessionManager, this.state, {
 			outputPath,
-			themeName,
 			toolRenderer,
 		});
 	}

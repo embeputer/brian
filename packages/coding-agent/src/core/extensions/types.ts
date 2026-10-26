@@ -66,7 +66,6 @@ import type { Settings } from "../settings-manager.ts";
 import type { SlashCommandInfo } from "../slash-commands.ts";
 import type { SourceInfo } from "../source-info.ts";
 import type { BuildSystemPromptOptions, NormalizedBuildSystemPromptOptions } from "../system-prompt.ts";
-import type { Theme } from "../theme/theme.ts";
 import type { BashOperations } from "../tools/bash.ts";
 import type { EditToolDetails } from "../tools/edit.ts";
 import type {
@@ -177,18 +176,6 @@ export interface ExtensionUIContext {
 
 	/** Show a multi-line editor for text editing. */
 	editor(title: string, prefill?: string): Promise<string | undefined>;
-
-	/** Get the current theme for styling. */
-	readonly theme: Theme;
-
-	/** Get all available themes with their names and file paths. */
-	getAllThemes(): { name: string; path: string | undefined }[];
-
-	/** Load a theme by name without switching to it. Returns undefined if not found. */
-	getTheme(name: string): Theme | undefined;
-
-	/** Set the current theme by name or Theme object. */
-	setTheme(theme: string | Theme): { success: boolean; error?: string };
 
 	/** Get current tool output expansion state. */
 	getToolsExpanded(): boolean;
@@ -328,7 +315,7 @@ export interface ExtensionCommandContext extends ExtensionContext {
 		options?: { withSession?: (ctx: ReplacedSessionContext) => Promise<void> },
 	): Promise<{ cancelled: boolean }>;
 
-	/** Reload extensions, skills, prompts, themes, and context files. */
+	/** Reload extensions, skills, prompts, and context files. */
 	reload(): Promise<void>;
 }
 
@@ -563,7 +550,6 @@ export interface ResourcesDiscoverEvent {
 export interface ResourcesDiscoverResult {
 	skillPaths?: string[];
 	promptPaths?: string[];
-	themePaths?: string[];
 }
 
 /**

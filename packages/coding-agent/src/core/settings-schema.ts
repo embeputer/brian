@@ -175,7 +175,6 @@ const PackageSourceSchema = Type.Union(
 			extensions: Type.Optional(Type.Array(Type.String())),
 			skills: Type.Optional(Type.Array(Type.String())),
 			prompts: Type.Optional(Type.Array(Type.String())),
-			themes: Type.Optional(Type.Array(Type.String())),
 		}),
 	],
 	{
@@ -227,7 +226,6 @@ export const SettingsSchema = Type.Object(
 				default: SETTINGS_DEFAULTS.followUpMode,
 			}),
 		),
-		theme: Type.Optional(Type.String()),
 		compaction: Type.Optional(CompactionSettingsSchema),
 		branchSummary: Type.Optional(BranchSummarySettingsSchema),
 		retry: Type.Optional(RetrySettingsSchema),
@@ -306,7 +304,6 @@ export const SettingsSchema = Type.Object(
 		prompts: Type.Optional(
 			Type.Array(Type.String(), { description: "Local prompt template file paths or directories." }),
 		),
-		themes: Type.Optional(Type.Array(Type.String(), { description: "Local theme file paths or directories." })),
 		enableSkillCommands: Type.Optional(
 			Type.Boolean({
 				description: "Register skills as /skill:name commands.",

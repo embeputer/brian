@@ -23,7 +23,6 @@ import { convertToLlm } from "../../src/core/messages.ts";
 import { SessionManager } from "../../src/core/session-manager.ts";
 import type { Settings } from "../../src/core/settings-manager.ts";
 import { SettingsManager } from "../../src/core/settings-manager.ts";
-import { theme } from "../../src/core/theme/theme.ts";
 import type { InlineExtension, ResourceLoader } from "../../src/index.ts";
 import {
 	type CreateTestExtensionsResultInput,
@@ -89,12 +88,6 @@ export function createTestUiContext(overrides: Partial<ExtensionUIContext> = {})
 		setEditorText: () => {},
 		getEditorText: () => "",
 		editor: async () => undefined,
-		get theme() {
-			return theme;
-		},
-		getAllThemes: () => [],
-		getTheme: () => undefined,
-		setTheme: () => ({ success: false, error: "Theme switching not available in tests" }),
 		getToolsExpanded: () => false,
 		setToolsExpanded: () => {},
 		...overrides,

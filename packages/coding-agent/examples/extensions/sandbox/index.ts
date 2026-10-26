@@ -45,8 +45,14 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { SandboxManager, type SandboxRuntimeConfig } from "@anthropic-ai/sandbox-runtime";
-import type { ExtensionAPI } from "@brian-agent/cli";
-import { type BashOperations, CONFIG_DIR_NAME, createBashTool, getAgentDir } from "@brian-agent/cli";
+import {
+	type BashOperations,
+	CONFIG_DIR_NAME,
+	createBashTool,
+	type ExtensionAPI,
+	getAgentDir,
+	theme,
+} from "@brian-agent/cli";
 
 interface SandboxConfig extends SandboxRuntimeConfig {
 	enabled?: boolean;
@@ -275,7 +281,7 @@ export default function (brian: ExtensionAPI) {
 			const writeCount = config.filesystem?.allowWrite?.length ?? 0;
 			ctx.ui.setStatus(
 				"sandbox",
-				ctx.ui.theme.fg("accent", `🔒 Sandbox: ${networkCount} domains, ${writeCount} write paths`),
+				theme.fg("accent", `🔒 Sandbox: ${networkCount} domains, ${writeCount} write paths`),
 			);
 			ctx.ui.notify("Sandbox initialized", "info");
 		} catch (err) {

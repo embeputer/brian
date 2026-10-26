@@ -61,14 +61,14 @@ describe("SettingsManager - External Edit Preservation", () => {
 		expect(JSON.parse(readFileSync(settingsPath, "utf-8")).packages).toEqual([]);
 
 		// User changes an UNRELATED setting via UI (this triggers save)
-		manager.setTheme("light");
+		manager.setProviderAttribution(false);
 		await manager.flush();
 
 		// With the fix, packages should be preserved as [] (not reverted to startup value)
 		const savedSettings = JSON.parse(readFileSync(settingsPath, "utf-8"));
 
 		expect(savedSettings.packages).toEqual([]);
-		expect(savedSettings.theme).toBe("light");
+		expect(savedSettings.providerAttribution).toBe(false);
 	});
 
 	it("should preserve file changes to extensions array when changing unrelated setting", async () => {
