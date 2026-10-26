@@ -290,6 +290,9 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} skill <command>           List, show, add, create, or remove skills
   ${APP_NAME} routines <command>        Reminders and scheduled tasks (run with routines daemon)
   ${APP_NAME} audit [--report|--schedule] Review skills and memory, weekly with --schedule
+  ${APP_NAME} connect beeper            Connect Beeper Desktop (Discord, WhatsApp, iMessage, ...)
+  ${APP_NAME} messages <command>        Chats, drafts to approve, per-chat policies, message log
+  ${APP_NAME} gateway                   Watch your chats and draft or send replies as you
   ${APP_NAME} uninstall --yes           Delete ~/.brian (--keep-memory keeps the vault)
   ${APP_NAME} install <source> [-l]     Install extension source and add to settings
   ${APP_NAME} remove <source> [-l]      Remove extension source from settings

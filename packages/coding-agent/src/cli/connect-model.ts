@@ -8,7 +8,7 @@ import { getAgentDir } from "../config.ts";
 import { ModelRuntime } from "../core/model-runtime.ts";
 import { SettingsManager } from "../core/settings-manager.ts";
 
-async function question(text: string): Promise<string> {
+export async function question(text: string): Promise<string> {
 	const rl = createInterface({ input: process.stdin, output: process.stdout });
 	try {
 		return (await rl.question(text)).trim();
@@ -18,7 +18,7 @@ async function question(text: string): Promise<string> {
 }
 
 /** Read a line without echoing it. */
-function secret(text: string): Promise<string> {
+export function secret(text: string): Promise<string> {
 	const stdin = process.stdin;
 	if (!stdin.isTTY) return question(text);
 	process.stdout.write(text);

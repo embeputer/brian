@@ -7,6 +7,7 @@ import contextPruningExtension from "./context-pruning/compress_context.ts";
 import llamaExtension from "./llama/index.ts";
 import mcpExtension from "./mcp/index.ts";
 import memoryExtension from "./memory/index.ts";
+import messagesExtension from "./messages/index.ts";
 import reportProgressExtension from "./report-progress/index.ts";
 import subagentExtension from "./subagent/index.ts";
 import toolSearchExtension from "./tool-search/index.ts";
@@ -25,4 +26,5 @@ export const builtInExtensions: InlineExtension[] = [
 	{ name: "memory", factory: memoryExtension },
 	{ name: "brian", factory: brianExtension },
 	{ name: "audit", factory: auditExtension },
+	{ name: "messages", factory: messagesExtension },
 ];

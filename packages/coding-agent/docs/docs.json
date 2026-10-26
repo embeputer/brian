@@ -52,6 +52,10 @@
               "path": "brian-audit.md"
             },
             {
+              "title": "Messages and the Gateway",
+              "path": "brian-messages.md"
+            },
+            {
               "title": "Run Brian Safely",
               "path": "security.md"
             },

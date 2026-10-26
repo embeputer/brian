@@ -23,6 +23,7 @@ import { loadSkills } from "../core/skills.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
 import { runAuditCommand } from "./audit-command.ts";
 import { connectModel, saveDefaultModel } from "./connect-model.ts";
+import { runConnectBeeper, runMessagesCommand } from "./messages-command.ts";
 import { runRoutinesCommand } from "./routines-command.ts";
 
 export const BRIAN_COMMANDS = [
@@ -39,6 +40,8 @@ export const BRIAN_COMMANDS = [
 	"routine",
 	"cron",
 	"audit",
+	"messages",
+	"gateway",
 	"uninstall",
 ] as const;
 
@@ -309,11 +312,20 @@ function runStatus(args: string[]): number {
 // connect / model
 
 async function runConnect(args: string[]): Promise<number> {
+	if (args[0] === "beeper") {
+		try {
+			return await runConnectBeeper(args.slice(1));
+		} catch (error) {
+			return fail(error instanceof Error ? error.message : String(error));
+		}
+	}
 	const flags = parseFlags(args, ["--provider"]);
 	if (isHelp(flags)) {
 		console.log(`Usage: ${APP_NAME} connect [--provider <id>]
+       ${APP_NAME} connect beeper [--token <t>] [--url <u>]
 
-Connect a model provider (API key or subscription login) and pick the default model.`);
+Connect a model provider (API key or subscription login) and pick the default model,
+or connect Beeper Desktop so Brian can read and answer your chats.`);
 		return 0;
 	}
 	if (!process.stdin.isTTY)
@@ -540,6 +552,10 @@ export async function runBrianCommand(args: string[]): Promise<number | undefine
 			return runSkill(rest);
 		case "audit":
 			return runAuditCommand(rest);
+		case "messages":
+			return runMessagesCommand(rest);
+		case "gateway":
+			return runMessagesCommand(["watch", ...rest]);
 		case "routines":
 		case "routine":
 		case "cron":
