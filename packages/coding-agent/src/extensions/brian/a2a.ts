@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import {
 	type A2aPeerRecord,
 	defaultA2aDiscoveryDir,
@@ -5,6 +6,7 @@ import {
 	LocalA2aDiscovery,
 } from "@brian-agent/a2a";
 import type { AgentMessage } from "@brian-agent/agent";
+import { StringEnum } from "@brian-agent/ai";
 import { Type } from "typebox";
 
 import type { ExtensionAPI } from "../../core/extensions/types.ts";
@@ -29,17 +31,17 @@ function isDisabled(value: string | undefined): boolean {
 export function isBrianA2aEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
 	if (isDisabled(env.BRIAN_A2A)) return false;
 	if (isTruthy(env.BRIAN_A2A)) return true;
-	return Boolean(env.SANDBOX_NAME?.trim());
+	return Boolean(env.BRIAN_NAME?.trim() || env.SANDBOX_NAME?.trim());
 }
 
-export function brianSandboxName(env: NodeJS.ProcessEnv = process.env): string {
-	const named = env.SANDBOX_NAME || env.BRIAN_SERVER_USERNAME || env.OPENCODE_SERVER_USERNAME;
+export function brianPeerName(env: NodeJS.ProcessEnv = process.env): string {
+	const named = env.BRIAN_NAME || env.SANDBOX_NAME;
 	if (named?.trim()) return named.trim();
 	return `brian-${process.pid}`;
 }
 
 export function formatA2aPeers(peers: readonly A2aPeerRecord[]): string {
-	if (peers.length === 0) return "No other brian sandboxes discovered on this machine.";
+	if (peers.length === 0) return "No other Brians discovered on this machine.";
 	return peers
 		.map((peer) => {
 			const cwd = peer.cwd ? ` cwd=${peer.cwd}` : "";
@@ -67,7 +69,7 @@ export function installA2a(brian: ExtensionAPI, options: InstallBrianA2aOptions 
 		const message: AgentMessage = {
 			role: "custom",
 			customType: "brian-a2a-peers",
-			content: `Local brian sandboxes reachable over A2A:\n${formatA2aPeers(peers)}`,
+			content: `Other Brians reachable with the brians tool:\n${formatA2aPeers(peers)}`,
 			display: false,
 			timestamp: Date.now(),
 		};
@@ -75,30 +77,42 @@ export function installA2a(brian: ExtensionAPI, options: InstallBrianA2aOptions 
 	});
 
 	brian.registerTool({
-		name: "a2a",
-		label: "Brian A2A",
+		name: "brians",
+		label: "Other Brians",
 		description:
-			"Discover and message other brian sandboxes on this machine over A2A. Use list to see peers, send to delegate a task by sandbox name.",
-		promptSnippet: "Talk to other local brian sandboxes over A2A",
+			"Talk to other Brian agents on this machine (yours or other people's). list shows peers; send delegates a task and returns the reply; review sends a git diff from a workspace and asks the peer to approve it or request changes.",
+		promptSnippet: "Message, delegate to, or ask for review from other Brian agents",
 		promptGuidelines: [
-			"Use a2a with action=list to see brian sandboxes on this machine.",
-			"Use a2a with action=send to ask a named local sandbox to do work.",
+			"Use brians with action=list to see other Brians before sending.",
+			"Use brians with action=send to hand a self-contained task to another Brian by name.",
+			"Use brians with action=review to get a second Brian to check changes before you call them done.",
 		],
 		parameters: Type.Object({
-			action: Type.Union([Type.Literal("list"), Type.Literal("send")]),
-			name: Type.Optional(Type.String({ description: "Sandbox name, for send" })),
-			task: Type.Optional(Type.String({ description: "Work to send to the peer sandbox" })),
+			action: StringEnum(["list", "send", "review"] as const),
+			name: Type.Optional(Type.String({ description: "Peer Brian name, for send and review" })),
+			task: Type.Optional(Type.String({ description: "Task to send, or what the reviewer should focus on" })),
+			workspace: Type.Optional(
+				Type.String({ description: "Git workspace to review; defaults to the current directory" }),
+			),
+			base: Type.Optional(
+				Type.String({ description: "Base ref for review; defaults to the working tree diff against HEAD" }),
+			),
 		}),
 		async execute(_toolCallId, args, signal, onUpdate) {
 			if (args.action === "list") {
 				const peers = discovery.list();
 				return { content: [{ type: "text", text: formatA2aPeers(peers) }], details: { peers } };
 			}
-			if (!args.name?.trim()) throw new Error("name is required to send");
-			if (!args.task?.trim()) throw new Error("task is required to send");
+			if (!args.name?.trim()) throw new Error(`name is required for ${args.action}`);
 			const peer = discovery.find(args.name);
-			if (!peer) throw new Error(`No local brian sandbox named "${args.name.trim()}"`);
-			const result = await delegateToA2aAgentPreferStream({ url: peer.url, task: args.task, signal }, (text) => {
+			if (!peer) throw new Error(`No Brian named "${args.name.trim()}" on this machine`);
+			let task = args.task?.trim() ?? "";
+			if (args.action === "review") {
+				task = buildReviewTask(args.workspace ?? process.cwd(), args.base, task);
+			} else if (!task) {
+				throw new Error("task is required to send");
+			}
+			const result = await delegateToA2aAgentPreferStream({ url: peer.url, task, signal }, (text) => {
 				onUpdate?.({
 					content: [{ type: "text", text }],
 					details: { peer },
@@ -106,7 +120,7 @@ export function installA2a(brian: ExtensionAPI, options: InstallBrianA2aOptions 
 			});
 			if (result.failed) {
 				return {
-					content: [{ type: "text", text: result.error ?? "A2A send failed" }],
+					content: [{ type: "text", text: result.error ?? "Message to peer failed" }],
 					details: { peer, failed: true, error: result.error },
 				};
 			}
@@ -116,4 +130,28 @@ export function installA2a(brian: ExtensionAPI, options: InstallBrianA2aOptions 
 			};
 		},
 	});
+}
+
+const MAX_REVIEW_DIFF = 60_000;
+
+export function buildReviewTask(workspace: string, base: string | undefined, focus: string): string {
+	const diffArgs = base ? ["diff", `${base}...HEAD`] : ["diff", "HEAD"];
+	let diff: string;
+	try {
+		diff = execFileSync("git", ["-C", workspace, ...diffArgs], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+	} catch (error) {
+		throw new Error(`git ${diffArgs.join(" ")} failed in ${workspace}: ${(error as Error).message}`);
+	}
+	if (!diff.trim()) throw new Error(`No changes to review in ${workspace}`);
+	const clipped = diff.length > MAX_REVIEW_DIFF ? `${diff.slice(0, MAX_REVIEW_DIFF)}\n... (diff truncated)` : diff;
+	return [
+		"Review this change from another Brian. Reply with APPROVE or CHANGES on the first line, then specific findings.",
+		`Workspace: ${workspace}${base ? ` (compared with ${base})` : ""}`,
+		focus ? `Focus: ${focus}` : "",
+		"```diff",
+		clipped,
+		"```",
+	]
+		.filter(Boolean)
+		.join("\n");
 }

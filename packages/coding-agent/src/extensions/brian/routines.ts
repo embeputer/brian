@@ -2,9 +2,9 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { dirname, join } from "node:path";
 import * as chrono from "chrono-node";
 import cronParser from "cron-parser";
+import { getAgentDir } from "../../config.ts";
 import {
 	DEFAULT_TIME_ZONE,
-	formatInTimeZone,
 	getTimeZoneOffsetMinutes,
 	localDateParts,
 	normalizeTimeZone,
@@ -16,109 +16,58 @@ export type RoutineSchedule =
 	| { kind: "interval"; everyMs: number }
 	| { kind: "cron"; cron: string };
 
+/** `reminder` notifies with the text; `task` runs the text as a Brian prompt. */
+export type RoutineType = "reminder" | "task";
+
 export interface Routine {
 	id: string;
-	userId: string;
-	channelId: string | null;
-	type: "message" | "llm" | "heartbeat";
+	type: RoutineType;
 	payload: string;
+	when: string;
+	recurrence: string;
 	schedule: RoutineSchedule;
 	timezone: string | null;
 	enabled: boolean;
-	state: "queued" | "running" | "succeeded" | "failed";
-	attempts: number;
-	nextRunAt: number;
+	nextRunAt: number | null;
 	lastRunAt: number | null;
-	createdAt: number;
+	lastStatus: "succeeded" | "failed" | null;
 	lastError: string | null;
+	createdAt: number;
 }
 
-interface RoutineExecution {
-	id: string;
+export interface RoutineRun {
 	routineId: string;
-	userId: string;
-	status: string;
-	attempt: number;
 	startedAt: number;
-	finishedAt: number | null;
-	error: string | null;
+	finishedAt: number;
+	status: "succeeded" | "failed";
+	output: string;
 }
 
-const DATA_DIR = process.env.BRIAN_DATA_DIR || join(process.cwd(), ".brian");
-const ROUTINES_FILE = join(DATA_DIR, "routines.json");
-const HISTORY_FILE = join(DATA_DIR, "routine-history.json");
-let seq = 0;
-const hadRoutinesFile = existsSync(ROUTINES_FILE);
-const hadHistoryFile = existsSync(HISTORY_FILE);
-const routines: Routine[] = loadJsonArray<Routine>(ROUTINES_FILE)
-	.map(normalizeRoutine)
-	.filter((r): r is Routine => r !== null);
-let history: RoutineExecution[] = loadJsonArray<RoutineExecution>(HISTORY_FILE);
-
-function loadJsonArray<T>(file: string): T[] {
-	try {
-		const parsed = JSON.parse(readFileSync(file, "utf8"));
-		if (!Array.isArray(parsed)) throw new Error("expected JSON array");
-		return parsed as T[];
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
-		throw new Error(`Failed to load ${file}: ${(err as Error).message}`);
-	}
+export interface RoutineInput {
+	type?: RoutineType;
+	payload: string;
+	when: string;
+	recurrence?: string;
+	timezone?: string | null;
 }
 
-function atomicWrite(file: string, value: unknown): void {
-	mkdirSync(dirname(file), { recursive: true });
-	const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
-	writeFileSync(tmp, JSON.stringify(value, null, 2), { mode: 0o600 });
-	renameSync(tmp, file);
+const ROUTINE_TYPES: readonly RoutineType[] = ["reminder", "task"];
+const MAX_HISTORY = 500;
+const MAX_OUTPUT = 4000;
+
+export function getRoutinesPath(): string {
+	return join(getAgentDir(), "routines.json");
 }
 
-function saveRoutines(): void {
-	atomicWrite(ROUTINES_FILE, routines);
-}
-
-function saveHistory(): void {
-	atomicWrite(HISTORY_FILE, history);
-}
-
-function newId(): string {
-	seq += 1;
-	return (Date.now().toString(36) + seq.toString(36)).slice(-8);
-}
-
-function validTimezone(value: string | null): string | null {
+function validTimezone(value: string | null | undefined): string | null {
 	if (!value) return null;
 	try {
 		new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
 		return value;
 	} catch {
-		return null;
+		throw new Error(`Unknown timezone: "${value}"`);
 	}
 }
-
-function normalizeRoutine(routine: Routine): Routine | null {
-	if (
-		!routine ||
-		!routine.id ||
-		!routine.userId ||
-		!routine.type ||
-		!routine.schedule ||
-		!Number.isFinite(routine.nextRunAt)
-	)
-		return null;
-	return {
-		...routine,
-		channelId: routine.channelId ?? null,
-		enabled: routine.enabled !== false,
-		createdAt: routine.createdAt ?? Date.now(),
-		lastRunAt: Number.isFinite(routine.lastRunAt ?? NaN) ? routine.lastRunAt : null,
-		attempts: Number.isInteger(routine.attempts) && routine.attempts >= 0 ? routine.attempts : 0,
-		state: ["queued", "running", "succeeded", "failed"].includes(routine.state) ? routine.state : "queued",
-		timezone: validTimezone(routine.timezone),
-	};
-}
-
-const VALID_TYPES = new Set(["message", "llm", "heartbeat"]);
 
 function parseShorthand(when: string): number | null {
 	const match = /^(\d+)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days)$/i.exec(when.trim());
@@ -135,7 +84,7 @@ function chronoReference(refDate: Date, timeZone: string | null): chrono.Parsing
 	return { instant: refDate, timezone: getTimeZoneOffsetMinutes(normalized, refDate) };
 }
 
-function parseTime(when: string, refDate: Date = new Date(), timeZone: string | null = null): number {
+export function parseTime(when: string, refDate: Date = new Date(), timeZone: string | null = null): number {
 	const trimmed = String(when).trim();
 	const shorthand = parseShorthand(trimmed);
 	if (shorthand !== null) return shorthand;
@@ -177,7 +126,11 @@ function parseEveryInterval(intervalStr: string): RoutineSchedule {
 	return { kind: "interval", everyMs };
 }
 
-function parseRecurrence(when: string, recurrence: string | null, timeZone: string | null = null): RoutineSchedule {
+export function parseRecurrence(
+	when: string,
+	recurrence: string | null,
+	timeZone: string | null = null,
+): RoutineSchedule {
 	const lower = String(recurrence || "once")
 		.toLowerCase()
 		.trim();
@@ -234,7 +187,7 @@ function nextActiveTime(activeHours: ActiveHours | null, from: number): number {
 	return candidate;
 }
 
-function computeNextRun(
+export function computeNextRun(
 	schedule: RoutineSchedule,
 	afterMs: number = Date.now(),
 	timezone: string | null = null,
@@ -260,116 +213,135 @@ function computeNextRun(
 	return next === null ? null : nextActiveTime(activeHours, next);
 }
 
-function addRoutine(input: {
-	userId: string;
-	channelId: string | null;
-	type: string;
-	payload: string;
-	schedule: RoutineSchedule;
-	timezone?: string | null;
-}): Routine {
-	if (!VALID_TYPES.has(input.type)) throw new Error("Invalid routine type");
-	const normalizedTimezone =
-		validTimezone(input.timezone ?? null) ?? (input.schedule.kind === "cron" ? DEFAULT_TIME_ZONE : null);
-	const nextRunAt = computeNextRun(input.schedule, Date.now(), normalizedTimezone);
-	if (nextRunAt === null) throw new Error("Scheduled time is in the past");
-	const routine: Routine = {
-		id: newId(),
-		userId: String(input.userId),
-		channelId: input.channelId ?? null,
-		type: input.type as Routine["type"],
-		payload: String(input.payload),
-		schedule: input.schedule,
-		timezone: normalizedTimezone,
-		enabled: true,
-		state: "queued",
-		attempts: 0,
-		nextRunAt,
-		lastRunAt: null,
-		createdAt: Date.now(),
-		lastError: null,
-	};
-	routines.push(routine);
-	saveRoutines();
-	return routine;
+interface RoutineFile {
+	routines: Routine[];
+	history: RoutineRun[];
 }
 
-function removeRoutine(id: string, userId: string): boolean {
-	const index = routines.findIndex((r) => r.id === id && r.userId === userId);
-	if (index === -1) return false;
-	routines.splice(index, 1);
-	saveRoutines();
-	return true;
-}
+/** Local routine store in ~/.brian/agent/routines.json. Reads the file on every call so CLI, daemon, and tools agree. */
+export class RoutineStore {
+	readonly file: string;
 
-function setRoutineEnabled(id: string, userId: string, enabled: boolean): Routine | null {
-	const routine = routines.find((r) => r.id === id && r.userId === userId);
-	if (!routine) return null;
-	routine.enabled = enabled;
-	routine.state = enabled ? "queued" : routine.state;
-	routine.lastError = null;
-	if (enabled && routine.schedule.kind !== "once") {
-		routine.nextRunAt = computeNextRun(routine.schedule, Date.now(), routine.timezone) ?? routine.nextRunAt;
+	constructor(file: string = getRoutinesPath()) {
+		this.file = file;
 	}
-	saveRoutines();
-	return routine;
-}
 
-function pauseRoutine(id: string, userId: string): Routine | null {
-	return setRoutineEnabled(id, userId, false);
-}
+	private read(): RoutineFile {
+		if (!existsSync(this.file)) return { routines: [], history: [] };
+		const parsed = JSON.parse(readFileSync(this.file, "utf8")) as Partial<RoutineFile>;
+		return {
+			routines: Array.isArray(parsed.routines) ? parsed.routines : [],
+			history: Array.isArray(parsed.history) ? parsed.history : [],
+		};
+	}
 
-function resumeRoutine(id: string, userId: string): Routine | null {
-	return setRoutineEnabled(id, userId, true);
-}
+	private write(data: RoutineFile): void {
+		mkdirSync(dirname(this.file), { recursive: true });
+		const tmp = `${this.file}.${process.pid}.${Date.now()}.tmp`;
+		writeFileSync(tmp, `${JSON.stringify({ ...data, history: data.history.slice(-MAX_HISTORY) }, null, 2)}\n`, {
+			mode: 0o600,
+		});
+		renameSync(tmp, this.file);
+	}
 
-function listRoutines(userId: string): Routine[] {
-	return routines.filter((r) => r.userId === userId);
-}
+	private update<T>(fn: (data: RoutineFile) => T): T {
+		const data = this.read();
+		const result = fn(data);
+		this.write(data);
+		return result;
+	}
 
-function getRoutine(id: string): Routine | undefined {
-	return routines.find((r) => r.id === id);
-}
+	list(): Routine[] {
+		return this.read().routines;
+	}
 
-function listHistory(userId: string, routineId: string | null = null, limit = 20): RoutineExecution[] {
-	return history
-		.filter((h) => h.userId === userId && (!routineId || h.routineId === routineId))
-		.slice(-Math.max(1, Math.min(100, limit)))
-		.reverse();
-}
+	get(id: string): Routine | undefined {
+		return this.list().find((r) => r.id === id);
+	}
 
-export {
-	DEFAULT_TIME_ZONE,
-	addRoutine,
-	computeNextRun,
-	formatInTimeZone,
-	getRoutine,
-	listHistory,
-	listRoutines,
-	parseRecurrence,
-	parseTime,
-	pauseRoutine,
-	removeRoutine,
-	resumeRoutine,
-};
+	history(routineId?: string, limit = 20): RoutineRun[] {
+		return this.read()
+			.history.filter((h) => !routineId || h.routineId === routineId)
+			.slice(-Math.max(1, limit))
+			.reverse();
+	}
 
-for (const routine of routines) {
-	if (routine.state === "running") {
-		routine.state = "failed";
-		routine.enabled = false;
-		routine.lastError = "Interrupted by bot restart; paused to avoid duplicate execution.";
-		history.push({
-			id: newId(),
-			routineId: routine.id,
-			userId: routine.userId,
-			status: "failed",
-			attempt: routine.attempts || 1,
-			startedAt: routine.lastRunAt ?? Date.now(),
-			finishedAt: Date.now(),
-			error: routine.lastError,
+	add(input: RoutineInput, now: number = Date.now()): Routine {
+		const type = input.type ?? "reminder";
+		if (!ROUTINE_TYPES.includes(type)) throw new Error(`Invalid routine type "${type}", use reminder or task`);
+		if (!input.payload.trim()) throw new Error("Routine text is required");
+		const recurrence = input.recurrence?.trim() || "once";
+		const zone = validTimezone(input.timezone) ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const schedule = parseRecurrence(input.when, recurrence, zone);
+		const nextRunAt =
+			schedule.kind === "interval" ? computeNextRun(schedule, now, zone) : computeNextRun(schedule, now - 1, zone);
+		if (nextRunAt === null) throw new Error("Scheduled time is in the past");
+		const routine: Routine = {
+			id: `r${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+			type,
+			payload: input.payload.trim(),
+			when: input.when,
+			recurrence,
+			schedule,
+			timezone: zone,
+			enabled: true,
+			nextRunAt,
+			lastRunAt: null,
+			lastStatus: null,
+			lastError: null,
+			createdAt: now,
+		};
+		return this.update((data) => {
+			data.routines.push(routine);
+			return routine;
+		});
+	}
+
+	remove(id: string): boolean {
+		return this.update((data) => {
+			const before = data.routines.length;
+			data.routines = data.routines.filter((r) => r.id !== id);
+			return data.routines.length !== before;
+		});
+	}
+
+	setEnabled(id: string, enabled: boolean, now: number = Date.now()): Routine | undefined {
+		return this.update((data) => {
+			const routine = data.routines.find((r) => r.id === id);
+			if (!routine) return undefined;
+			routine.enabled = enabled;
+			if (enabled && routine.schedule.kind !== "once") {
+				routine.nextRunAt = computeNextRun(routine.schedule, now, routine.timezone);
+			}
+			return routine;
+		});
+	}
+
+	/** Routines whose next run is at or before `now`. */
+	due(now: number = Date.now()): Routine[] {
+		return this.list().filter((r) => r.enabled && r.nextRunAt !== null && r.nextRunAt <= now);
+	}
+
+	/** Record a run and schedule the next one. One-shot routines are disabled after they run. */
+	recordRun(id: string, run: Omit<RoutineRun, "routineId">): void {
+		this.update((data) => {
+			const routine = data.routines.find((r) => r.id === id);
+			data.history.push({ routineId: id, ...run, output: run.output.slice(0, MAX_OUTPUT) });
+			if (!routine) return;
+			routine.lastRunAt = run.startedAt;
+			routine.lastStatus = run.status;
+			routine.lastError = run.status === "failed" ? run.output.slice(0, 500) : null;
+			routine.nextRunAt =
+				routine.schedule.kind === "once"
+					? null
+					: computeNextRun(routine.schedule, run.finishedAt, routine.timezone);
+			if (routine.nextRunAt === null) routine.enabled = false;
 		});
 	}
 }
-history = history.slice(-2000);
-if (hadRoutinesFile) saveRoutines();
-if (hadHistoryFile || history.length > 0) saveHistory();
+
+export function describeSchedule(routine: Routine): string {
+	const next = routine.nextRunAt ? new Date(routine.nextRunAt).toLocaleString() : "-";
+	const repeat = routine.recurrence === "once" ? "once" : routine.recurrence;
+	return `${repeat}, next ${routine.enabled ? next : "paused"}`;
+}

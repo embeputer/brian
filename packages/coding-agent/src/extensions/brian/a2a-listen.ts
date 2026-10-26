@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { createA2aServer, type LocalA2aDiscovery } from "@brian-agent/a2a";
 
 import { createCodingAgentHarnessRunnerFactory } from "../../server/a2a/harness-runner.ts";
-import { brianA2aDiscovery, brianSandboxName } from "./a2a.ts";
+import { brianA2aDiscovery, brianPeerName } from "./a2a.ts";
 
 const HEARTBEAT_MS = 15_000;
 
@@ -34,14 +34,14 @@ export async function startBrianA2aListener(
 		const registry = discovery ?? brianA2aDiscovery(env);
 		const host = env.BRIAN_A2A_HOST || "127.0.0.1";
 		const port = parseListenPort(env);
-		const name = brianSandboxName(env);
+		const name = brianPeerName(env);
 		const advertiseUrl = env.BRIAN_A2A_ADVERTISE_URL?.trim();
 		const publicHost = env.BRIAN_A2A_ADVERTISE_HOST?.trim();
 		const runnerFactory = await createCodingAgentHarnessRunnerFactory({ cwd: process.cwd() });
 		const server = await createA2aServer({
 			runnerFactory,
 			name,
-			description: `Brian sandbox ${name}`,
+			description: `Brian ${name}`,
 			...(advertiseUrl ? { baseUrl: advertiseUrl } : {}),
 			...(publicHost ? { publicHost } : {}),
 		});

@@ -28,7 +28,7 @@ System instructions for the agent.
 
 Omit `model` to inherit the parent session's model and thinking level. Set `a2aUrl` to delegate through A2A instead of starting a local `brian` process.
 
-Brian sandboxes on the same machine also advertise an A2A listener when `SANDBOX_NAME` is set (or `BRIAN_A2A=1`). Use the `a2a` tool (`list` / `send`) to talk to those peers by sandbox name without configuring `a2aUrl`.
+Brians on the same machine also advertise an A2A listener when `BRIAN_NAME` is set (or `BRIAN_A2A=1`). Use the `brians` tool (`list` / `send` / `review`) to talk to those peers by name without configuring `a2aUrl`. See [Brian routines and inter-Brian](brian-routines.md).
 
 ## Project agents and trust
 

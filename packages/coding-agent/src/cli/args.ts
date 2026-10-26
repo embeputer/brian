@@ -287,6 +287,7 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} model [provider/id]       Show or set the default model
   ${APP_NAME} memory <command>          Search and write the markdown memory vault
   ${APP_NAME} skill <command>           List, show, add, create, or remove skills
+  ${APP_NAME} routines <command>        Reminders and scheduled tasks (run with routines daemon)
   ${APP_NAME} uninstall --yes           Delete ~/.brian (--keep-memory keeps the vault)
   ${APP_NAME} install <source> [-l]     Install extension source and add to settings
   ${APP_NAME} remove <source> [-l]      Remove extension source from settings

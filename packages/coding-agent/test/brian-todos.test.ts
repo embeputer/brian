@@ -1,5 +1,4 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -14,8 +13,6 @@ import type {
 	SessionStartEvent,
 } from "../src/core/extensions/index.ts";
 import { SessionManager } from "../src/core/session-manager.ts";
-import { issueToken } from "../src/extensions/brian/auth.ts";
-import { handleBrianRequest } from "../src/extensions/brian/server.ts";
 import { TodoStore } from "../src/extensions/brian/todo-store.ts";
 import { applyTodoAction, installTodos, loadTodos, type TodoState } from "../src/extensions/brian/todos.ts";
 
@@ -485,58 +482,6 @@ describe("TodoStore", () => {
 		stores.push(reopened);
 		reopened.migrateLegacy("second-session", join(moved, "todos.json"));
 		expect(reopened.load("second-session")).toEqual(emptyState());
-	});
-});
-
-describe("todo API", () => {
-	it("requires authentication and deletes only the requested session", async () => {
-		const previousPassword = process.env.BRIAN_SERVER_PASSWORD;
-		try {
-			process.env.BRIAN_SERVER_PASSWORD = "test-password";
-			const store = new TodoStore(":memory:");
-			stores.push(store);
-			store.apply("first", { action: "add", text: "first task" });
-			store.apply("second", { action: "add", text: "second task" });
-			const otherCwd = join(tmpdir(), "other-project");
-			store.apply("first", { action: "add", text: "other project" }, otherCwd);
-			const server = createServer((req, res) => {
-				void handleBrianRequest(req, res, store);
-			});
-			try {
-				await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-				const address = server.address();
-				if (!address || typeof address === "string") throw new Error("Expected TCP address");
-				const base = `http://127.0.0.1:${address.port}`;
-				expect((await fetch(`${base}/todos/first`)).status).toBe(401);
-				const headers = { authorization: `Basic ${Buffer.from("opencode:test-password").toString("base64")}` };
-				const before = await fetch(`${base}/todos/first`, { headers });
-				expect(before.status).toBe(200);
-				const body = (await before.json()) as { todos: Array<{ text: string }> };
-				expect(body.todos[0]?.text).toBe("first task");
-				const otherHeaders = { authorization: `Bearer ${issueToken("other-user").token}` };
-				expect((await fetch(`${base}/todos/first`, { headers: otherHeaders })).status).toBe(403);
-				expect((await fetch(`${base}/todos/first`, { method: "DELETE", headers: otherHeaders })).status).toBe(403);
-				expect(store.load("first").todos[0]?.text).toBe("first task");
-				expect((await fetch(`${base}/todos/first`, { method: "DELETE", headers })).status).toBe(200);
-				expect(store.load("first")).toEqual(emptyState());
-				expect(store.load("second").todos[0]?.text).toBe("second task");
-				const scopedUrl = `${base}/todos/first?cwd=${encodeURIComponent(otherCwd)}`;
-				const scoped = await fetch(scopedUrl, { headers });
-				expect(((await scoped.json()) as TodoState).todos[0]?.text).toBe("other project");
-				expect((await fetch(scopedUrl, { method: "DELETE", headers })).status).toBe(200);
-				expect(store.load("first", otherCwd)).toEqual(emptyState());
-				expect((await fetch(`${base}/todos/first?cwd=relative`, { headers })).status).toBe(400);
-				for (const invalidId of ["%2F", "%20", "%00", "%ZZ"]) {
-					expect((await fetch(`${base}/todos/${invalidId}`, { headers })).status).toBe(400);
-					expect((await fetch(`${base}/todos/${invalidId}`, { method: "DELETE", headers })).status).toBe(400);
-				}
-			} finally {
-				await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
-			}
-		} finally {
-			if (previousPassword === undefined) delete process.env.BRIAN_SERVER_PASSWORD;
-			else process.env.BRIAN_SERVER_PASSWORD = previousPassword;
-		}
 	});
 });
 

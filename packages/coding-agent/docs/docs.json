@@ -44,6 +44,10 @@
               "path": "brian-todos.md"
             },
             {
+              "title": "Routines and Inter-Brian",
+              "path": "brian-routines.md"
+            },
+            {
               "title": "Run Brian Safely",
               "path": "security.md"
             },

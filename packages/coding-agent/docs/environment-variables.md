@@ -99,14 +99,14 @@ These variables are read by Brian itself:
 
 Provider credentials such as `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and cloud-provider configuration are listed in [Providers](providers.md#environment-variables-or-auth-file).
 
-## Brian sandbox A2A discovery
+## Inter-Brian discovery
 
-When `SANDBOX_NAME` is set, or `BRIAN_A2A=1`, a brian sandbox starts a loopback A2A server and advertises it so other sandboxes on the same machine can connect. Set `BRIAN_A2A=0` to disable.
+When `BRIAN_NAME` (or `SANDBOX_NAME`) is set, or `BRIAN_A2A=1`, Brian starts a loopback A2A server and advertises it so other Brians on the same machine can reach it with the `brians` tool. Set `BRIAN_A2A=0` to disable.
 
 | Variable | Description |
 |----------|-------------|
-| `SANDBOX_NAME` | Sandbox identity used in A2A advertisements and collab |
-| `BRIAN_A2A` | `1` enables discovery without `SANDBOX_NAME`; `0` disables it |
+| `BRIAN_NAME` | Name other Brians use to reach this one; falls back to `SANDBOX_NAME` |
+| `BRIAN_A2A` | `1` enables discovery without a name; `0` disables it |
 | `BRIAN_A2A_DISCOVERY_DIR` | Directory for advertisement files; default is `$XDG_RUNTIME_DIR/brian/a2a` or a per-user temp dir |
 | `BRIAN_A2A_HOST` | Bind host for the A2A listener; default `127.0.0.1` |
 | `BRIAN_A2A_PORT` | Bind port; default `0` (ephemeral) |

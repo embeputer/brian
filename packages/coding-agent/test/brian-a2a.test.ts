@@ -6,7 +6,7 @@ import { createA2aServer, LocalA2aDiscovery } from "@brian-agent/a2a";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { ContextEvent, ContextEventResult, ExtensionAPI, ExtensionHandler } from "../src/core/extensions/index.ts";
-import { brianSandboxName, formatA2aPeers, installA2a, isBrianA2aEnabled } from "../src/extensions/brian/a2a.ts";
+import { brianPeerName, formatA2aPeers, installA2a, isBrianA2aEnabled } from "../src/extensions/brian/a2a.ts";
 
 type ContextHandler = ExtensionHandler<ContextEvent, ContextEventResult>;
 
@@ -38,12 +38,12 @@ function setup(env: NodeJS.ProcessEnv, discovery?: LocalA2aDiscovery) {
 	return {
 		tools,
 		contextHandler: handlers.get("context") as ContextHandler | undefined,
-		a2aTool: tools.find((candidate) => candidate.name === "a2a"),
+		a2aTool: tools.find((candidate) => candidate.name === "brians"),
 	};
 }
 
 describe("isBrianA2aEnabled", () => {
-	it("defaults off without SANDBOX_NAME", () => {
+	it("defaults off without a name", () => {
 		expect(isBrianA2aEnabled({})).toBe(false);
 	});
 
@@ -51,12 +51,14 @@ describe("isBrianA2aEnabled", () => {
 		expect(isBrianA2aEnabled({ SANDBOX_NAME: "alice" })).toBe(true);
 		expect(isBrianA2aEnabled({ SANDBOX_NAME: "alice", BRIAN_A2A: "0" })).toBe(false);
 		expect(isBrianA2aEnabled({ BRIAN_A2A: "1" })).toBe(true);
+		expect(isBrianA2aEnabled({ BRIAN_NAME: "alice" })).toBe(true);
 	});
 });
 
-describe("brianSandboxName", () => {
-	it("prefers SANDBOX_NAME", () => {
-		expect(brianSandboxName({ SANDBOX_NAME: " alice ", BRIAN_SERVER_USERNAME: "bob" })).toBe("alice");
+describe("brianPeerName", () => {
+	it("prefers BRIAN_NAME over SANDBOX_NAME", () => {
+		expect(brianPeerName({ BRIAN_NAME: " alice ", SANDBOX_NAME: "bob" })).toBe("alice");
+		expect(brianPeerName({ SANDBOX_NAME: " bob " })).toBe("bob");
 	});
 });
 
@@ -126,6 +128,6 @@ describe("installA2a", () => {
 	});
 
 	it("formats an empty peer list", () => {
-		expect(formatA2aPeers([])).toBe("No other brian sandboxes discovered on this machine.");
+		expect(formatA2aPeers([])).toBe("No other Brians discovered on this machine.");
 	});
 });
