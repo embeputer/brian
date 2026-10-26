@@ -76,16 +76,8 @@
               "path": "nvidia-rtx-llama-cpp.md"
             },
             {
-              "title": "Configure Your Terminal",
-              "path": "terminal-setup.md"
-            },
-            {
               "title": "Configure Shell Commands",
               "path": "shell-aliases.md"
-            },
-            {
-              "title": "Run Brian in tmux",
-              "path": "tmux.md"
             },
             {
               "title": "Run Brian on Windows",

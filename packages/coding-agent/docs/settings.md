@@ -128,7 +128,7 @@ Windows paths in JSON must use forward slashes or escaped backslashes:
 | `markdown.codeBlockIndent` | string | `"  "` | Prefix used to indent rendered code blocks. |
 | `markdown.mermaid` | `"off" \| "final" \| "streaming"` | `"streaming"` | Mermaid rendering mode. |
 
-See [Themes](themes.md) and [Terminal Setup](terminal-setup.md) for format and platform details.
+See [Themes](themes.md) for the format.
 
 ## Network and retries
 

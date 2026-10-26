@@ -1,6 +1,6 @@
 # Customize Brian with themes
 
-Themes control the colors Brian uses in interactive mode and HTML exports. Brian includes the `system`, `dark`, and `light` themes. You can select one theme, follow your terminal's light or dark appearance, or create your own palette.
+Themes control the colors Brian uses in HTML exports. Brian includes the `system`, `dark`, and `light` themes. You can select one theme, follow your terminal's light or dark appearance, or create your own palette.
 
 ## Use your terminal's colors
 
@@ -93,7 +93,7 @@ A color can be written in six forms:
 
 Terminal default colors render as the terminal's own colors. Where Brian needs a concrete value, such as HTML export or extension color math, it uses the default colors the terminal reports, or a black or white guess based on the theme's appearance.
 
-Brian resolves chained variable references. A missing variable or circular reference makes the theme invalid. Brian uses truecolor when available, gamut-maps OKLCH to sRGB, and approximates colors for 256-color terminals. HTML exports convert OKHSL values to hexadecimal because CSS does not support them. If colors differ from their source values, check your terminal's truecolor detection and contrast settings. See [Configure Your Terminal](terminal-setup.md#override-detected-capabilities).
+Brian resolves chained variable references. A missing variable or circular reference makes the theme invalid. Brian uses truecolor when available, gamut-maps OKLCH to sRGB, and approximates colors for 256-color terminals. HTML exports convert OKHSL values to hexadecimal because CSS does not support them. If colors differ from their source values, check your terminal's truecolor detection and contrast settings.
 
 Use the [theme JSON schema](https://raw.githubusercontent.com/embeputer/brian/main/packages/coding-agent/schemas/theme.schema.json) for the exact properties, required colors, and accepted value types.
 
