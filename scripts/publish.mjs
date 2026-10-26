@@ -27,6 +27,8 @@ function isPublished(name, version) {
 	}
 }
 
+// npm can only attach provenance (a signed record of the CI build) inside GitHub Actions.
+const provenance = process.env.GITHUB_ACTIONS === "true";
 const repoRoot = process.cwd();
 const packages = getPublicWorkspacePackages();
 const packageByName = new Map(packages.map((pkg) => [pkg.name, pkg]));
@@ -45,13 +47,15 @@ try {
 	for (const pkg of packageStates) {
 		console.log(`${pkg.name}@${pkg.version} ${pkg.published ? "is already published" : "is ready to publish"}: ${pkg.tarballPath}`);
 	}
-	console.log(dryRun ? "\nDry-running tarball publication with provenance.\n" : "\nAll packages packed; starting publication.\n");
+	const how = provenance ? "with provenance" : "without provenance (not in GitHub Actions)";
+	console.log(dryRun ? `\nDry-running tarball publication ${how}.\n` : `\nAll packages packed; publishing ${how}.\n`);
 	for (const pkg of packageStates) {
 		if (pkg.published) {
 			console.log(`Skipping ${pkg.name}@${pkg.version}: already published\n`);
 			continue;
 		}
-		const args = ["publish", pkg.tarballPath, "--access", "public", "--provenance", "--ignore-scripts"];
+		const args = ["publish", pkg.tarballPath, "--access", "public", "--ignore-scripts"];
+		if (provenance) args.push("--provenance");
 		if (dryRun) args.push("--dry-run");
 		execNpmSync(args, {
 			cwd: packageByName.get(pkg.name).directory,

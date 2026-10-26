@@ -1,6 +1,6 @@
 {
 	"name": "@brian-agent/env",
-	"version": "1.3.0",
+	"version": "0.1.0",
 	"description": "Remote execution environments for Brian Durable: a small daemon deployed over SSH and its ExecutionEnv client",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -45,8 +45,8 @@
 		"node": ">=22.19.0"
 	},
 	"dependencies": {
-		"@brian-agent/chord": "1.3.0",
-		"@brian-agent/durable": "1.3.0"
+		"@brian-agent/chord": "0.1.0",
+		"@brian-agent/durable": "0.1.0"
 	},
 	"devDependencies": {
 		"shx": "0.3.4",

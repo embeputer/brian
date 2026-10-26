@@ -1,6 +1,6 @@
 {
 	"name": "@brian-agent/telemetry",
-	"version": "1.3.0",
+	"version": "0.1.0",
 	"description": "Vendor-neutral telemetry contracts and typed schema utilities for brian",
 	"type": "module",
 	"main": "./dist/index.js",
