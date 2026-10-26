@@ -1,6 +1,8 @@
 import { mkdirSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
-import { type BrowserContext, chromium, type Page } from "playwright";
+import type * as Playwright from "playwright";
+import type { BrowserContext, BrowserType, Page } from "playwright";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "../../core/extensions/types.ts";
 
@@ -31,7 +33,14 @@ function textResult(text: string, details: Record<string, unknown> = {}) {
 
 const LAUNCH_OPTIONS = { headless: true, viewport: DEFAULT_VIEWPORT, args: LAUNCH_ARGS };
 
+// Loaded on first use: playwright reads its package.json from disk at import time, which breaks
+// startup of the standalone binary where node_modules does not exist.
+function loadChromium(): BrowserType {
+	return (createRequire(import.meta.url)("playwright") as typeof Playwright).chromium;
+}
+
 async function launchContext(): Promise<BrowserContext> {
+	const chromium = loadChromium();
 	clearSingletonLocks();
 	try {
 		return await chromium.launchPersistentContext(USER_DATA_DIR, LAUNCH_OPTIONS);
