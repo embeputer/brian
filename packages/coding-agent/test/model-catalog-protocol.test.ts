@@ -116,7 +116,16 @@ describe("model catalog protocol with the current client", () => {
 			refreshOnCreate: false,
 		});
 		await runtime.setRuntimeApiKey("openrouter", "test-key");
-		const refresh = await runtime.refresh({ allowNetwork: true, force: true, providers: ["openrouter"] });
+		// Keep the key-personalization request (`GET /models/user`) off the real network.
+		const fetchBeforeRefresh = globalThis.fetch;
+		vi.stubGlobal("fetch", async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+			const request = new Request(input, init);
+			if (new URL(request.url).origin === "https://openrouter.ai") return new Response(null, { status: 404 });
+			return fetchBeforeRefresh(request);
+		});
+		const refresh = await runtime
+			.refresh({ allowNetwork: true, force: true, providers: ["openrouter"] })
+			.finally(() => vi.unstubAllGlobals());
 		expect([...refresh.errors]).toEqual([]);
 
 		const catalogUrl = "/api/models/providers/openrouter?types=chat%2Cimage%2Cclassifier";
