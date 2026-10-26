@@ -275,7 +275,7 @@ export function printHelp(extensionFlags?: ExtensionFlag[]): void {
 					})
 					.join("\n")}\n`
 			: "";
-	console.log(`${chalk.bold(APP_NAME)} - AI coding assistant with read, bash, edit, write tools
+	console.log(`${chalk.bold(APP_NAME)} - your agent for work, school, and life
 
 ${chalk.bold("Usage:")}
   ${APP_NAME} [options] [--] [@files...] [messages...]
@@ -289,13 +289,14 @@ ${chalk.bold("Commands:")}
   ${APP_NAME} config [-l]               Print resolved package resource paths as JSON
   ${APP_NAME} auth <command>            Print credentials or check provider readiness
   ${APP_NAME} mcp <command>             Check MCP servers, sign in to or out of OAuth servers
-  ${APP_NAME} <command> --help          Show help for install/remove/uninstall/update/list/config/auth/mcp
+  ${APP_NAME} memory <command>          Search and write the markdown memory vault
+  ${APP_NAME} <command> --help          Show help for install/remove/uninstall/update/list/config/auth/mcp/memory
 
 ${chalk.bold("Options:")}
   --provider <name>              Provider to search for --model (requires --model)
   --model <pattern>              Model ID or partial match (supports "provider/id" and optional ":<thinking>")
   --api-key <key>                API key (defaults to env vars)
-  --system-prompt <text>         System prompt (default: coding assistant prompt)
+  --system-prompt <text>         System prompt (default: Brian prompt)
   --append-system-prompt <text>  Append text or file contents to the system prompt (can be used multiple times)
   --mode <mode>                  Output mode: text (default), json, or rpc
   --print, -p                    Process prompt and exit

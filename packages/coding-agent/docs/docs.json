@@ -36,6 +36,10 @@
               "path": "sessions.md"
             },
             {
+              "title": "Memory Vault",
+              "path": "memory.md"
+            },
+            {
               "title": "Brian Todos",
               "path": "brian-todos.md"
             },

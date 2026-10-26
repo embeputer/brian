@@ -28,6 +28,7 @@ import { resolveCredentialForPrint } from "./cli/credential-print.ts";
 import { processFileArguments } from "./cli/file-processor.ts";
 import { buildInitialMessage } from "./cli/initial-message.ts";
 import { listModels } from "./cli/list-models.ts";
+import { runMemoryCommand } from "./cli/memory-command.ts";
 import { createProjectTrustContext } from "./cli/project-trust.ts";
 import { APP_NAME, ENV_SESSION_DIR, expandTildePath, getAgentDir, getPackageDir, VERSION } from "./config.ts";
 import { type CreateAgentSessionRuntimeFactory, createAgentSessionRuntime } from "./core/agent-session-runtime.ts";
@@ -584,6 +585,11 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 
 	if (await handleConfigCommand(args, { extensionFactories })) {
+		return;
+	}
+
+	if (args[0] === "memory") {
+		process.exitCode = runMemoryCommand(args.slice(1));
 		return;
 	}
 

@@ -563,6 +563,7 @@ export const VERSION: string = pkg.version || "0.0.0";
 // e.g., BRIAN_AGENT_DIR
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_AGENT_DIR`;
 export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_SESSION_DIR`;
+export const ENV_MEMORY_DIR = `${APP_NAME.toUpperCase()}_MEMORY_DIR`;
 
 export function expandTildePath(path: string): string {
 	return normalizePath(path);
@@ -587,6 +588,15 @@ export function getAgentDir(): string {
 		return expandTildePath(envDir);
 	}
 	return join(homedir(), CONFIG_DIR_NAME, "agent");
+}
+
+/** Get path to the markdown memory vault (~/.brian/memory, or BRIAN_MEMORY_DIR) */
+export function getMemoryDir(): string {
+	const envDir = process.env[ENV_MEMORY_DIR];
+	if (envDir) {
+		return expandTildePath(envDir);
+	}
+	return join(homedir(), CONFIG_DIR_NAME, "memory");
 }
 
 /** Get path to user's custom themes directory */

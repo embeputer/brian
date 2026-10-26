@@ -48,7 +48,7 @@ describe("buildSystemPrompt", () => {
 				skills: [],
 			});
 
-			expect(defaultPrompt.startsWith("# Brian identity\n\nYou are Brian, a personal assistant")).toBe(true);
+			expect(defaultPrompt.startsWith("# Brian identity\n\nYou are Brian, your user's own agent")).toBe(true);
 			// A custom prompt replaces only the opening; the tool list follows it.
 			expect(customPrompt.startsWith("You are Exact.\n\n<tools>\n(none)\n")).toBe(true);
 		});
