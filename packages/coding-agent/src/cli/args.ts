@@ -281,16 +281,22 @@ ${chalk.bold("Usage:")}
   ${APP_NAME} [options] [--] [@files...] [messages...]
 
 ${chalk.bold("Commands:")}
+  ${APP_NAME} setup | onboard           Create ~/.brian and the memory vault, tell Brian who you are
+  ${APP_NAME} doctor                    Check node, config, memory, providers, and skills
+  ${APP_NAME} status [--json]           Show paths, counts, and the default model
+  ${APP_NAME} model [provider/id]       Show or set the default model
+  ${APP_NAME} memory <command>          Search and write the markdown memory vault
+  ${APP_NAME} skill <command>           List, show, add, create, or remove skills
+  ${APP_NAME} uninstall --yes           Delete ~/.brian (--keep-memory keeps the vault)
   ${APP_NAME} install <source> [-l]     Install extension source and add to settings
   ${APP_NAME} remove <source> [-l]      Remove extension source from settings
-  ${APP_NAME} uninstall <source> [-l]   Alias for remove
+  ${APP_NAME} uninstall <source> [-l]   Alias for remove when given a source
   ${APP_NAME} update [source|self|brian]   Update brian, extensions, or model catalogs
   ${APP_NAME} list                      List installed extensions from settings
   ${APP_NAME} config [-l]               Print resolved package resource paths as JSON
   ${APP_NAME} auth <command>            Print credentials or check provider readiness
   ${APP_NAME} mcp <command>             Check MCP servers, sign in to or out of OAuth servers
-  ${APP_NAME} memory <command>          Search and write the markdown memory vault
-  ${APP_NAME} <command> --help          Show help for install/remove/uninstall/update/list/config/auth/mcp/memory
+  ${APP_NAME} <command> --help          Show help for any command above
 
 ${chalk.bold("Options:")}
   --provider <name>              Provider to search for --model (requires --model)
