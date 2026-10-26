@@ -1,4 +1,3 @@
-import { createHost, memoryLinkPair, replicatedState } from "@brian-agent/chord";
 import { createAssistantMessageEventStream, Type } from "@brian-agent/ai";
 import { complete, getModel, getProviders, streamSimple } from "@brian-agent/ai/compat";
 import { Agent, streamProxy } from "@brian-agent/agent";
@@ -20,7 +19,4 @@ console.log(
 	typeof stream.push,
 	agent.hasQueuedMessages(),
 	typeof streamProxy,
-	typeof createHost,
-	typeof memoryLinkPair,
-	replicatedState({ browser: true }).value.browser,
 );

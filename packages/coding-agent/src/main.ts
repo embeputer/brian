@@ -52,7 +52,6 @@ import { getMissingSessionCwdIssue, MissingSessionCwdError } from "./core/sessio
 import { assertValidSessionId, SessionManager } from "./core/session-manager.ts";
 import { collectSettingsDiagnostics, deduplicateDiagnostics } from "./core/settings-diagnostics.ts";
 import { SettingsManager } from "./core/settings-manager.ts";
-import { recordInstallTelemetry } from "./core/telemetry.ts";
 import { initTheme, setThemeJsonValidator, stopThemeWatcher } from "./core/theme/theme.ts";
 import { validateThemeJson } from "./core/theme/theme-schema.ts";
 import { printTimings, resetTimings, time } from "./core/timings.ts";
@@ -61,7 +60,7 @@ import { builtInExtensions } from "./extensions/index.ts";
 import { loadMcpCommand } from "./extensions/mcp/cli.lazy.ts";
 import { runMigrations } from "./migrations.ts";
 import { runPrintMode, runRpcMode } from "./modes/index.ts";
-import { cleanupManagedInstall, handleConfigCommand, handlePackageCommand } from "./package-manager-cli.ts";
+import { handleConfigCommand, handlePackageCommand } from "./package-manager-cli.ts";
 import { isLocalPath, normalizePath, resolvePath } from "./utils/paths.ts";
 import { cleanupWindowsSelfUpdateQuarantine } from "./utils/windows-self-update.ts";
 
@@ -564,7 +563,6 @@ export async function main(args: string[], options?: MainOptions) {
 	if (process.platform === "win32") {
 		cleanupWindowsSelfUpdateQuarantine(getPackageDir());
 	}
-	cleanupManagedInstall();
 
 	const cwd = process.cwd();
 	const agentDir = getAgentDir();
@@ -894,7 +892,6 @@ export async function main(args: string[], options?: MainOptions) {
 	time("prepareInitialMessage");
 	initTheme(settingsManager.getTheme(), false, settingsManager.getTerminalCapabilityOverrides().trueColor);
 	time("initTheme");
-	recordInstallTelemetry(settingsManager, VERSION);
 
 	time("resolveModelScope");
 	const startupDiagnostics = deduplicateDiagnostics([

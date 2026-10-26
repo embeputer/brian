@@ -273,10 +273,11 @@ export const SettingsSchema = Type.Object(
 				default: SETTINGS_DEFAULTS.collapseChangelog,
 			}),
 		),
-		enableInstallTelemetry: Type.Optional(
+		providerAttribution: Type.Optional(
 			Type.Boolean({
-				description: "Send an anonymous version and update ping after changelog-detected updates.",
-				default: SETTINGS_DEFAULTS.enableInstallTelemetry,
+				description:
+					"Identify requests as coming from Brian to providers that ask for it (OpenRouter, NVIDIA, Cloudflare).",
+				default: SETTINGS_DEFAULTS.providerAttribution,
 			}),
 		),
 		enableAnalytics: Type.Optional(

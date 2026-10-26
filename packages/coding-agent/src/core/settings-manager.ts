@@ -1041,13 +1041,13 @@ export class SettingsManager {
 		this.save();
 	}
 
-	getEnableInstallTelemetry(): boolean {
-		return this.settings.enableInstallTelemetry ?? SETTINGS_DEFAULTS.enableInstallTelemetry;
+	getProviderAttribution(): boolean {
+		return this.settings.providerAttribution ?? SETTINGS_DEFAULTS.providerAttribution;
 	}
 
-	setEnableInstallTelemetry(enabled: boolean): void {
-		this.globalSettings.enableInstallTelemetry = enabled;
-		this.markModified("enableInstallTelemetry");
+	setProviderAttribution(enabled: boolean): void {
+		this.globalSettings.providerAttribution = enabled;
+		this.markModified("providerAttribution");
 		this.save();
 	}
 

@@ -21,7 +21,6 @@ describe("createAgentSession provider attribution headers", () => {
 	let tempDir: string;
 	let cwd: string;
 	let agentDir: string;
-	let originalTelemetryEnv: string | undefined;
 
 	beforeEach(() => {
 		tempDir = join(tmpdir(), `brian-sdk-attribution-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -29,16 +28,9 @@ describe("createAgentSession provider attribution headers", () => {
 		agentDir = join(tempDir, "agent");
 		mkdirSync(cwd, { recursive: true });
 		mkdirSync(agentDir, { recursive: true });
-		originalTelemetryEnv = process.env.BRIAN_TELEMETRY;
-		delete process.env.BRIAN_TELEMETRY;
 	});
 
 	afterEach(() => {
-		if (originalTelemetryEnv === undefined) {
-			delete process.env.BRIAN_TELEMETRY;
-		} else {
-			process.env.BRIAN_TELEMETRY = originalTelemetryEnv;
-		}
 		if (tempDir && existsSync(tempDir)) {
 			rmSync(tempDir, { recursive: true, force: true });
 		}
@@ -93,7 +85,7 @@ describe("createAgentSession provider attribution headers", () => {
 	): Promise<ProviderHeaders | undefined> {
 		const settingsManager = SettingsManager.create(cwd, agentDir);
 		if (options.telemetryEnabled === false) {
-			settingsManager.setEnableInstallTelemetry(false);
+			settingsManager.setProviderAttribution(false);
 		}
 
 		const authStorage = AuthStorage.inMemory({

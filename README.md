@@ -20,7 +20,6 @@ CLI docs: [packages/coding-agent/README.md](packages/coding-agent/README.md).
 | **[@brian-agent/agent](packages/agent)** | `packages/agent` | Agent runtime with tool calling and state management |
 | **[@brian-agent/ai](packages/ai)** | `packages/ai` | Unified multi-provider LLM API |
 | **[@brian-agent/telemetry](packages/telemetry)** | `packages/telemetry` | Vendor-neutral telemetry contracts and reference adapter |
-| **[@brian-agent/env](packages/env)** | `packages/env` | SSH remote execution environments and daemon |
 | **[@brian-agent/sqlite-node](packages/session-backends/sqlite-node)** | `packages/session-backends/sqlite-node` | Node SQLite session backend for `@brian-agent/agent` |
 
 ## Install
@@ -78,7 +77,7 @@ its Brian dependencies from the same artifact set. npm is the default:
 node scripts/use-local-packages.mjs \
   --manifest .artifacts/brian-packages/manifest.json \
   --consumer ../my-project \
-  --package @brian-agent/durable \
+  --package @brian-agent/ai \
   --package @brian-agent/agent
 cd ../my-project
 npm install --ignore-scripts

@@ -1,0 +1,10 @@
+{
+	"client_id": "https://raw.githubusercontent.com/embeputer/brian/main/oauth/client.json",
+	"client_name": "brian",
+	"client_uri": "https://github.com/embeputer/brian",
+	"application_type": "native",
+	"redirect_uris": ["http://127.0.0.1/callback", "http://localhost/callback"],
+	"grant_types": ["authorization_code", "refresh_token"],
+	"response_types": ["code"],
+	"token_endpoint_auth_method": "none"
+}
