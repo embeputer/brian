@@ -6,6 +6,10 @@
 
 - Changed a custom system prompt (`--system-prompt`, `SYSTEM.md`, SDK `systemPromptOverride` or `ResourceLoader.getSystemPrompt()`, `BuildSystemPromptOptions.customPrompt`) to replace only the opening of the default prompt. The `<tools>` and `<rules>` sections, including tool and extension guidelines, now follow it; the pi documentation pointers stay out. To send an exact prompt with no Pi sections, return `systemPrompt` from a `before_agent_start` handler ([#38](https://github.com/punch-bot/core/pull/38))
 
+### Added
+
+- Added the `propose_plan` tool to the Punch extension: the model proposes a plan, the host decides, and pending/denied decisions end the turn via `AgentToolResult.terminate`. Also added `createDeferredApprovalHook`, a reference `tool_call` handler for "defer execution pending external decision" so hosts can enforce the gate policy-side.
+
 ## [1.3.0] - 2026-10-17
 
 ### Breaking Changes
