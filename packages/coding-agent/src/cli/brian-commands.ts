@@ -21,6 +21,7 @@ import { ensureMemoryVault, listMemoryNotes, writeMemoryNote } from "../core/mem
 import { SettingsManager } from "../core/settings-manager.ts";
 import { loadSkills } from "../core/skills.ts";
 import { parseFrontmatter } from "../utils/frontmatter.ts";
+import { runAuditCommand } from "./audit-command.ts";
 import { runRoutinesCommand } from "./routines-command.ts";
 
 export const BRIAN_COMMANDS = [
@@ -31,6 +32,10 @@ export const BRIAN_COMMANDS = [
 	"model",
 	"skill",
 	"skills",
+	"routines",
+	"routine",
+	"cron",
+	"audit",
 	"uninstall",
 ] as const;
 
@@ -481,6 +486,8 @@ export async function runBrianCommand(args: string[]): Promise<number | undefine
 		case "skill":
 		case "skills":
 			return runSkill(rest);
+		case "audit":
+			return runAuditCommand(rest);
 		case "routines":
 		case "routine":
 		case "cron":

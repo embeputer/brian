@@ -1,4 +1,5 @@
 import type { InlineExtension } from "../core/extensions/types.ts";
+import auditExtension from "./audit/index.ts";
 import brianExtension from "./brian/index.ts";
 import browserExtension from "./browser/index.ts";
 import codemodeExtension from "./codemode/index.ts";
@@ -23,4 +24,5 @@ export const builtInExtensions: InlineExtension[] = [
 	{ name: "mcp", factory: mcpExtension, builtin: true, replaceable: true },
 	{ name: "memory", factory: memoryExtension },
 	{ name: "brian", factory: brianExtension },
+	{ name: "audit", factory: auditExtension },
 ];

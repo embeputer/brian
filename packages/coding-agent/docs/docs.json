@@ -48,6 +48,10 @@
               "path": "brian-routines.md"
             },
             {
+              "title": "Weekly Audit",
+              "path": "brian-audit.md"
+            },
+            {
               "title": "Run Brian Safely",
               "path": "security.md"
             },
