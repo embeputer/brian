@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "revision": "sha256-90dfdce288326e87cad820ae30478d36c5df3d7ae18d3e8369470cbf28557de4",
+  "generatedAt": "2026-10-27T05:18:19.406Z",
+  "sourceCommit": "fe790b88df536e6c61448ebfcc71f8ad821b119f",
+  "providerCount": 41,
+  "modelCount": 1570,
+  "chatModelCount": 1570,
+  "imageModelCount": 63,
+  "classifierModelCount": 51,
+  "totalModelCount": 1684,
+  "modelTypes": [
+    "chat",
+    "image",
+    "classifier"
+  ]
+}
