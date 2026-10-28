@@ -6,7 +6,6 @@ import { ENV_AGENT_DIR } from "../../../src/config.ts";
 import type { AgentSessionRuntime } from "../../../src/core/agent-session-runtime.ts";
 import { defaultModelPerProvider } from "../../../src/core/model-resolver.ts";
 import { SessionManager } from "../../../src/core/session-manager.ts";
-import { stopThemeWatcher } from "../../../src/core/theme/theme.ts";
 import { main } from "../../../src/main.ts";
 import { runRpcMode } from "../../../src/modes/rpc/rpc-mode.ts";
 import type { RpcCommand, RpcResponse } from "../../../src/modes/rpc/rpc-types.ts";
@@ -91,7 +90,6 @@ describe("regression #3042: OpenRouter RPC startup and session selection", () =>
 				if (!previous.has(listener)) process.off(signal, listener);
 			}
 		}
-		stopThemeWatcher();
 		rpcIo.responses = [];
 		rpcIo.hosts = [];
 		rpcIo.lineHandler = undefined;

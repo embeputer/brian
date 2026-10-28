@@ -76,9 +76,6 @@
       ],
       "default": "one-at-a-time"
     },
-    "theme": {
-      "type": "string"
-    },
     "compaction": {
       "type": "object",
       "properties": {
@@ -297,12 +294,6 @@
                 "items": {
                   "type": "string"
                 }
-              },
-              "themes": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
               }
             }
           }
@@ -354,13 +345,6 @@
         "type": "string"
       },
       "description": "Local prompt template file paths or directories."
-    },
-    "themes": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Local theme file paths or directories."
     },
     "enableSkillCommands": {
       "type": "boolean",

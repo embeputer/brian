@@ -14,7 +14,6 @@
  */
 
 import { spawn } from "node:child_process";
-import type { ExtensionAPI } from "@brian-agent/cli";
 import {
 	type BashOperations,
 	createBashTool,
@@ -22,7 +21,9 @@ import {
 	createReadTool,
 	createWriteTool,
 	type EditOperations,
+	type ExtensionAPI,
 	type ReadOperations,
+	theme,
 	type WriteOperations,
 } from "@brian-agent/cli";
 
@@ -194,7 +195,7 @@ export default function (brian: ExtensionAPI) {
 				const pwd = (await sshExec(remote, "pwd")).toString().trim();
 				resolvedSsh = { remote, remoteCwd: pwd };
 			}
-			ctx.ui.setStatus("ssh", ctx.ui.theme.fg("accent", `SSH: ${resolvedSsh.remote}:${resolvedSsh.remoteCwd}`));
+			ctx.ui.setStatus("ssh", theme.fg("accent", `SSH: ${resolvedSsh.remote}:${resolvedSsh.remoteCwd}`));
 			ctx.ui.notify(`SSH mode: ${resolvedSsh.remote}:${resolvedSsh.remoteCwd}`, "info");
 		}
 	});

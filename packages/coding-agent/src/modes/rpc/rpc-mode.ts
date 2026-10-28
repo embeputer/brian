@@ -33,7 +33,6 @@ import {
 	waitForRawStdoutBackpressure,
 	writeRawStdout,
 } from "../../core/output-guard.ts";
-import { type Theme, theme } from "../../core/theme/theme.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { toJsonEvent } from "../json-event.ts";
 import { attachJsonlLineReader, serializeJsonLine } from "./jsonl.ts";
@@ -254,23 +253,6 @@ export async function runRpcMode(runtimeHost: AgentSessionRuntime): Promise<neve
 				});
 				output({ type: "extension_ui_request", id, method: "editor", title, prefill } as RpcExtensionUIRequest);
 			});
-		},
-
-		get theme() {
-			return theme;
-		},
-
-		getAllThemes() {
-			return [];
-		},
-
-		getTheme(_name: string) {
-			return undefined;
-		},
-
-		setTheme(_theme: string | Theme) {
-			// Theme switching not supported in RPC mode
-			return { success: false, error: "Theme switching not supported in RPC mode" };
 		},
 
 		getToolsExpanded() {

@@ -14,7 +14,6 @@ import {
 import type { TSchema } from "typebox";
 import { ModelsConfigSchema } from "../src/core/model-config.ts";
 import { SettingsSchema } from "../src/core/settings-schema.ts";
-import { ColorValueSchema, ThemeJsonSchema } from "../src/core/theme/theme-schema.ts";
 
 const packageDirectory = fileURLToPath(new URL("..", import.meta.url));
 const schemaBaseUrl = "https://raw.githubusercontent.com/embeputer/brian/main/packages/coding-agent/schemas";
@@ -44,11 +43,6 @@ const schemaArtifacts: readonly SchemaArtifact[] = [
 		filename: "settings.schema.json",
 		schema: SettingsSchema,
 		definitions: { ModelThinkingLevel: ModelThinkingLevelSchema },
-	},
-	{
-		filename: "theme.schema.json",
-		schema: ThemeJsonSchema,
-		definitions: { ColorValue: ColorValueSchema },
 	},
 ];
 

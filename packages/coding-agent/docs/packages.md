@@ -126,4 +126,4 @@ The same package can appear in personal and project settings. A project entry no
 
 Brian identifies npm packages by package name, git packages by repository URL without the ref, and local packages by resolved absolute path. This prevents the same package from loading twice through equivalent declarations.
 
-Use [Extensions](extensions.md), [Skills](skills.md), [Prompt Templates](prompt-templates.md), and [Themes](themes.md) to design each resource before packaging it.
+Use [Extensions](extensions.md), [Skills](skills.md), and [Prompt Templates](prompt-templates.md) to design each resource before packaging it.

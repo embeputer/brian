@@ -105,7 +105,6 @@ Windows paths in JSON must use forward slashes or escaped backslashes:
 
 | Setting | Type | Default | Description |
 |---|---|---|---|
-| `theme` | string | `"system"` | Built-in or custom theme name. `system` derives colors from the terminal theme. |
 | `quietStartup` | boolean \| `"header"` | `false` | `true` hides the startup header and loaded-resource listing. `"header"` keeps the header (version and key hints) but hides the model scope line and loaded-resource listing. |
 | `tuiMode` | `"regular" \| "fullscreen"` | `"fullscreen"` | Interactive terminal UI mode. |
 | `fullscreenExitOutput` | `"transcript" \| "resume-hint"` | `"transcript"` | Output printed when fullscreen mode exits. |
@@ -128,7 +127,6 @@ Windows paths in JSON must use forward slashes or escaped backslashes:
 | `markdown.codeBlockIndent` | string | `"  "` | Prefix used to indent rendered code blocks. |
 | `markdown.mermaid` | `"off" \| "final" \| "streaming"` | `"streaming"` | Mermaid rendering mode. |
 
-See [Themes](themes.md) for the format.
 
 ## Network and retries
 
@@ -160,7 +158,6 @@ Resource paths in user settings resolve from the agent directory. Paths in proje
 | `extensions` | `string[]` | `[]` | Extension files or directories. |
 | `skills` | `string[]` | `[]` | Skill files or directories. |
 | `prompts` | `string[]` | `[]` | Prompt-template files or directories. |
-| `themes` | `string[]` | `[]` | Theme files or directories. |
 | `enableSkillCommands` | boolean | `true` | Register skills as `/skill:name` commands. |
 
 Resource arrays support glob exclusions with `!pattern`, exact inclusion with `+path`, and exact exclusion with `-path`. Brian loads resources listed in both user-level and project settings.

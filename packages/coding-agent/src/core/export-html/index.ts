@@ -34,7 +34,6 @@ interface RenderedToolHtml {
 
 export interface ExportOptions {
 	outputPath?: string;
-	themeName?: string;
 	/** Optional tool renderer for custom tools */
 	toolRenderer?: ToolHtmlRenderer;
 }
@@ -108,15 +107,15 @@ function deriveExportColors(baseColor: string): { pageBg: string; cardBg: string
 /**
  * Generate CSS custom property declarations from theme colors.
  */
-function generateThemeVars(themeName?: string): string {
-	const colors = getResolvedThemeColors(themeName);
+function generateThemeVars(): string {
+	const colors = getResolvedThemeColors();
 	const lines: string[] = [];
 	for (const [key, value] of Object.entries(colors)) {
 		lines.push(`--${key}: ${value};`);
 	}
 
 	// Use explicit theme export colors if available, otherwise derive from userMessageBg
-	const themeExport = getThemeExportColors(themeName);
+	const themeExport = getThemeExportColors();
 	const userMessageBg = colors.userMessageBg || "#343541";
 	const derivedColors = deriveExportColors(userMessageBg);
 
@@ -140,7 +139,7 @@ interface SessionData {
 /**
  * Core HTML generation logic shared by both export functions.
  */
-function generateHtml(sessionData: SessionData, themeName?: string): string {
+function generateHtml(sessionData: SessionData): string {
 	const templateDir = getExportTemplateDir();
 	const template = readFileSync(join(templateDir, "template.html"), "utf-8");
 	const templateCss = readFileSync(join(templateDir, "template.css"), "utf-8");
@@ -148,9 +147,9 @@ function generateHtml(sessionData: SessionData, themeName?: string): string {
 	const markedJs = readFileSync(join(templateDir, "vendor", "marked.min.js"), "utf-8");
 	const hljsJs = readFileSync(join(templateDir, "vendor", "highlight.min.js"), "utf-8");
 
-	const themeVars = generateThemeVars(themeName);
-	const colors = getResolvedThemeColors(themeName);
-	const themeExport = getThemeExportColors(themeName);
+	const themeVars = generateThemeVars();
+	const colors = getResolvedThemeColors();
+	const themeExport = getThemeExportColors();
 	const derivedExportColors = deriveExportColors(colors.userMessageBg || "#343541");
 	const bodyBg = themeExport.pageBg ?? derivedExportColors.pageBg;
 	const containerBg = themeExport.cardBg ?? derivedExportColors.cardBg;
@@ -269,7 +268,7 @@ export async function exportSessionToHtml(
 		renderedTools,
 	};
 
-	const html = generateHtml(sessionData, opts.themeName);
+	const html = generateHtml(sessionData);
 
 	let outputPath = opts.outputPath ? normalizePath(opts.outputPath) : undefined;
 	if (!outputPath) {
@@ -303,7 +302,7 @@ export async function exportFromFile(inputPath: string, options?: ExportOptions 
 		tools: undefined,
 	};
 
-	const html = generateHtml(sessionData, opts.themeName);
+	const html = generateHtml(sessionData);
 
 	let outputPath = opts.outputPath ? normalizePath(opts.outputPath) : undefined;
 	if (!outputPath) {

@@ -16,7 +16,7 @@
  *   /working-indicator reset     Restore brian's default spinner
  */
 
-import type { ExtensionAPI, ExtensionContext, WorkingIndicatorOptions } from "@brian-agent/cli";
+import { type ExtensionAPI, type ExtensionContext, theme, type WorkingIndicatorOptions } from "@brian-agent/cli";
 
 type WorkingIndicatorMode = "dot" | "none" | "pulse" | "spinner" | "default";
 
@@ -88,7 +88,7 @@ export default function (brian: ExtensionAPI) {
 
 	const applyIndicator = (ctx: ExtensionContext) => {
 		ctx.ui.setWorkingIndicator(getIndicator(mode));
-		ctx.ui.setStatus("working-indicator", ctx.ui.theme.fg("dim", `Indicator: ${describeMode(mode)}`));
+		ctx.ui.setStatus("working-indicator", theme.fg("dim", `Indicator: ${describeMode(mode)}`));
 	};
 
 	brian.on("session_start", async (_event, ctx) => {

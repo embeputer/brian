@@ -52,8 +52,6 @@ import { getMissingSessionCwdIssue, MissingSessionCwdError } from "./core/sessio
 import { assertValidSessionId, SessionManager } from "./core/session-manager.ts";
 import { collectSettingsDiagnostics, deduplicateDiagnostics } from "./core/settings-diagnostics.ts";
 import { SettingsManager } from "./core/settings-manager.ts";
-import { initTheme, setThemeJsonValidator, stopThemeWatcher } from "./core/theme/theme.ts";
-import { validateThemeJson } from "./core/theme/theme-schema.ts";
 import { printTimings, resetTimings, time } from "./core/timings.ts";
 import { hasTrustRequiringProjectResources, ProjectTrustStore } from "./core/trust-manager.ts";
 import { builtInExtensions } from "./extensions/index.ts";
@@ -547,8 +545,6 @@ export interface MainOptions {
 
 export async function main(args: string[], options?: MainOptions) {
 	resetTimings();
-	// Commands and startup selectors can load user-authored themes before runtime creation.
-	setThemeJsonValidator(validateThemeJson);
 	const extensionFactories = [...builtInExtensions, ...(options?.extensionFactories ?? [])];
 	const offlineMode = args.includes("--offline") || isTruthyEnvFlag(process.env.BRIAN_OFFLINE);
 	if (offlineMode) {
@@ -657,10 +653,6 @@ export async function main(args: string[], options?: MainOptions) {
 	const startupSettingsManager = SettingsManager.create(cwd, agentDir);
 	const startupSettingsDiagnostics = collectSettingsDiagnostics(startupSettingsManager);
 
-	if (parsed.useTheme !== undefined) {
-		startupSettingsManager.applyOverrides({ theme: parsed.useTheme });
-	}
-
 	// Decide the final runtime cwd before creating cwd-bound runtime services.
 	// --session and --resume may select a session from another project, so project-local
 	// settings, resources, provider registrations, and models must be resolved only after
@@ -694,7 +686,6 @@ export async function main(args: string[], options?: MainOptions) {
 	const resolvedExtensionPaths = resolveCliPaths(cwd, parsed.extensions);
 	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
 	const resolvedPromptTemplatePaths = resolveCliPaths(cwd, parsed.promptTemplates);
-	const resolvedThemePaths = resolveCliPaths(cwd, parsed.themes);
 	// Provider of the model resolved from startup --model, reused by later runtimes for --api-key.
 	let cliModelProvider: string | undefined;
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
@@ -716,9 +707,6 @@ export async function main(args: string[], options?: MainOptions) {
 				parsed.projectTrustOverride ??
 				(!hasTrustRequiringResources || trustStore.get(cwd) === true));
 		const runtimeSettingsManager = SettingsManager.create(cwd, agentDir, { projectTrusted });
-		if (parsed.useTheme !== undefined) {
-			runtimeSettingsManager.applyOverrides({ theme: parsed.useTheme });
-		}
 		const services = await createAgentSessionServices({
 			cwd,
 			agentDir,
@@ -753,12 +741,10 @@ export async function main(args: string[], options?: MainOptions) {
 				additionalExtensionPaths: resolvedExtensionPaths,
 				additionalSkillPaths: resolvedSkillPaths,
 				additionalPromptTemplatePaths: resolvedPromptTemplatePaths,
-				additionalThemePaths: resolvedThemePaths,
 				noExtensions: parsed.noExtensions,
 				disabledBuiltinExtensions: parsed.noMcp ? ["mcp"] : undefined,
 				noSkills: parsed.noSkills,
 				noPromptTemplates: parsed.noPromptTemplates,
-				noThemes: parsed.noThemes,
 				noContextFiles: parsed.noContextFiles,
 				systemPrompt: parsed.systemPrompt,
 				appendSystemPrompt: parsed.appendSystemPrompt,
@@ -890,8 +876,6 @@ export async function main(args: string[], options?: MainOptions) {
 
 	const { initialMessage, initialImages } = await prepareInitialMessage(parsed, stdinContent);
 	time("prepareInitialMessage");
-	initTheme(settingsManager.getTheme(), false, settingsManager.getTerminalCapabilityOverrides().trueColor);
-	time("initTheme");
 
 	time("resolveModelScope");
 	const startupDiagnostics = deduplicateDiagnostics([
@@ -942,7 +926,6 @@ export async function main(args: string[], options?: MainOptions) {
 		initialMessage,
 		initialImages,
 	});
-	stopThemeWatcher();
 	restoreStdout();
 	if (exitCode !== 0) {
 		process.exitCode = exitCode;

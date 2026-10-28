@@ -21,7 +21,6 @@ import {
 	type NormalizedBuildSystemPromptOptions,
 	normalizeBuildSystemPromptOptions,
 } from "../system-prompt.ts";
-import { type Theme, theme } from "../theme/theme.ts";
 import type { VirtualModelDefinition } from "../virtual-models.ts";
 import type {
 	AgentBeforeSettleEvent,
@@ -293,12 +292,6 @@ const noOpUIContext: ExtensionUIContext = {
 	setEditorText: () => {},
 	getEditorText: () => "",
 	editor: async () => undefined,
-	get theme() {
-		return theme;
-	},
-	getAllThemes: () => [],
-	getTheme: () => undefined,
-	setTheme: (_theme: string | Theme) => ({ success: false, error: "UI not available" }),
 	getToolsExpanded: () => false,
 	setToolsExpanded: () => {},
 };
@@ -1357,12 +1350,10 @@ export class ExtensionRunner {
 	): Promise<{
 		skillPaths: Array<{ path: string; extensionPath: string }>;
 		promptPaths: Array<{ path: string; extensionPath: string }>;
-		themePaths: Array<{ path: string; extensionPath: string }>;
 	}> {
 		const ctx = this.createContext();
 		const skillPaths: Array<{ path: string; extensionPath: string }> = [];
 		const promptPaths: Array<{ path: string; extensionPath: string }> = [];
-		const themePaths: Array<{ path: string; extensionPath: string }> = [];
 
 		for (const { ext, handlers } of snapshotEventHandlers(this.extensions, "resources_discover")) {
 			for (const handler of handlers) {
@@ -1377,9 +1368,6 @@ export class ExtensionRunner {
 					if (result?.promptPaths?.length) {
 						promptPaths.push(...result.promptPaths.map((path) => ({ path, extensionPath: ext.path })));
 					}
-					if (result?.themePaths?.length) {
-						themePaths.push(...result.themePaths.map((path) => ({ path, extensionPath: ext.path })));
-					}
 				} catch (err) {
 					const message = err instanceof Error ? err.message : String(err);
 					const stack = err instanceof Error ? err.stack : undefined;
@@ -1393,7 +1381,7 @@ export class ExtensionRunner {
 			}
 		}
 
-		return { skillPaths, promptPaths, themePaths };
+		return { skillPaths, promptPaths };
 	}
 
 	/** Emit input event. Transforms chain, "handled" short-circuits. */

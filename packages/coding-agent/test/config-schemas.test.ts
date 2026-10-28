@@ -7,7 +7,6 @@ import { renderConfigSchemas } from "../scripts/generate-schemas.ts";
 import { ModelConfig } from "../src/core/model-config.ts";
 import { SettingsManager } from "../src/core/settings-manager.ts";
 import { SettingsSchema } from "../src/core/settings-schema.ts";
-import { validateThemeJson } from "../src/core/theme/theme-schema.ts";
 
 const schemaBaseUrl = "https://raw.githubusercontent.com/embeputer/brian/main/packages/coding-agent/schemas";
 const temporaryDirectories: string[] = [];
@@ -24,47 +23,20 @@ function createTemporaryDirectory(): string {
 	return directory;
 }
 
-function schemaUrl(name: "models" | "settings" | "theme"): string {
+function schemaUrl(name: "models" | "settings"): string {
 	return `${schemaBaseUrl}/${name}.schema.json`;
 }
 
 describe("generated configuration schemas", () => {
-	it("matches the three committed artifacts", () => {
+	it("matches the committed artifacts", () => {
 		const rendered = renderConfigSchemas();
-		expect([...rendered.keys()]).toEqual([
-			"schemas/models.schema.json",
-			"schemas/settings.schema.json",
-			"schemas/theme.schema.json",
-		]);
+		expect([...rendered.keys()]).toEqual(["schemas/models.schema.json", "schemas/settings.schema.json"]);
 		for (const [relativePath, expected] of rendered) {
 			expect(
 				readFileSync(new URL(`../${relativePath}`, import.meta.url), "utf-8"),
 				`${relativePath} is stale; run npm run generate:schemas`,
 			).toBe(expected);
 		}
-	});
-
-	it("preserves editor guidance in the generated theme schema", () => {
-		const schema = JSON.parse(renderConfigSchemas().get("schemas/theme.schema.json") ?? "");
-		const accent = schema.properties.colors.properties.accent;
-		const colorValue = accent.$ref ? schema.$defs.ColorValue : accent;
-		expect(schema).toMatchObject({
-			title: "Brian Coding Agent Theme",
-			description: "Theme schema for Brian coding agent",
-			properties: {
-				colors: {
-					description: expect.stringContaining("use compatible fallbacks"),
-					properties: {
-						scrollbarTrack: { description: expect.stringContaining("falls back to muted") },
-						accent: { description: "Primary accent color (logo, selected items, cursor)" },
-					},
-				},
-				export: { description: expect.stringContaining("defaults derived from userMessageBg") },
-			},
-		});
-		expect(colorValue).toMatchObject({
-			anyOf: [{ description: expect.stringContaining("Hex color") }, expect.any(Object)],
-		});
 	});
 
 	it("preserves moved model and settings guidance", () => {
@@ -248,37 +220,18 @@ describe("generated configuration schemas", () => {
 		const directory = createTemporaryDirectory();
 		writeFileSync(
 			join(directory, "settings.json"),
-			JSON.stringify({ $schema: schemaUrl("settings"), theme: "light", extensionSetting: { enabled: true } }),
+			JSON.stringify({
+				$schema: schemaUrl("settings"),
+				providerAttribution: false,
+				extensionSetting: { enabled: true },
+			}),
 		);
 
 		const manager = SettingsManager.create(directory, directory);
-		expect(manager.getTheme()).toBe("light");
+		expect(manager.getProviderAttribution()).toBe(false);
 		expect(manager.getGlobalSettings()).toMatchObject({
 			$schema: schemaUrl("settings"),
 			extensionSetting: { enabled: true },
 		});
-	});
-
-	it("accepts $schema in themes and rejects malformed themes", () => {
-		const builtIn = JSON.parse(
-			readFileSync(new URL("../src/core/theme/dark.json", import.meta.url), "utf-8"),
-		) as Record<string, unknown>;
-		expect(validateThemeJson("custom", { ...builtIn, $schema: schemaUrl("theme"), name: "custom" }).name).toBe(
-			"custom",
-		);
-		expect(() => validateThemeJson("invalid", { ...builtIn, name: "invalid/name" })).toThrow(
-			"theme names cannot contain",
-		);
-		expect(() => validateThemeJson("invalid", { ...builtIn, colors: {} })).toThrow("Missing required color tokens");
-		for (const invalid of [
-			{ ...builtIn, unexpected: true },
-			{
-				...builtIn,
-				colors: { ...(builtIn.colors as Record<string, unknown>), scrollbarThmb: "" },
-			},
-			{ ...builtIn, export: { unexpected: "" } },
-		]) {
-			expect(() => validateThemeJson("invalid", invalid)).toThrow(/additional properties/i);
-		}
 	});
 });

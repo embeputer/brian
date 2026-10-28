@@ -14,7 +14,7 @@
 
 Brian is a minimal, extensible agent harness that you can make your own.
 
-Adapt Brian to your workflows, not the other way around. Customize Brian with [extensions](docs/extensions.md), [skills](docs/skills.md), [prompt templates](docs/prompt-templates.md), and [themes](docs/themes.md). Bundle them as [Brian packages](docs/packages.md) and share via npm or git.
+Adapt Brian to your workflows, not the other way around. Customize Brian with [extensions](docs/extensions.md), [skills](docs/skills.md), and [prompt templates](docs/prompt-templates.md). Bundle them as [Brian packages](docs/packages.md) and share via npm or git.
 
 Brian ships with powerful defaults but skips features like sub-agents and plan mode. Ask Brian to build what you want, or install a package that does it your way.
 
@@ -53,7 +53,6 @@ I regularly publish my own `pi-mono` work sessions here:
   - [Prompt Templates](#prompt-templates)
   - [Skills](#skills)
   - [Extensions](#extensions)
-  - [Themes](#themes)
   - [Brian Packages](#brian-packages)
 - [Programmatic Usage](#programmatic-usage)
 - [Philosophy](#philosophy)
@@ -334,15 +333,10 @@ The default export can also be `async`. brian waits for async extension factorie
 
 Place in `~/.brian/agent/extensions/`, `.brian/extensions/`, or a [brian package](#brian-packages) to share with others. See [docs/extensions.md](docs/extensions.md) and [examples/extensions/](examples/extensions/).
 
-### Themes
-
-Built-in: `dark`, `light`. Themes hot-reload: modify the active theme file and brian immediately applies changes.
-
-Place in `~/.brian/agent/themes/`, `.brian/themes/`, or a [brian package](#brian-packages) to share with others. See [docs/themes.md](docs/themes.md).
 
 ### Brian Packages
 
-Bundle and share extensions, skills, prompts, and themes via npm or git. Find packages on [npmjs.com](https://www.npmjs.com/search?q=keywords%3Api-package) or [Discord](https://discord.com/channels/1456806362351669492/1457744485428629628).
+Bundle and share extensions, skills, and prompts via npm or git. Find packages on [npmjs.com](https://www.npmjs.com/search?q=keywords%3Api-package) or [Discord](https://discord.com/channels/1456806362351669492/1457744485428629628).
 
 > **Security:** Brian packages run with full system access. Extensions execute arbitrary code, and skills can instruct the model to perform any action including running executables. Review source code before installing third-party packages.
 
@@ -357,13 +351,12 @@ Create a package by adding a `brian` key to `package.json`:
   "brian": {
     "extensions": ["./extensions"],
     "skills": ["./skills"],
-    "prompts": ["./prompts"],
-    "themes": ["./themes"]
+    "prompts": ["./prompts"]
   }
 }
 ```
 
-Without a `brian` manifest, brian auto-discovers from conventional directories (`extensions/`, `skills/`, `prompts/`, `themes/`).
+Without a `brian` manifest, brian auto-discovers from conventional directories (`extensions/`, `skills/`, `prompts/`).
 
 See [docs/packages.md](docs/packages.md).
 
@@ -507,8 +500,6 @@ Available built-in tools: `read`, `bash`, `powershell` (Windows), `edit`, `write
 | `--no-skills` | Disable skill discovery |
 | `--prompt-template <path>` | Load prompt template (repeatable) |
 | `--no-prompt-templates` | Disable prompt template discovery |
-| `--theme <path>` | Load theme (repeatable) |
-| `--no-themes` | Disable theme discovery |
 | `--no-context-files`, `-nc` | Disable AGENTS.md and CLAUDE.md context file discovery |
 
 Combine `--no-*` with explicit flags to load exactly what you need, ignoring settings.json (e.g., `--no-extensions -e ./my-ext.ts`).
@@ -519,7 +510,6 @@ Combine `--no-*` with explicit flags to load exactly what you need, ignoring set
 |--------|-------------|
 | `--system-prompt <text>` | Replace the default prompt's opening (tools, rules, context files, and skills still appended) |
 | `--append-system-prompt <text>` | Append to system prompt |
-| `--use-theme <name[/name]>` | Set the theme for this run without changing settings |
 | `--verbose` | Force verbose startup |
 | `-a`, `--approve` | Trust project-local files for this run |
 | `-na`, `--no-approve` | Ignore project-local files for this run |
