@@ -258,14 +258,14 @@ describe("Anthropic preferred strict tool fallback", () => {
 		expect(payloads.map((payload) => (payload.tools as BetaTool[])[0].strict)).toEqual([true, undefined, true]);
 	});
 
-	it("preserves prefer through pi-messages so the gateway's Anthropic adapter can fall back", async () => {
+	it("preserves prefer through brian-messages so the gateway's Anthropic adapter can fall back", async () => {
 		const { payloads, options } = harness((_payload, attempt) =>
 			attempt === 1 ? errorResponse() : successResponse(),
 		);
 		const transcript = context([tool("lookup", "prefer")]);
-		const gatewayModel: Model<"pi-messages"> = {
+		const gatewayModel: Model<"brian-messages"> = {
 			...model,
-			api: "pi-messages",
+			api: "brian-messages",
 			provider: "radius",
 			baseUrl: "https://radius.example/v1",
 			compat: undefined,

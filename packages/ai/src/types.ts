@@ -68,7 +68,7 @@ export type KnownApi =
 	| "bedrock-converse-stream"
 	| "google-generative-ai"
 	| "google-vertex"
-	| "pi-messages";
+	| "brian-messages";
 
 export type Api = KnownApi | (string & {});
 
@@ -288,7 +288,7 @@ export interface ApiOptionsMap {
 	"google-vertex": GoogleVertexOptions;
 	"mistral-conversations": MistralOptions;
 	"bedrock-converse-stream": BedrockOptions;
-	"pi-messages": BrianMessagesOptions;
+	"brian-messages": BrianMessagesOptions;
 }
 
 /**

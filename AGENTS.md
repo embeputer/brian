@@ -1,6 +1,6 @@
 # Brian
 
-This is [`embeputer/brian`](https://github.com/embeputer/brian), a fork of the [pi agent harness](https://github.com/earendil-works/pi). npm packages are `@brian-agent/*`. The CLI binary is `brian`, the config dir is `~/.brian` (project: `.brian/`), and env vars use the `BRIAN_` prefix. Rename upstream pi names (`pi`, `.pi`, `PI_*`, `@earendil-works/*`) when merging upstream changes. Kept for protocol compatibility: the OpenAI Codex `originator` and xAI `referrer` OAuth values stay `pi`, and pi.dev services (model catalog, MCP OAuth client metadata, share viewer, Radius gateway) keep their URLs.
+This is [`embeputer/brian`](https://github.com/embeputer/brian), a personal "you agent" built on the [pi agent harness](https://github.com/earendil-works/pi). npm packages are `@brian-agent/*`. The CLI binary is `brian`, the config dir is `~/.brian` (project: `.brian/`), and env vars use the `BRIAN_` prefix.
 
 Directory names did not change with the npm rename. `@brian-agent/cli` lives in `packages/coding-agent`.
 
@@ -14,28 +14,30 @@ Directory names did not change with the npm rename. `@brian-agent/cli` lives in 
 | `@brian-agent/codemode` | `packages/codemode` |
 | `@brian-agent/a2a` | `packages/a2a` |
 
-## Merging upstream brian
+Kept from pi on purpose:
 
-Brian dropped several parts of brian. Upstream merges bring changes to them back as modify/delete conflicts, new files, or edits to files that survived. Before resolving, check whether the code belongs to something Brian dropped, and do not restore it.
+- The OpenAI Codex `originator` and xAI `referrer` OAuth values stay `pi`; the providers only accept known values.
+- Extensions written for pi import `@mariozechner/pi-*`. The extension loader maps those names to the Brian packages (`src/core/extensions/loader.ts`, `virtual-modules.ts`), so pi extensions keep loading.
+- Code comments and tests link pi issues (`earendil-works/pi#...`) to explain regressions. Leave them.
 
-- [PR #19](https://github.com/embeputer/brian/pull/19) made `@brian-agent/cli` headless. Only print, JSON, and RPC modes exist. Removed:
-  - `packages/tui` (`@brian-agent/tui`) and `packages/evals`;
-  - interactive mode (`src/modes/interactive`), the session picker, startup UI, config selector, and TUI keybindings;
-  - TUI-only extension APIs: `renderCall`/`renderResult`, tool renderers (`src/core/tools/renderers`), custom editors/footers/headers, `InteractiveMode`, `registerMarkdownTransformer`;
-  - the MCP manager UI (`src/extensions/mcp/ui.ts`), the codemode renderer, and experimental TUI entrypoints (`src/experimental/client-tui*.ts`, `src/experimental/*/{main,tui}.ts`);
-  - TUI-only examples and tests.
-  Theme tokens moved to `src/core/theme`.
-- [PR #9](https://github.com/embeputer/brian/pull/9) disabled GitHub Actions. Workflows live in `.github/workflows-disabled/`. Put new upstream workflows there, not in `.github/workflows/`.
-- Model selection uses brian's resolver (partial matching, lenient session restore) with Brian patches in `src/core/model-resolver.ts` and `src/core/model-suffix-variants.ts`: partial matches prefer a base ID over its `:variant` and an ID ending in the typed text over one continuing it, and warn with the selected model; `<catalog id>:<suffix>` IDs (OpenRouter routing variants such as `:nitro`) copy the catalog model; restore and saved-default fallbacks print a warning. Keep these patches when merging upstream resolver changes, and do not add provider-specific suffix lists.
-- brian 1.0.1 removed `packages/coding-agent/npm-shrinkwrap.json` and its generator. Brian keeps both, along with `check:shrinkwrap` and the `shrinkwrap` step in `prepublishOnly` and `scripts/release.mjs`.
-- The brian 1.1 merge left out the Nix flake (`flake.nix`, `flake.lock`, `nix/`, `nix.yml`, `scripts/update-model-catalog-pin.mjs`). It packages `packages/tui` and pins pi.dev's model catalog.
-- Rename new upstream `@earendil-works/*` packages, imports, and docs references to `@brian-agent/*`, and add new packages to the table above.
+## What Brian removed from pi
 
-How to resolve:
+Do not bring these back when porting upstream pi changes:
 
-- Modify/delete conflicts on dropped paths: keep the deletion.
-- Upstream edits in surviving files that only serve the TUI: drop them. Port fixes that also affect print, JSON, or RPC mode, the SDK, or extensions.
-- Land upstream merges with a merge commit, not squash or rebase, so the upstream tag stays an ancestor. If `git merge-base HEAD <tag>` is older than the last merged upstream tag, preview with `git merge-tree --merge-base=<last merged tag> HEAD <tag>`.
+- Terminal UI: `@brian-agent/cli` is headless. Only print, JSON, and RPC modes exist (no `packages/tui`, interactive mode, TUI keybindings, tool renderers, or TUI-only extension APIs).
+- Themes and the footer data provider ([#22](https://github.com/embeputer/brian/pull/22)). One fixed palette in `src/core/theme` colors HTML export.
+- `/share` and the pi.dev share viewer ([#11](https://github.com/embeputer/brian/pull/11)).
+- The install telemetry ping, the Radius provider, pi's managed installer update path, and the `durable`, `env`, and `chord` packages ([#20](https://github.com/embeputer/brian/pull/20)).
+- The Nix flake.
+- All pi.dev services. The live model catalog comes from the `model-catalog` branch, rebuilt every 6 hours by `.github/workflows/model-catalog.yml` ([#17](https://github.com/embeputer/brian/pull/17)). Shipped model data in `packages/ai/src/providers/data/` is committed and changes only through its own PR ([#19](https://github.com/embeputer/brian/pull/19)). The MCP client metadata document is `oauth/client.json` in this repo.
+
+Active workflows are `.github/workflows/build-binaries.yml` (release) and `model-catalog.yml`. `ci.yml` and `npm-audit.yml` sit in `.github/workflows-disabled/`.
+
+Model selection patches in `src/core/model-resolver.ts` and `src/core/model-suffix-variants.ts`: partial matches prefer a base ID over its `:variant` and an ID ending in the typed text over one continuing it, and warn with the selected model; `<catalog id>:<suffix>` IDs (OpenRouter routing variants such as `:nitro`) copy the catalog model; restore and saved-default fallbacks print a warning. Do not add provider-specific suffix lists.
+
+Brian keeps `packages/coding-agent/npm-shrinkwrap.json` and its generator, along with `check:shrinkwrap` and the `shrinkwrap` step in `prepublishOnly` and `scripts/release.mjs`.
+
+When porting upstream pi changes, rename pi names (`pi`, `.pi`, `PI_*`, `@earendil-works/*`) to Brian names, drop changes that only serve removed parts, and port fixes that affect print, JSON, or RPC mode, the SDK, or extensions.
 
 # Development Rules
 

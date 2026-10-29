@@ -1,18 +1,6 @@
-<p align="center">
-  <a href="https://pi.dev">
-    <img alt="Brian logo" src="https://pi.dev/logo-auto.svg" width="128">
-  </a>
-</p>
-<p align="center">
-  <a href="https://discord.com/invite/3cU7Bz4UPx"><img alt="Discord" src="https://img.shields.io/badge/discord-community-5865F2?style=flat-square&logo=discord&logoColor=white" /></a>
-  <a href="https://www.npmjs.com/package/@brian-agent/cli"><img alt="npm" src="https://img.shields.io/npm/v/@brian-agent/cli?style=flat-square&logo=npm&logoColor=white" /></a>
-</p>
-
-> New issues and PRs from new contributors are closed automatically. Maintainers review closed submissions daily. See [CONTRIBUTING.md](https://github.com/earendil-works/pi/blob/main/CONTRIBUTING.md).
-
 # Brian
 
-Brian is a minimal, extensible agent harness that you can make your own.
+Brian is your agent: one agent for work, school, and life. This package is the `brian` CLI.
 
 Adapt Brian to your workflows, not the other way around. Customize Brian with [extensions](docs/extensions.md), [skills](docs/skills.md), and [prompt templates](docs/prompt-templates.md). Bundle them as [Brian packages](docs/packages.md) and share via npm or git.
 
@@ -608,9 +596,3 @@ MIT
 
 - [@brian-agent/ai](https://www.npmjs.com/package/@brian-agent/ai): Core LLM toolkit
 - [@brian-agent/agent](https://www.npmjs.com/package/@brian-agent/agent): Agent framework
-
-<p align="center">
-  <a href="https://pi.dev">pi.dev</a> domain graciously donated by
-  <br /><br />
-  <a href="https://exe.dev"><img src="docs/images/exy.png" alt="Exy mascot" width="48" /><br />exe.dev</a>
-</p>
