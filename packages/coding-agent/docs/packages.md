@@ -71,7 +71,7 @@ Use an explicit manifest when resources live elsewhere or need filtering:
 
 Paths are relative to the package root. Arrays accept glob patterns and exclusions. List dot-prefixed or symlinked resource roots directly when traversal through a glob would not discover them.
 
-The `brian-package` keyword makes an npm package eligible for discovery in the [Brian package gallery](https://pi.dev/packages). Optional `brian.image` and `brian.video` fields add gallery previews.
+The `brian-package` keyword marks an npm package as a Brian package.
 
 ## Declare dependencies
 

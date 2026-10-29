@@ -42,7 +42,7 @@ reports and coordinate disclosure as appropriate.
 
 Security issues in the distributed packages, command-line tools, APIs, and
 repository code are in scope. Third-party services Brian calls (model
-providers, Beeper, pi.dev's model catalog) are out of scope; report those to
+providers, Beeper) are out of scope; report those to
 their operators.
 
 ## Out Of Scope
