@@ -23,9 +23,6 @@ export default mergeConfig(
 			alias: [
 				{ find: /^@brian-agent\/ai$/, replacement: workspaceSourcePaths.aiIndex },
 				{ find: /^@brian-agent\/agent$/, replacement: workspaceSourcePaths.agentIndex },
-				{ find: /^@mariozechner\/brian-ai$/, replacement: workspaceSourcePaths.aiIndex },
-				{ find: /^@mariozechner\/brian-ai\/oauth$/, replacement: workspaceSourcePaths.aiOAuth },
-				{ find: /^@mariozechner\/brian-agent-core$/, replacement: workspaceSourcePaths.agentIndex },
 				{ find: /^@brian-agent\/a2a$/, replacement: workspaceSourcePaths.a2aIndex },
 			],
 		},

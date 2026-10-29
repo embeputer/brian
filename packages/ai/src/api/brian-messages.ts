@@ -6,7 +6,7 @@
  * response is an SSE stream of serialized assistant-message events plus a
  * terminal `done`/`error` event. This is the wire protocol spoken by the
  * Radius gateway, but any backend implementing it can be used, e.g. via a
- * models.json custom provider with `"api": "pi-messages"`.
+ * models.json custom provider with `"api": "brian-messages"`.
  */
 
 import type {
@@ -135,7 +135,7 @@ function formatBrianMessagesResponseError(
 }
 
 function createBrianMessagesResponseError(
-	model: Model<"pi-messages">,
+	model: Model<"brian-messages">,
 	url: URL,
 	response: Response,
 	body: string,
@@ -177,7 +177,7 @@ function appendRewriteDiagnostic(message: AssistantMessage, rewrite: BrianMessag
 	});
 }
 
-function createEventConverter(model: Model<"pi-messages">) {
+function createEventConverter(model: Model<"brian-messages">) {
 	const partial: AssistantMessage = {
 		role: "assistant",
 		content: [],
@@ -320,7 +320,7 @@ function parseBrianMessagesEvent(raw: string): BrianMessagesEvent | undefined {
 	return data && data !== "[DONE]" ? (JSON.parse(data) as BrianMessagesEvent) : undefined;
 }
 
-function createErrorEvent(model: Model<"pi-messages">, error: unknown, aborted: boolean): AssistantMessageEvent {
+function createErrorEvent(model: Model<"brian-messages">, error: unknown, aborted: boolean): AssistantMessageEvent {
 	const reason = aborted ? "aborted" : "error";
 	const assistantMessage: AssistantMessage = {
 		role: "assistant",
@@ -352,8 +352,8 @@ function resolveCacheRetention(cacheRetention?: CacheRetention, env?: ProviderEn
 	return getProviderEnvValue("BRIAN_CACHE_RETENTION", env) === "long" ? "long" : undefined;
 }
 
-export const stream: StreamFunction<"pi-messages", BrianMessagesOptions> = (
-	model: Model<"pi-messages">,
+export const stream: StreamFunction<"brian-messages", BrianMessagesOptions> = (
+	model: Model<"brian-messages">,
 	context: TranscriptContext,
 	options?: BrianMessagesOptions,
 ): AssistantMessageEventStream => {
@@ -429,8 +429,8 @@ export const stream: StreamFunction<"pi-messages", BrianMessagesOptions> = (
 	return eventStream;
 };
 
-export const streamSimple: StreamFunction<"pi-messages", SimpleStreamOptions> = (
-	model: Model<"pi-messages">,
+export const streamSimple: StreamFunction<"brian-messages", SimpleStreamOptions> = (
+	model: Model<"brian-messages">,
 	context: TranscriptContext,
 	options?: SimpleStreamOptions,
 ): AssistantMessageEventStream => {
