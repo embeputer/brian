@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Refreshed shipped provider model data: drops models providers retired (OpenRouter `openai/o1`, `o3-mini`, `o4-mini`, `gpt-4-turbo`, Poolside Laguna 2.1, and others; NVIDIA `z-ai/glm-5.3`; OpenCode `nemotron-3-ultra-free`; three Vercel AI Gateway models) and adds new ones
+
 ## [0.1.1] - 2026-10-26
 
 ### Changed
