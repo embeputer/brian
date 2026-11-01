@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "revision": "sha256-d94a6e7343dd2b74240032bd24bf9a164f5d7d2eb1dd1e29f2d474cb74987f8a",
-  "generatedAt": "2026-10-31T21:45:25.898Z",
+  "revision": "sha256-f2f4457e5968081af39dc2acce462932a54d7f7bd84048de66f967006ea51802",
+  "generatedAt": "2026-11-01T06:27:54.975Z",
   "sourceCommit": "6c2bee2d6ad91e527bcadfc87d72406b6dc33d1f",
   "providerCount": 41,
   "modelCount": 1563,
   "chatModelCount": 1563,
   "imageModelCount": 64,
-  "classifierModelCount": 55,
-  "totalModelCount": 1682,
+  "classifierModelCount": 54,
+  "totalModelCount": 1681,
   "modelTypes": [
     "chat",
     "image",
