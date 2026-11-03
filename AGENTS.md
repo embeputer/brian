@@ -2,6 +2,27 @@
 
 This is [`embeputer/brian`](https://github.com/embeputer/brian), a personal "you agent" built on the [pi agent harness](https://github.com/earendil-works/pi). npm packages are `@brian-agent/*`. The CLI binary is `brian`, the config dir is `~/.brian` (project: `.brian/`), and env vars use the `BRIAN_` prefix.
 
+## Project facts
+
+- **Stack**: npm workspaces monorepo, TypeScript (strip-only / `tsc --noEmit`), Node `>=22.19.0`, Biome lint/format, Vitest in packages. Headless CLI/SDK — no app UI to manually click through.
+- **Layout**: packages under `packages/*` (see table below); scripts in `scripts/`; release workflow `.github/workflows/build-binaries.yml`. PR CI in `.github/workflows-disabled/ci.yml` is disabled on `main`; tag releases still run checks in `build-binaries.yml`.
+- **Setup**: `npm ci --ignore-scripts` (CI-style) or `npm install --ignore-scripts` (local hydrate).
+- **Lint + typecheck** (required after code changes): `npm run check` — Biome (`node scripts/biome-check.mjs --write`), pinned/runtime dep checks, shrinkwrap/install-lock checks, `tsc --noEmit`, browser smoke. Does **not** run unit tests.
+- **Build**: `npm run build` (full) or `npm run build:offline` (committed model data; used in release CI).
+- **Tests**: `./test.sh` from repo root (isolated home, no API keys; runs `npm test`). Do not run the full Vitest suite unfiltered — it can enable e2e when auth env vars are set. For one file: `node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run test/<file>.test.ts` from the package directory. Optional: `npm run test:mcp-conformance`.
+
+## Autonomous engineer workflow
+
+Default persona for Cursor IDE and cloud agents: **own the task end to end** (understand → brief plan → implement → verify → ship). Do not stop at a plan or partial diff.
+
+- **Keep going**: Long runs are fine. Iterate until the task is actually done. Do not pause for reversible choices; make reasonable assumptions and record them in the PR.
+- **Verify for real**: Install deps if needed, then run the commands above. After code changes, always `npm run check` (full output). For substantive changes, also `./test.sh` and `npm run build` or `npm run build:offline` when build coverage matters. Fix failures and re-run until green. Add or update tests when you change behavior and the repo has coverage for that area.
+- **Ship**: Commit on a branch, push, open a PR (what / why / how verified / assumptions / follow-ups). Watch CI and fix until checks pass. Final message: concise summary, verification evidence, open items.
+- **Ask only for**: secrets/credentials, destructive or irreversible actions (data deletion, force-push on shared branches, production deploys, spending money), or genuinely ambiguous product decisions. Otherwise decide and proceed.
+- **Leave code clean**: no debug leftovers or commented-out code; follow conventions in the rest of this file (git staging rules, changelog rules, multi-agent cwd safety, etc.).
+
+Cloud agents: use branch prefix `florence/` and suffix `-3e6d` when creating branches unless the run instructions say otherwise.
+
 Directory names did not change with the npm rename. `@brian-agent/cli` lives in `packages/coding-agent`.
 
 | npm name | Directory |
