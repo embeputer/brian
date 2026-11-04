@@ -137,6 +137,10 @@ Examples:
 
 Update brian, installed packages, or model catalogs.
 
+When the update includes brian, prints the current version and the published
+@brian-agent/cli version, then installs that package when the published version
+is newer. An installed version that is already current is left in place.
+
 Options:
   --self                  Update brian only (default when no target is given)
   --extensions            Update installed packages only
@@ -464,6 +468,8 @@ async function getSelfUpdatePlan(force: boolean): Promise<SelfUpdatePlan> {
 
 	const packageName = latestRelease.packageName ?? PACKAGE_NAME;
 	const installSpec = `${packageName}@${latestRelease.version}`;
+	console.log(`Current version: ${VERSION}`);
+	console.log(`Available version: ${latestRelease.version}`);
 	if (force || packageName !== PACKAGE_NAME || isNewerPackageVersion(latestRelease.version, VERSION)) {
 		return {
 			packageName,

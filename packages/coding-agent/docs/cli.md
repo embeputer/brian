@@ -268,7 +268,7 @@ Add `--local` or `-l` to `install`, `remove`, `uninstall`, or `config` to use pr
 
 ### Update Brian or packages
 
-Running `brian update` without a target updates Brian itself.
+Running `brian update` without a target prints the current version and the version published on npm for `@brian-agent/cli`, then installs that package when the published version is newer. The published package depends on the other `@brian-agent` packages at the same version. When the installed version is already the published version, it prints both versions and leaves the installation in place.
 
 | Task | Command |
 |---|---|
