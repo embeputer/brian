@@ -13,7 +13,6 @@
 ### Fixed
 
 - Updated `undici` to 8.12.2 for its TLS certificate validation bypass, cache poisoning and crash fixes ([GHSA-2m5v-pch6-74hx](https://github.com/nodejs/undici/security/advisories/GHSA-2m5v-pch6-74hx), [GHSA-qrxm-fqhp-jwvm](https://github.com/nodejs/undici/security/advisories/GHSA-qrxm-fqhp-jwvm), [GHSA-4w7w-5xrc-9h26](https://github.com/nodejs/undici/security/advisories/GHSA-4w7w-5xrc-9h26), [GHSA-xjj6-f33q-929c](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c)), and the bundled `body-parser` to 2.4.0 ([#24](https://github.com/embeputer/brian/pull/24))
-- `webfetch` no longer lets a web page reach internal addresses (cloud metadata, local services) through its browser fallback: blocked URLs are not retried in the browser, and the fallback browser now sends all traffic, including redirects, popups, workers and WebSockets, through the same private-address check ([#33](https://github.com/embeputer/brian/pull/33))
 
 ### Removed
 
