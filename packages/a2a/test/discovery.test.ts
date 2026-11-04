@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { chmodSync, mkdtempSync, rmSync, statSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
@@ -139,17 +139,43 @@ describe("LocalA2aDiscovery", () => {
 				name: "bob",
 				url: bound.url,
 				pid: 22,
+				token: server.token,
 				startedAt: Date.now(),
 			});
 			const peer = alice.find("bob");
 			expect(peer?.url).toBe(bound.url);
-			const result = await delegateToA2aAgent({ url: peer!.url, task: "hi" });
+			expect(peer?.token).toBe(server.token);
+			const result = await delegateToA2aAgent({ url: peer!.url, task: "hi", token: peer!.token });
 			expect(result.text).toBe("bob:hi");
 		} finally {
 			alice.close();
 			bob.close();
 			await server.close();
 		}
+	});
+
+	test.skipIf(process.platform === "win32")("closes a discovery directory others can read", () => {
+		const dir = tempDir();
+		chmodSync(dir, 0o777);
+		const alice = new LocalA2aDiscovery({ dir, now: () => 1 });
+		alice.advertise({
+			id: "alice-id",
+			name: "alice",
+			url: "http://127.0.0.1:1/",
+			pid: 11,
+			token: "secret",
+			startedAt: 1,
+		});
+		expect(statSync(dir).mode & 0o777).toBe(0o700);
+		expect(statSync(path.join(dir, "alice-id.json")).mode & 0o777).toBe(0o600);
+	});
+
+	test.skipIf(process.platform === "win32")("refuses a symlinked discovery directory", () => {
+		const target = tempDir();
+		const link = path.join(tempDir(), "link");
+		symlinkSync(target, link);
+		const alice = new LocalA2aDiscovery({ dir: link, now: () => 1 });
+		expect(() => alice.list()).toThrow("is not a directory");
 	});
 
 	test("close removes the local advertisement", () => {

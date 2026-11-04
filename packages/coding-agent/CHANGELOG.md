@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-04
+
 ### Breaking Changes
 
 - Custom `models.json` providers must use `"api": "brian-messages"` instead of `"api": "pi-messages"` ([#23](https://github.com/embeputer/brian/pull/23))
+
+### Added
+
+- `brian update` prints the installed version and the version published on npm before it updates ([#27](https://github.com/embeputer/brian/pull/27))
 
 ### Changed
 
