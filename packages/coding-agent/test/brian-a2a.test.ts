@@ -96,6 +96,7 @@ describe("installA2a", () => {
 				name: "bob",
 				url: bound.url,
 				pid: process.pid + 1,
+				token: server.token,
 				startedAt: Date.now(),
 			});
 			const { a2aTool, contextHandler } = setup({ SANDBOX_NAME: "alice" }, aliceDiscovery);

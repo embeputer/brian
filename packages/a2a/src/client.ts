@@ -7,6 +7,8 @@ export interface DelegateToA2aAgentOptions {
 	url: string;
 	task: string;
 	signal?: AbortSignal;
+	/** Sent as `Authorization: Bearer <token>` on every request. */
+	token?: string;
 }
 
 export interface DelegateToA2aAgentResult {
@@ -43,9 +45,18 @@ function buildStreamingSendMessageRequest(task: string): SendMessageRequest {
 	};
 }
 
-async function createA2aClient(url: string): Promise<Client> {
+function withBearerToken(token: string): typeof fetch {
+	return (input, init) => {
+		const headers = new Headers(init?.headers);
+		headers.set("authorization", `Bearer ${token}`);
+		return fetch(input, { ...init, headers });
+	};
+}
+
+async function createA2aClient(url: string, token: string | undefined): Promise<Client> {
+	const fetchImpl = token ? withBearerToken(token) : undefined;
 	const factory = new ClientFactory({
-		transports: [new JsonRpcTransportFactory()],
+		transports: [new JsonRpcTransportFactory(fetchImpl ? { fetchImpl } : undefined)],
 	});
 	return factory.createFromUrl(url);
 }
@@ -221,7 +232,7 @@ async function delegateToA2aAgentStreamWithClient(
 }
 
 export async function delegateToA2aAgent(options: DelegateToA2aAgentOptions): Promise<DelegateToA2aAgentResult> {
-	const client = await createA2aClient(options.url);
+	const client = await createA2aClient(options.url, options.token);
 	return delegateToA2aAgentWithClient(client, options);
 }
 
@@ -229,7 +240,7 @@ export async function delegateToA2aAgentStream(
 	options: DelegateToA2aAgentOptions,
 	onUpdate?: (text: string) => void,
 ): Promise<DelegateToA2aAgentResult> {
-	const client = await createA2aClient(options.url);
+	const client = await createA2aClient(options.url, options.token);
 	return delegateToA2aAgentStreamWithClient(client, options, onUpdate);
 }
 
@@ -237,7 +248,7 @@ export async function delegateToA2aAgentPreferStream(
 	options: DelegateToA2aAgentOptions,
 	onUpdate?: (text: string) => void,
 ): Promise<DelegateToA2aAgentResult> {
-	const client = await createA2aClient(options.url);
+	const client = await createA2aClient(options.url, options.token);
 	const card = await client.getAgentCard({ signal: options.signal });
 	if (card.capabilities?.streaming) {
 		return delegateToA2aAgentStreamWithClient(client, options, onUpdate);
