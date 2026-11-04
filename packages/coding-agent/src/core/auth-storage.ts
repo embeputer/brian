@@ -10,7 +10,7 @@ import lockfile from "proper-lockfile";
 import { setTimeout as sleep } from "timers/promises";
 import { getAgentDir } from "../config.ts";
 import { raceWithAbortSignal } from "../utils/abort.ts";
-import { getFileRevision, normalizePath } from "../utils/paths.ts";
+import { normalizePath } from "../utils/paths.ts";
 import { stripBom } from "../utils/text.ts";
 import { isCommandConfigValue, resolveConfigValue } from "./resolve-config-value.ts";
 
@@ -44,9 +44,19 @@ type AuthFileReload = {
 
 type AuthFileReadState = {
 	data: AuthStorageData;
-	revision?: string;
+	// Raw auth.json content behind `data`. Compared by content because a same-size rewrite within
+	// one filesystem timestamp tick leaves size, mtime, and ctime unchanged.
+	content?: string;
 	reload?: AuthFileReload;
 };
+
+function readAuthFileContent(authPath: string): string | undefined {
+	try {
+		return readFileSync(authPath, "utf-8");
+	} catch {
+		return undefined;
+	}
+}
 
 let sharedAuthFileReadState: { authPath: string; readState: AuthFileReadState } | undefined;
 
@@ -339,8 +349,8 @@ export class AuthStorage implements CredentialStore {
 			sharedAuthFileReadState = { authPath, readState: this.readState };
 		}
 		if (authPath) {
-			const revision = getFileRevision(authPath);
-			if (revision !== undefined && revision === this.readState.revision) return;
+			const content = readAuthFileContent(authPath);
+			if (content !== undefined && content === this.readState.content) return;
 		}
 		this.reload();
 	}
@@ -367,9 +377,9 @@ export class AuthStorage implements CredentialStore {
 		return JSON.parse(stripBom(content)) as AuthStorageData;
 	}
 
-	private updateReadState(data: AuthStorageData, revision?: string): void {
+	private updateReadState(data: AuthStorageData, content?: string): void {
 		this.readState.data = data;
-		this.readState.revision = revision;
+		this.readState.content = content;
 	}
 
 	/**
@@ -377,14 +387,12 @@ export class AuthStorage implements CredentialStore {
 	 */
 	reload(): void {
 		let content: string | undefined;
-		let revision: string | undefined;
 		try {
 			this.storage.withLock((current) => {
 				content = current;
-				revision = this.authPath ? getFileRevision(this.authPath) : undefined;
 				return { result: undefined };
 			});
-			this.updateReadState(this.parseStorageData(content), revision);
+			this.updateReadState(this.parseStorageData(content), content);
 		} catch {
 			// Preserve the last valid in-memory snapshot.
 		}
@@ -393,8 +401,7 @@ export class AuthStorage implements CredentialStore {
 	private async reloadFromStorageAsync(options?: AuthOperationOptions): Promise<AuthStorageData> {
 		return this.storage.withLockAsync(async (content) => {
 			const currentData = this.parseStorageData(content);
-			const revision = this.authPath ? getFileRevision(this.authPath) : undefined;
-			this.updateReadState(currentData, revision);
+			this.updateReadState(currentData, content);
 			return { result: currentData };
 		}, options);
 	}
@@ -405,8 +412,8 @@ export class AuthStorage implements CredentialStore {
 			const reload = this.reloadFromStorageAsync(options);
 			return options?.signal ? reload : reload.catch(() => this.readState.data);
 		}
-		const revision = getFileRevision(this.authPath);
-		if (revision !== undefined && revision === this.readState.revision) return this.readState.data;
+		const content = readAuthFileContent(this.authPath);
+		if (content !== undefined && content === this.readState.content) return this.readState.data;
 		if (!this.readState.reload) {
 			const controller = new AbortController();
 			const reload: AuthFileReload = {
@@ -453,13 +460,13 @@ export class AuthStorage implements CredentialStore {
 		options?: AuthOperationOptions,
 	): Promise<Credential | undefined> {
 		let latestData = this.readState.data;
-		let revision: string | undefined;
+		let latestContent: string | undefined;
 		const result = await this.storage.withLockAsync(async (content) => {
 			const currentData = this.parseStorageData(content);
 			const next = await fn(currentData[provider]);
 			if (next === undefined) {
 				latestData = currentData;
-				revision = this.authPath ? getFileRevision(this.authPath) : undefined;
+				latestContent = content;
 				return { result: currentData[provider] };
 			}
 
@@ -467,7 +474,7 @@ export class AuthStorage implements CredentialStore {
 			latestData = merged;
 			return { result: next, next: JSON.stringify(merged, null, 2) };
 		}, options);
-		this.updateReadState(latestData, revision);
+		this.updateReadState(latestData, latestContent);
 		return result;
 	}
 
