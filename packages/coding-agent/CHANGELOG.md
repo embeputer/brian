@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated `minimatch` to 11.0.4 to fix a denial of service from crafted glob patterns in `--models`/`enabledModels` globs and package filters (GHSA-g3hv-75wg-m249). The sandbox and gondolin example extensions now use versions without the open `zod` and `node-forge` advisories
+
 ## [0.2.1] - 2026-11-04
 
 ### Fixed
