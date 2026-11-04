@@ -27,6 +27,7 @@ import {
 	sendAsBrian,
 } from "../core/messaging/gateway.ts";
 import { createProcessExecutor, type RoutineExecutor } from "../extensions/brian/routine-runner.ts";
+import { MEMORY_PEOPLE_ONLY_FLAG } from "../extensions/memory/index.ts";
 import { question, secret } from "./connect-model.ts";
 
 const HELP = `Usage: ${APP_NAME} messages <command>
@@ -93,9 +94,11 @@ function requireClient(deps: MessagesDeps): BeeperClient {
 
 /**
  * Tool arguments for deciding on messages from other people. Their text is in the prompt, so the run
- * only gets the memory tools: no bash, file, MCP, or other extension tools a message could steer.
+ * only gets the memory tools: no bash, file, MCP, or other extension tools a message could steer. Its writes
+ * stay in People/, because Agent/ notes and folder names are loaded into the system prompt of later runs.
  */
 export const OTHERS_CHAT_TOOL_ARGS = [
+	`--${MEMORY_PEOPLE_ONLY_FLAG}`,
 	"--no-tools",
 	"--tools",
 	"memory_search,memory_write",
