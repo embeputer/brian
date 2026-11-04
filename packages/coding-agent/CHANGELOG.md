@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Credential reads now notice when another process rewrites `auth.json` with content of the same length right after Brian loaded it. Previously the change could be missed and the old credential returned until the file changed again ([#40](https://github.com/embeputer/brian/pull/40))
+
 ## [0.2.2] - 2026-11-04
 
 ### Fixed
