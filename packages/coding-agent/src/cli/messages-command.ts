@@ -1,6 +1,11 @@
 import chalk from "chalk";
 import { APP_NAME } from "../config.ts";
 import {
+	LIST_MCP_RESOURCE_TEMPLATES_TOOL,
+	LIST_MCP_RESOURCES_TOOL,
+	READ_MCP_RESOURCE_TOOL,
+} from "../core/mcp-servers.ts";
+import {
 	BeeperClient,
 	type BeeperConfig,
 	DEFAULT_BEEPER_URL,
@@ -21,7 +26,7 @@ import {
 	pollMessages,
 	sendAsBrian,
 } from "../core/messaging/gateway.ts";
-import { createProcessExecutor } from "../extensions/brian/routine-runner.ts";
+import { createProcessExecutor, type RoutineExecutor } from "../extensions/brian/routine-runner.ts";
 import { question, secret } from "./connect-model.ts";
 
 const HELP = `Usage: ${APP_NAME} messages <command>
@@ -86,9 +91,25 @@ function requireClient(deps: MessagesDeps): BeeperClient {
 	return new BeeperClient(config);
 }
 
-export function createProcessDecider(): Decider {
-	const executor = createProcessExecutor();
-	return async (input) => parseDecision(await executor.runTask(buildDecidePrompt(input)));
+/**
+ * Tool arguments for deciding on messages from other people. Their text is in the prompt, so the run
+ * only gets the memory tools: no bash, file, MCP, or other extension tools a message could steer.
+ */
+export const OTHERS_CHAT_TOOL_ARGS = [
+	"--no-tools",
+	"--tools",
+	"memory_search,memory_write",
+	"--exclude-tools",
+	["mcp__*", LIST_MCP_RESOURCES_TOOL, LIST_MCP_RESOURCE_TEMPLATES_TOOL, READ_MCP_RESOURCE_TOOL].join(","),
+];
+
+export function createProcessDecider(executor: RoutineExecutor = createProcessExecutor()): Decider {
+	return async (input) =>
+		parseDecision(
+			await executor.runTask(buildDecidePrompt(input), {
+				args: input.mode === "brian" ? [] : OTHERS_CHAT_TOOL_ARGS,
+			}),
+		);
 }
 
 const when = (ms: number) => new Date(ms).toLocaleString();
