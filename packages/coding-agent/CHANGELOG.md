@@ -12,7 +12,6 @@
 
 ### Fixed
 
-- The inter-Brian A2A listener no longer accepts prompts from any local process: calls need the token from the peer's advertisement file, and requests for a foreign `Host` are rejected ([#32](https://github.com/embeputer/brian/pull/32))
 - Updated `undici` to 8.12.2 for its TLS certificate validation bypass, cache poisoning and crash fixes ([GHSA-2m5v-pch6-74hx](https://github.com/nodejs/undici/security/advisories/GHSA-2m5v-pch6-74hx), [GHSA-qrxm-fqhp-jwvm](https://github.com/nodejs/undici/security/advisories/GHSA-qrxm-fqhp-jwvm), [GHSA-4w7w-5xrc-9h26](https://github.com/nodejs/undici/security/advisories/GHSA-4w7w-5xrc-9h26), [GHSA-xjj6-f33q-929c](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c)), and the bundled `body-parser` to 2.4.0 ([#24](https://github.com/embeputer/brian/pull/24))
 
 ### Removed
