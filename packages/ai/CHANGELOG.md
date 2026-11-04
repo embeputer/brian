@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-04
+
 ### Breaking Changes
 
 - The `pi-messages` API id is now `brian-messages`. Custom `models.json` providers and SDK callers that set `api: "pi-messages"` must use `"brian-messages"` ([#23](https://github.com/embeputer/brian/pull/23))

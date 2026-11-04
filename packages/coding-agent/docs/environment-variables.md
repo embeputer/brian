@@ -99,6 +99,8 @@ Provider credentials such as `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and cloud-pr
 
 When `BRIAN_NAME` (or `SANDBOX_NAME`) is set, or `BRIAN_A2A=1`, Brian starts a loopback A2A server and advertises it so other Brians on the same machine can reach it with the `brians` tool. Set `BRIAN_A2A=0` to disable.
 
+The server needs `Authorization: Bearer <token>` on every call and only answers requests whose `Host` is its own address. Each Brian writes a fresh token into its advertisement file, which only the user running Brian can read: the discovery directory must be owned by that user and is set to mode `0700`.
+
 | Variable | Description |
 |----------|-------------|
 | `BRIAN_NAME` | Name other Brians use to reach this one; falls back to `SANDBOX_NAME` |
