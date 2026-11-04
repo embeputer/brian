@@ -1,10 +1,10 @@
 {
 	"name": "@brian-agent/cli-install",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"private": true,
 	"description": "Lockfile root used by the Brian installer and updater.",
 	"dependencies": {
-		"@brian-agent/cli": "0.2.1"
+		"@brian-agent/cli": "0.2.2"
 	},
 	"overrides": {
 		"protobufjs": "7.6.5"
