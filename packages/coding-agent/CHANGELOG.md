@@ -5,6 +5,8 @@
 ### Fixed
 
 - `brian messages watch` and the `brian serve` gateway now decide on messages from other people with only the `memory_search` and `memory_write` tools, so a chat message can no longer get Brian to run commands or edit files. Your own brian chat keeps all tools ([#31](https://github.com/embeputer/brian/pull/31))
+- The A2A server (used by the `brians` tool when `BRIAN_NAME`, `SANDBOX_NAME` or `BRIAN_A2A=1` is set) now requires `Authorization: Bearer <token>` and rejects requests whose `Host` is not its own address, so other local processes and DNS-rebinding pages can no longer prompt the agent. The token is shared through the discovery directory, which must be owned by the current user and is set to mode 0700. External A2A clients now need the token ([#32](https://github.com/embeputer/brian/pull/32))
+- `webfetch` no longer falls back to the browser for blocked private, loopback or link-local URLs, and the browser fallback now runs in a separate headless Chromium whose traffic goes through a guard proxy, so redirects, popups, workers and DNS rebinding can no longer reach internal addresses such as `169.254.169.254` ([#33](https://github.com/embeputer/brian/pull/33))
 
 ## [0.2.0] - 2026-11-04
 

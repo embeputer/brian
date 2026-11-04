@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `createA2aServer` now requires `Authorization: Bearer <token>` (`server.token`, or `options.token`) on every request except the agent card, and rejects requests whose `Host` is not the server's own address (`options.allowedHosts` adds more). `LocalA2aDiscovery` stores the token in the peer lease and refuses a discovery directory that is a symlink or owned by another user ([#32](https://github.com/embeputer/brian/pull/32))
+
 ## [0.2.0] - 2026-11-04
 
 ## [0.1.1] - 2026-10-26
