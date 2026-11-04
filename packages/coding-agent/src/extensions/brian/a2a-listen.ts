@@ -55,6 +55,7 @@ export async function startBrianA2aListener(
 				url,
 				pid: process.pid,
 				cwd: process.cwd(),
+				token: server.token,
 				startedAt: Date.now(),
 			});
 			const timer = setInterval(() => {

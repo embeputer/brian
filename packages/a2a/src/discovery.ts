@@ -1,4 +1,13 @@
-import { mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+	chmodSync,
+	lstatSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	renameSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 
@@ -8,6 +17,8 @@ export interface A2aPeerRecord {
 	url: string;
 	pid: number;
 	cwd?: string;
+	/** Bearer token for the peer's A2A server. */
+	token?: string;
 	startedAt: number;
 	updatedAt: number;
 }
@@ -53,19 +64,35 @@ function parseRecord(raw: unknown): A2aPeerRecord | undefined {
 	if (typeof value.startedAt !== "number" || !Number.isFinite(value.startedAt)) return undefined;
 	if (typeof value.updatedAt !== "number" || !Number.isFinite(value.updatedAt)) return undefined;
 	const cwd = typeof value.cwd === "string" && value.cwd.length > 0 ? value.cwd : undefined;
+	const token = typeof value.token === "string" && value.token.length > 0 ? value.token : undefined;
 	return {
 		id: value.id,
 		name: value.name.trim(),
 		url: value.url,
 		pid: value.pid,
 		...(cwd ? { cwd } : {}),
+		...(token ? { token } : {}),
 		startedAt: value.startedAt,
 		updatedAt: value.updatedAt,
 	};
 }
 
+/**
+ * Records hold server tokens, so the directory must be a real directory owned by this user and closed to others.
+ * Otherwise another local user could read tokens or plant records pointing at their own server.
+ */
+function ensurePrivateDir(dir: string): void {
+	mkdirSync(dir, { recursive: true, mode: 0o700 });
+	const stat = lstatSync(dir);
+	if (!stat.isDirectory()) throw new Error(`A2A discovery path ${dir} is not a directory.`);
+	if (typeof process.getuid === "function" && stat.uid !== process.getuid()) {
+		throw new Error(`A2A discovery directory ${dir} is owned by another user.`);
+	}
+	if ((stat.mode & 0o077) !== 0) chmodSync(dir, 0o700);
+}
+
 function atomicWrite(file: string, value: unknown): void {
-	mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+	ensurePrivateDir(path.dirname(file));
 	const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
 	writeFileSync(tmp, JSON.stringify(value, null, 2), { mode: 0o600 });
 	renameSync(tmp, file);
@@ -115,7 +142,7 @@ export class LocalA2aDiscovery {
 	}
 
 	list(options?: { excludeId?: string }): A2aPeerRecord[] {
-		mkdirSync(this.dir, { recursive: true, mode: 0o700 });
+		ensurePrivateDir(this.dir);
 		let entries: string[];
 		try {
 			entries = readdirSync(this.dir);

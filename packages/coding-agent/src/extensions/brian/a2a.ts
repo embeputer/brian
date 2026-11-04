@@ -112,12 +112,15 @@ export function installA2a(brian: ExtensionAPI, options: InstallBrianA2aOptions 
 			} else if (!task) {
 				throw new Error("task is required to send");
 			}
-			const result = await delegateToA2aAgentPreferStream({ url: peer.url, task, signal }, (text) => {
-				onUpdate?.({
-					content: [{ type: "text", text }],
-					details: { peer },
-				});
-			});
+			const result = await delegateToA2aAgentPreferStream(
+				{ url: peer.url, task, signal, token: peer.token },
+				(text) => {
+					onUpdate?.({
+						content: [{ type: "text", text }],
+						details: { peer },
+					});
+				},
+			);
 			if (result.failed) {
 				return {
 					content: [{ type: "text", text: result.error ?? "Message to peer failed" }],
