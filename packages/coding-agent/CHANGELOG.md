@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `brian messages watch` and the `brian serve` gateway now decide on messages from other people with only the `memory_search` and `memory_write` tools, so a chat message can no longer get Brian to run commands or edit files. Your own brian chat keeps all tools ([#31](https://github.com/embeputer/brian/pull/31))
+
 ## [0.2.0] - 2026-11-04
 
 ### Breaking Changes

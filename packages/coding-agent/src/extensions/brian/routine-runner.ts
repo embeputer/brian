@@ -6,6 +6,8 @@ import type { Routine, RoutineStore } from "./routines.ts";
 export interface RunTaskOptions {
 	/** Session file to write the run to, or to continue if it exists. */
 	sessionFile?: string;
+	/** Extra CLI arguments for the run, such as a tool allowlist. */
+	args?: string[];
 }
 
 export interface RoutineExecutor {
@@ -36,7 +38,14 @@ export function createProcessExecutor(): RoutineExecutor {
 		async runTask(prompt, options) {
 			const entry = process.argv[1];
 			const session = options?.sessionFile ? ["--session", options.sessionFile] : [];
-			const args = [...process.execArgv, ...(entry ? [entry] : []), ...session, "-p", prompt];
+			const args = [
+				...process.execArgv,
+				...(entry ? [entry] : []),
+				...session,
+				...(options?.args ?? []),
+				"-p",
+				prompt,
+			];
 			const result = await run(process.execPath, args, 30 * 60_000);
 			if (result.code !== 0) throw new Error(result.output || `exit ${result.code}`);
 			return result.output;
