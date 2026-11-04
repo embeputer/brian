@@ -125,7 +125,6 @@ async function main() {
 			"--no-context-files",
 			"--no-skills",
 			"--no-prompt-templates",
-			"--no-themes",
 			"Run the codemode binary smoke test.",
 		];
 		const javaScript = extname(binary) === ".js";

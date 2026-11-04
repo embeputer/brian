@@ -2,9 +2,21 @@
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- Custom `models.json` providers must use `"api": "brian-messages"` instead of `"api": "pi-messages"` ([#23](https://github.com/embeputer/brian/pull/23))
+
+### Changed
+
+- Updated the shipped model list: models providers retired are gone and new ones were added ([#25](https://github.com/embeputer/brian/pull/25))
+
 ### Fixed
 
-- Updated `undici` to 8.12.2 for its TLS certificate validation bypass, cache poisoning and crash fixes ([GHSA-2m5v-pch6-74hx](https://github.com/nodejs/undici/security/advisories/GHSA-2m5v-pch6-74hx), [GHSA-qrxm-fqhp-jwvm](https://github.com/nodejs/undici/security/advisories/GHSA-qrxm-fqhp-jwvm), [GHSA-4w7w-5xrc-9h26](https://github.com/nodejs/undici/security/advisories/GHSA-4w7w-5xrc-9h26), [GHSA-xjj6-f33q-929c](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c)), and the bundled `body-parser` to 2.4.0
+- Updated `undici` to 8.12.2 for its TLS certificate validation bypass, cache poisoning and crash fixes ([GHSA-2m5v-pch6-74hx](https://github.com/nodejs/undici/security/advisories/GHSA-2m5v-pch6-74hx), [GHSA-qrxm-fqhp-jwvm](https://github.com/nodejs/undici/security/advisories/GHSA-qrxm-fqhp-jwvm), [GHSA-4w7w-5xrc-9h26](https://github.com/nodejs/undici/security/advisories/GHSA-4w7w-5xrc-9h26), [GHSA-xjj6-f33q-929c](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c)), and the bundled `body-parser` to 2.4.0 ([#24](https://github.com/embeputer/brian/pull/24))
+
+### Removed
+
+- Themes: the `--theme`, `--use-theme` and `--no-themes` flags, the `theme` and `themes` settings, the `themes` entry in package manifests, and the extension UI theme methods (`theme`, `getAllThemes`, `getTheme`, `setTheme`). The SDK no longer exports `initTheme` or `ReadonlyFooterDataProvider` ([#22](https://github.com/embeputer/brian/pull/22))
 
 ## [0.1.1] - 2026-10-26
 
