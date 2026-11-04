@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `brian messages watch` and the `brian serve` gateway now decide on messages from other people with only the `memory_search` and `memory_write` tools, so a chat message can no longer get Brian to run commands or edit files. Your own brian chat keeps all tools ([#31](https://github.com/embeputer/brian/pull/31))
+
 ## [0.2.0] - 2026-11-04
 
 ### Breaking Changes
@@ -18,7 +22,6 @@
 
 ### Fixed
 
-- `brian messages watch` and the `brian serve` gateway now decide on messages from other people with only the `memory_search` and `memory_write` tools, so a chat message can no longer get Brian to run commands or edit files. Your own brian chat keeps all tools
 - Updated `undici` to 8.12.2 for its TLS certificate validation bypass, cache poisoning and crash fixes ([GHSA-2m5v-pch6-74hx](https://github.com/nodejs/undici/security/advisories/GHSA-2m5v-pch6-74hx), [GHSA-qrxm-fqhp-jwvm](https://github.com/nodejs/undici/security/advisories/GHSA-qrxm-fqhp-jwvm), [GHSA-4w7w-5xrc-9h26](https://github.com/nodejs/undici/security/advisories/GHSA-4w7w-5xrc-9h26), [GHSA-xjj6-f33q-929c](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c)), and the bundled `body-parser` to 2.4.0 ([#24](https://github.com/embeputer/brian/pull/24))
 
 ### Removed
