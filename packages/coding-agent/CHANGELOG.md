@@ -6,6 +6,12 @@
 
 - Credential reads now notice when another process rewrites `auth.json` with content of the same length right after Brian loaded it. Previously the change could be missed and the old credential returned until the file changed again ([#40](https://github.com/embeputer/brian/pull/40))
 
+## [0.2.3] - 2026-11-04
+
+### Fixed
+
+- When `brian messages watch` and the `brian serve` gateway decide on messages from other people, `memory_write` can now only create or append to notes directly in `People/`. It refuses `Agent/` and every other folder, `People/` subfolders, `mode: "replace"`, the `me` tag, and content that starts with frontmatter. Before, a message could get Brian to write an `Agent/` note, which is loaded into the system prompt of later runs with all tools (your brian chat, routines). The restriction is the new `--memory-people-only` flag ([#39](https://github.com/embeputer/brian/pull/39))
+
 ## [0.2.2] - 2026-11-04
 
 ### Fixed

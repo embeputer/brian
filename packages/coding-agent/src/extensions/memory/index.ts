@@ -8,9 +8,30 @@ import {
 	ensureMemoryVault,
 	listMemoryFolders,
 	listMemoryNotes,
+	type MemoryWriteInput,
+	normalizeMemoryFolder,
 	searchMemory,
 	writeMemoryNote,
 } from "../../core/memory/vault.ts";
+
+/**
+ * Set on runs whose prompt holds other people's messages. Agent/ notes and folder names are loaded into
+ * the system prompt of every later run, so memory_write may only create or append to notes directly in People/.
+ */
+export const MEMORY_PEOPLE_ONLY_FLAG = "memory-people-only";
+
+/** Why a run started with MEMORY_PEOPLE_ONLY_FLAG may not make this write, or undefined when it may. */
+export function peopleOnlyWriteError(input: MemoryWriteInput): string | undefined {
+	if (normalizeMemoryFolder(input.folder).toLowerCase() !== "people") {
+		return "this run can only write notes directly in People/";
+	}
+	if (input.mode === "replace") return 'this run can only create or append to notes, not use mode "replace"';
+	if (input.tags?.some((tag) => tag.trim().replace(/^#/, "").toLowerCase() === "me")) {
+		return 'this run cannot tag a note "me"';
+	}
+	if (input.content.trimStart().startsWith("---")) return "this run cannot write frontmatter in the content";
+	return undefined;
+}
 
 const MAX_AGENT_NOTES_CHARS = 8_000;
 
@@ -45,6 +66,11 @@ export function buildMemoryPromptSection(vaultDir: string): string {
 
 export default function memoryExtension(brian: ExtensionAPI): void {
 	const vaultDir = (): string => getMemoryDir();
+
+	brian.registerFlag(MEMORY_PEOPLE_ONLY_FLAG, {
+		description: "Limit memory_write to creating or appending notes directly in People/",
+		type: "boolean",
+	});
 
 	brian.on("before_agent_start", (event) => {
 		const dir = vaultDir();
@@ -110,7 +136,13 @@ export default function memoryExtension(brian: ExtensionAPI): void {
 				}),
 			),
 		}),
-		async execute(_toolCallId, args) {
+		async execute(_toolCallId, input) {
+			let args = input;
+			if (brian.getFlag(MEMORY_PEOPLE_ONLY_FLAG) === true) {
+				const error = peopleOnlyWriteError(input);
+				if (error) throw new Error(`memory_write refused: ${error}`);
+				args = { ...input, folder: "People" };
+			}
 			const dir = vaultDir();
 			const exists = existsSync(join(dir, args.folder, `${args.name.replace(/\.md$/i, "")}.md`));
 			const note = writeMemoryNote(dir, { ...args, mode: args.mode ?? (exists ? "append" : "create") });
