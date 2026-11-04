@@ -6,6 +6,10 @@
 
 - Custom `models.json` providers must use `"api": "brian-messages"` instead of `"api": "pi-messages"` ([#23](https://github.com/embeputer/brian/pull/23))
 
+### Added
+
+- `brian update` prints the installed version and the version published on npm before it updates ([#27](https://github.com/embeputer/brian/pull/27))
+
 ### Changed
 
 - Updated the shipped model list: models providers retired are gone and new ones were added ([#25](https://github.com/embeputer/brian/pull/25))
